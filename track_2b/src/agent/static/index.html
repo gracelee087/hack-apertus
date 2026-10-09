@@ -555,7 +555,7 @@ async function dashboard() {
     queue: {title: t("처리 순서", "Work queue by priority"), icon: "alert", render: () => `<p class="sub" data-tip="${esc(t("여유 = 마감까지 남은 날 − 확인(2~3일) − 은행 1일", "Spare = days to due − days to verify (2–3) − 1 bank day"))}">${t("사기 의심 → 여유 적은 순 → 금액", "Fraud first → least spare time → amount")}
         ${urgent.length ? `<span class="pill bad">${t(`지금 바로 ${urgent.length}건`, `${urgent.length} urgent`)}</span>` : tight ? `<span class="pill ok" data-tip="${esc(t(`가장 촉박: ${tight.case_id}, 여유 ${tight.slack}일`, `tightest: ${tight.case_id}, ${tight.slack} days to spare`))}">${t("급한 건 없음", "none urgent")}</span>` : ""} <span class="pill warn">${t(`${o.alerts.length}건 대기`, `${o.alerts.length} open`)}</span></p>
       ${o.alerts.length ? urgencyPlot(o.alerts).replace('class="uplot"', 'class="uplot small"') + queueMini(o.alerts.slice(0, 3)) : `<p class="mute">${t("대기 건 없음", "nothing waiting")}</p>`}
-      ${o.alerts.length > 3 ? more(t(`전체 ${o.alerts.length}건 보기`, `All ${o.alerts.length} waiting`), alertTable(o.alerts)) : ""}`},
+      ${o.alerts.length > 3 ? more(t(`나머지 ${o.alerts.length - 3}건 보기 (4번부터)`, `The other ${o.alerts.length - 3} waiting (from #4)`), alertTable(o.alerts.slice(3))) : ""}`},
     signals: {title: t("위험 신호 유형", "Risk signals by type"), render: () => `<p class="sub">${t("전체 고객사에서 청구서를 막은 이유.", "Why invoices were held back, across all clients.")}</p>
       ${donut(Object.entries(o.risk_totals).map(([k, r]) => ({label: riskName(k, r.label), v: r.count, kind: r.kind})).sort((a, b) => (a.kind === "fraud" ? 0 : 1) - (b.kind === "fraud" ? 0 : 1) || b.v - a.v))}`},
     board: {title: t("고객사 현황판", "Client status board"), render: () => `${statusBoardTight(o)}${legend(riskLegend())}`},
@@ -630,6 +630,7 @@ async function clientPage(cid, tab) {
   if (FOCUS && $(`q-${FOCUS}`)) $(`q-${FOCUS}`).scrollIntoView({block: "center"});
 }
 function cTodo(c) {  // what needs a human now, in order, with the decision buttons right there
+  setTimeout(() => loadPicks(c.client_id));  // fill the database picker once the page is on screen
   const al = {}; ((OV && OV.alerts) || []).forEach(a => al[a.case_id] = a);
   const open = c.queue.filter(i => i.status === "open").sort((x, y) => (al[x.case_id]?.rank ?? 999) - (al[y.case_id]?.rank ?? 999));
   const done = c.queue.filter(i => i.status !== "open"), a = c.agent, m = c.mandate, own = c.owner.name;
@@ -666,7 +667,8 @@ function cTodo(c) {  // what needs a human now, in order, with the decision butt
     ${open.length ? `<div class="qlist"><div class="qgrid qh"><span>#</span><span>${t("건", "Case")}</span><span>${t("거래처", "Supplier")}</span><span>${t("신호", "Signal")}</span><span class="n">${t("위험", "Risk")}</span><span class="n">${t("여유", "Spare")}</span><span class="n">CHF</span><span></span></div>${open.map(row).join("")}</div>` : `<p class="mute">${t("없음", "none")}</p>`}
     ${done.length ? `<div style="margin-top:20px">${more(t(`처리한 건 (${done.length})`, `Handled (${done.length})`), `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결과", "Result")}</th><th>${t("메모", "Note")}</th></tr>${done.map(i => `<tr><td><code>${esc(i.case_id)}</code></td><td>${esc(i.vendor)}</td><td class="n">${chf(i.amount_chf)}</td><td>${i.status === "approved" ? `<span class="ok">${t("승인", "approved")}</span>` : `<span class="bad">${t("거절", "rejected")}</span>`}</td><td class="mute">${esc(i.note || "")}</td></tr>`).join("")}</table>`)}</div>` : ""}</div>
   <div class="card">${more(t("새 청구서를 에이전트에게 맡기기", "Give the agent a new invoice"), `<p class="sub">${t("Apertus가 읽고, 하드 체크가 위임장을 확인하고, Apertus가 내용을 검토해요. 에이전트가 결정에 서명하면 문지기가 확인한 뒤 기록돼요.", "Apertus reads it, the hard checks apply the mandate, Apertus reviews the content; the agent signs the decision and the gate checks it before it is recorded.")}</p>
-    <textarea id="ptext"></textarea>
+    <div class="row"><select id="ppick" onchange="pickInvoice(this.value)" aria-label="${t("데이터베이스에서 고르기", "pick from the database")}"><option value="">${t("데이터베이스에서 청구서 고르기 (원문만 채워요)…", "Pick an invoice from the database (fills in the text only)…")}</option></select></div>
+    <textarea id="ptext" oninput="PICKED = null"></textarea>
     <div class="row"><button class="btn primary" onclick="processInvoice('${c.client_id}')" ${a.active ? "" : "disabled"}>${t("에이전트 실행", "Run agent")}</button><span id="pstatus" class="mute"></span></div>
     <div id="presult"></div>`)}</div>`;
 }
@@ -710,12 +712,29 @@ function riskTable(rows) {
     `<tr><td>${esc(e.case_id)}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td><td>${dec(e.decision)}</td>
      <td>${e.risk.map(r => `<span class="${r.kind === "fraud" ? "bad" : "warn"}">${esc(riskName(r.code, r.label))}</span>`).join("<br>")}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table>`;
 }
+let PICKS = null, PICKED = null;
+async function loadPicks(cid) {  // the labelled invoices in data/: new ones (holdout) first, then test and train
+  const el = $("ppick"); if (!el) return;
+  if (!PICKS) PICKS = (await Promise.all(["holdout.jsonl", "cases.jsonl"].map(n => api(`/api/data/${n}?limit=500`)))).flatMap(r => r.rows);
+  const mine = PICKS.filter(r => r.client_id === cid), groups = [["holdout", t("새 평가셋 (장부에 없음)", "holdout (not in the ledger yet)")], ["test", t("테스트 (이미 처리돼 장부에 있음)", "test (already in the ledger)")], ["train", t("학습", "train")]];
+  el.insertAdjacentHTML("beforeend", groups.map(([k, name]) => { const rs = mine.filter(r => r.split === k);
+    return rs.length ? `<optgroup label="${esc(name)}">${rs.map(r => `<option value="${esc(r.case_id)}">${esc(r.case_id)} · ${esc(r["gold.vendor"])} · CHF ${chf(r["gold.total_chf"])} · ${esc(r.lang)}</option>`).join("")}</optgroup>` : ""; }).join(""));
+}
+function pickInvoice(id) {
+  PICKED = PICKS.find(r => r.case_id === id) || null;
+  $("ptext").value = PICKED ? PICKED.invoice_text : ""; $("presult").innerHTML = "";
+}
 async function processInvoice(cid) {
+  const picked = PICKED;
   $("pstatus").textContent = t("처리 중…", "running…"); $("presult").innerHTML = "";
   try {
     const h = await post(`/api/clients/${cid}/process`, {invoice_text: $("ptext").value});
     $("pstatus").textContent = "";
+    const dup = h.findings.some(f => f.code === "R_DUPLICATE");
     $("presult").innerHTML = `<h3>${t("결정", "Decision")}: ${dec(h.decision)} <span class="meta">${esc(h.case_id || "")}</span></h3>
+      ${picked && dup && picked.split !== "holdout" ? `<p class="ok">${t(`데이터베이스 정답 (${picked.case_id}): 이 청구서는 이미 처리돼 장부에 있으니 다시 내면 중복 거절이 맞아요 ✓`, `Database answer (${picked.case_id}): this invoice is already in the ledger, so rejecting it again as a duplicate is right ✓`)}</p>`
+      : picked ? `<p class="${picked.label === h.decision ? "ok" : "bad"}">${t("데이터베이스 정답", "Database answer")} (${esc(picked.case_id)}, ${esc(picked.reason_code === "OK" ? t("정상 청구서", "legitimate") : riskName(picked.reason_code))}): ${dec(picked.label)} · ${t("에이전트", "agent")}: ${dec(h.decision)} ${picked.label === h.decision ? "✓" : "✗"}</p>` : ""}
+      ${dup ? `<p class="meta">${t("같은 거래처·청구서 번호가 이번 달 장부에 이미 지급돼 있어 중복으로 거절했어요. 같은 청구서를 두 번 내면 실제로도 이렇게 막혀야 해요.", "The same supplier and invoice number are already paid in this month's ledger, so it was rejected as a duplicate, as it should be when the same invoice comes in twice.")}</p>` : ""}
       ${pipe(flowFromResult(h, (OV.clients.find(x => x.client_id === cid) || {owner: {}}).owner.name || ""))}<p>${esc(h.reason)}</p>
       <p>${t("서명한 에이전트", "Signed by agent")} v${h.generation} <code>${short(h.agent_did)}</code> · ${t("문지기", "gate")}: ${h.executed ? `<span class="ok">${esc(gateName(h.gate))} — ${t("기록됨", "recorded")}</span>` : `<span class="bad">${esc(gateName(h.gate))} — ${t("실행 안 됨", "not executed")}</span>`}</p>
       ${h.file ? `<p class="ok">${t(`지급 파일 ${h.file}에 추가됐어요`, `added to payment file ${h.file}`)}</p>` : ""}
