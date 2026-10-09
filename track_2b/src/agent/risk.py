@@ -14,6 +14,7 @@ The score never changes a payment decision. It ranks the approval queue and expl
 import json
 import math
 import random
+from collections import Counter
 from datetime import date
 
 from . import badge
@@ -45,6 +46,13 @@ def generate_history(n=N_HISTORY, seed=SEED) -> list:
     mandates = {m["client_id"]: m for m in load_json(DATA / "mandates.json")}
     vendors = load_json(DATA / "vendors.json")
     base = {v["vendor_id"]: rng.uniform(*TYPICAL.get(v["category"], (200, 3000))) for vs in vendors.values() for v in vs}
+    seen = {}  # each supplier's usual amount, from the legitimate TRAIN-split invoices only (never the test split)
+    for c in read_jsonl(DATA / "cases.jsonl"):
+        if c["split"] == "train" and c["reason_code"] == "OK":
+            v = next((v for v in vendors[c["client_id"]] if badge.same_name(v["name"], c["gold"]["vendor"])), None)
+            if v:
+                seen.setdefault(v["vendor_id"], []).append(c["gold"]["total_chf"])
+    base.update({k: _median(xs) for k, xs in seen.items()})
     kinds = ([("legit", None)] * 76 + [("control", c) for c in ("limit", "scope", "new_vendor", "month")] * 3
              + [("fraud", f) for f in ["iban_swap"] * 4 + ["inflated"] * 2 + ["fake_vendor"] * 2 + ["pressure"] * 2
                 + ["vat_mismatch", "wrong_addressee", "duplicate", "invalid_iban"]])
@@ -268,19 +276,22 @@ def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
         y = [h[target] for h in history]
         Xtr, stats = standardize([X[i] for i in tr])
         Xva, _ = standardize([X[i] for i in va], stats)
-        best = None
+        best, grid = None, []
         for l2 in (0.01, 0.1, 1.0, 10.0):  # pick the regularisation on the validation split
             auc = roc_auc([y[i] for i in va], predict(fit_logistic(Xtr, [y[i] for i in tr], l2), Xva))
+            grid.append({"l2": l2, "val_roc_auc": auc})
             if best is None or auc > best[1] + 1e-9:
                 best = (l2, auc)
         w_val = fit_logistic(Xtr, [y[i] for i in tr], best[0])
-        val = report([y[i] for i in va], predict(w_val, Xva), 0.5)
+        s_val = predict(w_val, Xva)
         Xall, stats_all = standardize(X)
-        return fit_logistic(Xall, y, best[0]), stats_all, best[0], val
+        return fit_logistic(Xall, y, best[0]), stats_all, best[0], report([y[i] for i in va], s_val, 0.5), grid, s_val, stats
 
-    wA, statsA, l2A, valA = train("is_fraud")
-    wB, statsB, l2B, valB = train("must_not_autopay")
-    val_unsup = report([history[i]["is_fraud"] for i in va], anomaly_scores([X[i] for i in tr], [X[i] for i in va]))
+    wA, statsA, l2A, valA, gridA, svA, stats_trA = train("is_fraud")
+    wB, statsB, l2B, valB, gridB, svB, _ = train("must_not_autopay")
+    yvA, yvB = [history[i]["is_fraud"] for i in va], [history[i]["must_not_autopay"] for i in va]
+    svU = anomaly_scores([X[i] for i in tr], [X[i] for i in va])
+    val_unsup = report(yvA, svU)
 
     rows, yA, yB, passed_rules, missed = [], [], [], [], []
     for p in preds:
@@ -322,9 +333,91 @@ def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
                                                    "rank_among_passed": sub_rank.index(i) + 1 if i in sub else None}
                                                   for i, mm in enumerate(missed) if mm]},
         "scores": scores,
+        "pipeline": pipeline(history, X, tr, va, rows, preds, yA, yB, sA, sU, sB, yvA, yvB, svA, svU, svB,
+                             stats_trA, gridA, gridB),
     }
     (RESULTS / "risk_model.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     return out
+
+
+def roc_points(y, s, keep=60):
+    """(false positive rate, true positive rate) at every score threshold, thinned for drawing."""
+    P, N = sum(y), len(y) - sum(y)
+    pts, tp, fp = [(0.0, 0.0)], 0, 0
+    for _, yi in sorted(zip(s, y), key=lambda t: -t[0]):
+        tp, fp = tp + yi, fp + (1 - yi)
+        pts.append((round(fp / max(N, 1), 4), round(tp / max(P, 1), 4)))
+    return _thin(pts, keep)
+
+
+def pr_points(y, s, keep=60):
+    """(recall, precision) going down the ranked list."""
+    P, pts, tp = sum(y), [], 0
+    for k, (_, yi) in enumerate(sorted(zip(s, y), key=lambda t: -t[0]), 1):
+        tp += yi
+        pts.append((round(tp / max(P, 1), 4), round(tp / k, 4)))
+    return _thin(pts, keep)
+
+
+def confusion(y, s, threshold):
+    tp = sum(1 for yi, si in zip(y, s) if yi and si >= threshold)
+    fp = sum(1 for yi, si in zip(y, s) if not yi and si >= threshold)
+    fn, tn = sum(y) - tp, len(y) - sum(y) - fp
+    prec, rec = (tp / (tp + fp) if tp + fp else None), tp / max(tp + fn, 1)
+    f1 = 2 * prec * rec / (prec + rec) if prec and rec else 0.0
+    return {"threshold": threshold, "tp": tp, "fp": fp, "fn": fn, "tn": tn,
+            "precision": None if prec is None else round(prec, 4), "recall": round(rec, 4), "f1": round(f1, 4)}
+
+
+def histogram(y, s, bins=10):
+    out = [{"from": b / bins, "to": (b + 1) / bins, "fraud": 0, "legit": 0} for b in range(bins)]
+    for yi, si in zip(y, s):
+        out[min(int(si * bins), bins - 1)]["fraud" if yi else "legit"] += 1
+    return out
+
+
+def pipeline(history, X, tr, va, rows, preds, yA, yB, sA, sU, sB, yvA, yvB, svA, svU, svB, stats_tr, gridA, gridB):
+    """Every data-science step, as numbers for the data-analysis page."""
+    pattern = Counter(f"{r['kind']}:{r['pattern'] or 'normal'}" for r in history)
+    noise = sum(1 for r in history if r["is_fraud"] != int(r["kind"] == "fraud"))
+    fraud_tr = [i for i in tr if history[i]["is_fraud"]]
+    legit_tr = [i for i in tr if not history[i]["is_fraud"]]
+    mean = lambda idx, j: round(sum(X[i][j] for i in idx) / max(len(idx), 1), 4)
+    errors = [{"case_id": p["case_id"], "kind": "false negative" if yA[i] else "false positive",
+               "reason_code": p["reason_code"], "risk_score": round(100 * sA[i], 1),
+               "features": {f: rows[i][j] for j, f in enumerate(FEATURES) if rows[i][j]}}
+              for i, p in enumerate(preds) if (sA[i] >= 0.5) != bool(yA[i])]
+    curves = lambda yy, s3: {"A_logistic": {"roc": roc_points(yy[0], s3[0]), "pr": pr_points(yy[0], s3[0])},
+                             "A_unsupervised": {"roc": roc_points(yy[0], s3[1]), "pr": pr_points(yy[0], s3[1])},
+                             "B_logistic": {"roc": roc_points(yy[1], s3[2]), "pr": pr_points(yy[1], s3[2])}}
+    return {
+        "data": {"rows": len(history), "seed": SEED, "patterns": dict(pattern.most_common()),
+                 "fraud": sum(r["is_fraud"] for r in history), "must_not_autopay": sum(r["must_not_autopay"] for r in history),
+                 "label_noise": noise, "sample": [next(r for r in history if r["kind"] == "legit"),
+                                                   next(r for r in history if r["kind"] == "fraud")]},
+        "test_data": {"rows": len(preds), "fraud": sum(yA), "must_not_autopay": sum(yB),
+                      "by_reason": dict(Counter(p["reason_code"] for p in preds).most_common())},
+        "split": {"train": {"rows": len(tr), "fraud": sum(history[i]["is_fraud"] for i in tr)},
+                  "validation": {"rows": len(va), "fraud": sum(yvA)},
+                  "test": {"rows": len(preds), "fraud": sum(yA)}},
+        "features": [{"name": f, "train_mean": round(m, 4), "train_std": round(s, 4),
+                      "mean_fraud": mean(fraud_tr, j), "mean_legit": mean(legit_tr, j),
+                      "nonzero_share": round(sum(1 for i in tr if X[i][j]) / len(tr), 4)}
+                     for j, (f, (m, s)) in enumerate(zip(FEATURES, stats_tr))],
+        "l2_search": {"A": gridA, "B": gridB},
+        "curves": {"validation": curves((yvA, yvB), (svA, svU, svB)), "test": curves((yA, yB), (sA, sU, sB))},
+        "confusion": {"validation": [confusion(yvA, svA, t) for t in (0.2, 0.5, 0.8)],
+                      "test": [confusion(yA, sA, t) for t in (0.2, 0.5, 0.8)]},
+        "histogram": {"validation": histogram(yvA, svA), "test": histogram(yA, sA)},
+        "errors_at_0.5": errors,
+    }
+
+
+def _thin(pts, keep):
+    if len(pts) <= keep:
+        return pts
+    step = (len(pts) - 1) / (keep - 1)
+    return [pts[round(k * step)] for k in range(keep)]
 
 
 def _new_iban(rng):

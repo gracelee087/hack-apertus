@@ -77,8 +77,8 @@ Each attack is tried once per paid invoice of the reference run.
 
 | Model | ROC AUC validation | ROC AUC test | Avg precision test |
 |---|---|---|---|
-| fraud, supervised (logistic regression) | 0.9117 | 0.9542 | 0.9483 |
-| fraud, unsupervised baseline | 0.8551 | 0.8324 | 0.6759 |
-| must not autopay, supervised (comparison) | 0.9961 | 0.9266 | 0.9581 |
+| fraud, supervised (logistic regression) | 0.9082 | 0.97 | 0.9729 |
+| fraud, unsupervised baseline | 0.8599 | 0.8775 | 0.7703 |
+| must not autopay, supervised (comparison) | 0.996 | 0.9616 | 0.9799 |
 
-On the 43 test invoices the rules let through (10 fraud): ROC AUC 0.9303. Missed by production: T110 (E_PRESSURE) score 100.0, rank 3, T111 (E_VAT_MISMATCH) score 0.9, rank 33
+On the 43 test invoices the rules let through (10 fraud): ROC AUC 0.9515. Missed by production: T110 (E_PRESSURE) score 99.9, rank 2, T111 (E_VAT_MISMATCH) score 1.2, rank 26

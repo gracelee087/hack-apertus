@@ -161,6 +161,24 @@ details.more > div > table tr:last-child > td { border-bottom:0; }
 .uplot .ax span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
 .rank { display:inline-grid; place-items:center; min-width:24px; height:24px; border-radius:6px; background:var(--chip); font-weight:700; font-size:12px; }
 .rank.top { background:var(--brand); color:var(--brand-ink); }
+.flow { display:flex; align-items:stretch; gap:6px; flex-wrap:wrap; margin:0 0 20px; }
+.flow-s { flex:1; min-width:120px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:3px; box-shadow:var(--shadow); }
+.flow-s .kic { width:30px; height:30px; border-radius:7px; display:grid; place-items:center; color:var(--brand); background:color-mix(in srgb, var(--brand) 10%, transparent); margin-bottom:4px; }
+.flow-s b { font-size:13px; } .flow-s small { font-size:11.5px; color:var(--mute); }
+.card .flow-s { box-shadow:none; background:var(--thead); }
+.flow-a { display:flex; align-items:center; color:var(--mute); }
+.stepno { display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--brand); color:var(--brand-ink); font-size:12px; font-weight:700; margin-right:4px; }
+.split { display:flex; gap:10px; align-items:flex-end; margin:4px 0 6px; }
+.split-p { display:flex; flex-direction:column; gap:4px; min-width:0; } .split-p b { font-size:13px; } .split-p small { font-size:11.5px; color:var(--mute); }
+.split-bar { height:30px; border-radius:6px; background:color-mix(in srgb, var(--s-control) 22%, transparent); overflow:hidden; display:flex; }
+.split-bar.test { background:color-mix(in srgb, var(--ink2) 18%, transparent); }
+.split-bar i { display:block; height:100%; background:var(--s-fraud); }
+.split-gap { width:18px; border-left:2px dashed var(--line); align-self:stretch; }
+.cm { display:grid; grid-template-columns:92px 1fr 1fr; gap:4px; max-width:420px; }
+.cm-t { grid-column:1 / -1; font-size:12px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.cm-h { font-size:12px; color:var(--ink2); text-align:center; align-self:end; padding:2px; } .cm-v { align-self:center; text-align:right; }
+.cm-c { border-radius:8px; padding:14px 10px; text-align:center; display:flex; flex-direction:column; gap:2px; border:1px solid var(--line); }
+.cm-c b { font-size:24px; font-variant-numeric:tabular-nums; } .cm-c small { font-size:11.5px; font-weight:700; color:var(--ink2); } .cm-c i { font-style:normal; font-size:11px; }
 #tip { position:fixed; pointer-events:none; z-index:10; background:var(--card); color:var(--ink); border:1px solid var(--line);
        border-radius:6px; padding:6px 9px; font-size:12.5px; box-shadow:0 6px 18px rgba(0,0,0,.14); display:none; max-width:300px; }
 @media (max-width:1100px) { .user div { display:none; } }
@@ -297,6 +315,7 @@ async function sidebar(active) {
     <div class="sec">${t("사무소", "Firm")}</div>
     <a href="#/evaluation" class="${active === "evaluation" ? "on" : ""}">${ic("chart")}<span class="nm">${t("평가 결과", "Evaluation")}</span></a>
     <a href="#/analytics" class="${active === "analytics" ? "on" : ""}">${ic("shield")}<span class="nm">${t("위험 분석", "Risk analytics")}</span></a>
+    <a href="#/datascience" class="${active === "datascience" ? "on" : ""}">${ic("cpu")}<span class="nm">${t("데이터 분석", "Data science")}</span></a>
     <a href="#/ledger" class="${active === "ledger" ? "on" : ""}">${ic("book")}<span class="nm">${t("장부", "Ledger")}</span></a>
     <div class="foot">${ic("cpu", 13)} ${esc(OV.model)}<br>
       <span class="dot" style="background:var(--st-good)"></span> ${t("정상", "clear")} &nbsp;<span class="dot" style="background:var(--st-warn)"></span> ${t("확인 필요", "attention")}<br>
@@ -320,11 +339,13 @@ async function route() {
   topbar(h[0] === "c" ? [[t("고객사", "Clients"), "#/"], [cl ? cl.name : h[1], `#/c/${h[1]}`], [(ctabs().find(x => x[0] === (h[2] || "overview")) || ["", ""])[1]]]
     : h[0] === "evaluation" ? [[t("사무소", "Firm")], [t("평가 결과", "Evaluation")]]
     : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("장부", "Ledger")]]
-    : h[0] === "analytics" ? [[t("사무소", "Firm")], [t("위험 분석", "Risk analytics")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
+    : h[0] === "analytics" ? [[t("사무소", "Firm")], [t("위험 분석", "Risk analytics")]]
+    : h[0] === "datascience" ? [[t("사무소", "Firm")], [t("데이터 분석", "Data science")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
   if (h[0] === "c") return clientPage(h[1], h[2] || "overview");
   if (h[0] === "evaluation") return evaluation();
   if (h[0] === "ledger") return ledgerPage();
   if (h[0] === "analytics") return analyticsPage();
+  if (h[0] === "datascience") return dataSciencePage();
   return dashboard();
 }
 window.addEventListener("hashchange", route);
@@ -641,6 +662,159 @@ function riskModelCard(rm) {
       ${M.flatMap(([k, n]) => [["validation", t("검증", "validation")], ["test", t("테스트", "test")]].map(([d, dn]) => { const r = rm[d][k];
         return `<tr><td>${esc(n)}</td><td>${dn}</td><td class="n">${r.n}</td><td class="n">${r.positives}</td><td class="n">${r.roc_auc}</td><td class="n">${r.avg_precision}</td><td class="n">${r.precision_at_10}</td><td class="n">${r["recall_at_0.5"] ?? "–"}</td><td class="n">${r["precision_at_0.5"] ?? "–"}</td></tr>`; })).join("")}</table>
       <p class="meta">${t("학습·검증 = 합성 과거 지급(8:2 분할, 규제 강도는 검증으로 선택). 테스트 = 처음 보는 청구서 78건. 합성 데이터라 실제 성능은 실데이터로 다시 재야 해요.", "Train / validation = synthetic past payments (80/20 split, regularisation chosen on validation). Test = 78 unseen invoices. Synthetic data: real performance must be re-measured on real data.")}</p>`)}</div>`;
+}
+// ---------------------------------------------------------------- data science page
+const DS_COL = [  // the 16 columns of data/history/payments.jsonl
+  ["row_id", "행 번호", "row id"], ["client_id", "고객사", "client"], ["vendor", "거래처 이름", "supplier name"], ["iban", "청구서의 계좌", "account on the invoice"],
+  ["category", "지출 종류", "expense type"], ["urgency_terms", "재촉·비밀 단어 수", "pressure / secrecy words"], ["days_to_due", "지급 기한까지 일수", "days to due date"],
+  ["addressee_ok", "수신인이 고객사인가", "addressed to the client"], ["duplicate", "이미 낸 청구서 번호인가", "invoice number already paid"],
+  ["vat_ok", "순액+부가세=합계인가", "net + VAT = total"], ["month_spent", "이번 달 이미 지급한 금액", "paid this month so far"],
+  ["kind", "정상 / 통제 위반 / 사기 (생성 정보)", "legit / control / fraud (generator)"], ["pattern", "사기·위반 수법 (생성 정보)", "pattern (generator)"],
+  ["total_chf", "청구 금액", "invoice total"], ["is_fraud", "정답 A: 사기 (2% 뒤집힘)", "label A: fraud (2% flipped)"], ["must_not_autopay", "정답 B: 자동 지급 불가", "label B: must not autopay"]];
+const FEAT_HOW = {amount_z: ["log(금액)을 그 고객사·거래처 과거 금액의 중앙값과 MAD로 로버스트 z 변환, −5~10으로 자름. 이력 5건 미만이면 0", "robust z of log(amount) vs the client-supplier median and MAD; clipped to −5..10; 0 with fewer than 5 past payments"],
+  iban_changed: ["등록된 거래처인데 계좌가 등록 계좌와 다르고 형식은 유효", "known supplier, valid IBAN that differs from the account on file"],
+  iban_invalid: ["IBAN 검증 숫자(mod 97) 실패", "IBAN checksum (mod 97) fails"], new_vendor: ["고객사 거래처 목록에 없음(이름 유사도 0.85 기준)", "not in the client's supplier list (name similarity 0.85)"],
+  round_amount: ["500 이상이고 100으로 나누어떨어짐", "≥ 500 and divisible by 100"], vat_mismatch: ["|순액+부가세−합계| > 0.05", "|net + VAT − total| > 0.05"],
+  wrong_addressee: ["수신인이 고객사 이름과 다름(악센트·주소 무시)", "addressee is not the client (accents and address ignored)"],
+  urgency_terms: ["청구서 원문에서 4개 언어 사전 21개 단어 등장 횟수, 최대 5", "occurrences of 21 words in four languages in the invoice text, capped at 5"],
+  short_due: ["지급 기한이 10일 미만", "due in fewer than 10 days"], duplicate: ["같은 거래처의 같은 청구서 번호를 이번 달 이미 지급", "same supplier and invoice number already paid this month"],
+  over_single_limit: ["금액 > 위임장 건당 한도", "amount above the mandate's single limit"], out_of_scope: ["지출 종류가 위임 범위 밖", "expense type outside the mandate"],
+  month_load: ["(이번 달 지급 + 이 금액) ÷ 월 한도, 최대 2", "(paid this month + this amount) ÷ monthly limit, capped at 2"]};
+const PAT = {"legit:normal": ["정상", "legit"], "fraud:iban_swap": ["사기 · 계좌 바꿔치기", "fraud · bank-detail swap"], "fraud:pressure": ["사기 · 재촉·비밀", "fraud · pressure"],
+  "fraud:fake_vendor": ["사기 · 가짜 거래처", "fraud · fake supplier"], "fraud:inflated": ["사기 · 금액 부풀리기", "fraud · inflated amount"], "fraud:vat_mismatch": ["사기 · 금액 불일치", "fraud · amounts do not add up"],
+  "fraud:invalid_iban": ["사기 · 잘못된 IBAN", "fraud · invalid IBAN"], "fraud:wrong_addressee": ["사기 · 다른 회사 앞", "fraud · wrong addressee"], "fraud:duplicate": ["사기 · 중복", "fraud · duplicate"],
+  "control:month": ["통제 · 월 한도", "control · monthly limit"], "control:new_vendor": ["통제 · 새 거래처", "control · new supplier"], "control:scope": ["통제 · 범위 밖", "control · out of scope"], "control:limit": ["통제 · 건당 한도", "control · single limit"]};
+const MODELS = () => [["A_logistic", t("사기 · 지도 (로지스틱 회귀)", "fraud · supervised (logistic)"), C.control, ""], ["A_unsupervised", t("사기 · 비지도 기준선", "fraud · unsupervised baseline"), C.fraud, ""],
+  ["B_logistic", t("자동 지급 불가 · 지도 (비교)", "must not autopay · supervised (comparison)"), "var(--ink2)", "5 4"]];
+function lineChart(series, o) {  // series: [{name, color, dash, pts:[[x,y]...]}], axes 0..1
+  const W = 420, H = 300, L = 46, R = 12, T = 12, B = 40, x = v => L + v * (W - L - R), y = v => T + (1 - v) * (H - T - B);
+  const ticks = [0, .25, .5, .75, 1];
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:520px;height:auto" role="img" aria-label="${esc(o.title)}">
+    ${ticks.map(v => `<line x1="${x(0)}" x2="${x(1)}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--mute)">${v}</text>
+      <text x="${x(v)}" y="${H - B + 16}" text-anchor="middle" font-size="11" fill="var(--mute)">${v}</text>`).join("")}
+    <line x1="${x(0)}" x2="${x(0)}" y1="${y(0)}" y2="${y(1)}" stroke="var(--axis)"/><line x1="${x(0)}" x2="${x(1)}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>
+    ${o.diagonal ? `<line x1="${x(0)}" y1="${y(0)}" x2="${x(1)}" y2="${y(1)}" stroke="var(--axis)" stroke-dasharray="2 4"/>` : ""}
+    ${o.base != null ? `<line x1="${x(0)}" y1="${y(o.base)}" x2="${x(1)}" y2="${y(o.base)}" stroke="var(--axis)" stroke-dasharray="2 4"/>` : ""}
+    ${series.map(s => `<path d="${s.pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("")}" fill="none" stroke="${s.color}" stroke-width="2" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`).join("")}
+    ${series.map(s => s.pts.map(p => `<circle cx="${x(p[0]).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="6" fill="transparent" data-tip="${esc(`${s.name} · ${o.xl} ${p[0]} · ${o.yl} ${p[1]}`)}"/>`).join("")).join("")}
+    <text x="${(x(0) + x(1)) / 2}" y="${H - 6}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${esc(o.xl)}</text>
+    <text transform="translate(12 ${(y(0) + y(1)) / 2}) rotate(-90)" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${esc(o.yl)}</text></svg>`;
+}
+const lineLegend = () => `<div class="legend">${MODELS().map(([, n, c, d]) => `<span><svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="${c}" stroke-width="2" ${d ? `stroke-dasharray="${d}"` : ""}/></svg>${esc(n)}</span>`).join("")}</div>`;
+function curveChart(cv, kind, title) {
+  const s = MODELS().map(([k, n, c, d]) => ({name: n, color: c, dash: d, pts: cv[k][kind]}));
+  return kind === "roc" ? lineChart(s, {title, diagonal: true, xl: t("거짓 양성률 (FPR)", "false positive rate"), yl: t("참 양성률 (TPR, 재현율)", "true positive rate (recall)")})
+    : lineChart(s, {title, xl: t("재현율", "recall"), yl: t("정밀도", "precision")});
+}
+function confusionGrid(c, title) {
+  const n = c.tp + c.fp + c.fn + c.tn, cell = (v, lab, good) => `<div class="cm-c" style="background:rgba(var(--heat),${(.08 + .6 * v / n).toFixed(3)})" data-tip="${esc(`${lab}: ${v}`)}">
+    <b>${v}</b><small>${lab}</small><i class="${good ? "ok" : "bad"}">${good ? t("맞음", "correct") : t("틀림", "wrong")}</i></div>`;
+  return `<div class="cm"><div class="cm-t">${esc(title)}</div>
+    <div></div><div class="cm-h">${t("예측: 사기", "predicted fraud")}</div><div class="cm-h">${t("예측: 정상", "predicted legit")}</div>
+    <div class="cm-h cm-v">${t("실제 사기", "actual fraud")}</div>${cell(c.tp, "TP", true)}${cell(c.fn, "FN", false)}
+    <div class="cm-h cm-v">${t("실제 정상", "actual legit")}</div>${cell(c.fp, "FP", false)}${cell(c.tn, "TN", true)}</div>
+    <p class="meta" style="margin-top:8px">${t("정밀도", "precision")} ${c.precision ?? "–"} · ${t("재현율", "recall")} ${c.recall} · F1 ${c.f1} (${t("기준", "threshold")} ${c.threshold})</p>`;
+}
+function histChart(bins) {
+  const W = 420, H = 220, L = 34, B = 34, T = 10, max = Math.max(1, ...bins.flatMap(b => [b.fraud, b.legit]));
+  const bw = (W - L - 10) / bins.length, y = v => T + (1 - v / max) * (H - T - B);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:520px;height:auto" role="img" aria-label="score histogram">
+    <line x1="${L}" x2="${W - 10}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>
+    ${bins.map((b, i) => { const x0 = L + i * bw, w = (bw - 6) / 2;
+      return `<rect x="${x0 + 2}" y="${y(b.legit)}" width="${w}" height="${y(0) - y(b.legit)}" rx="2" fill="var(--mute)" data-tip="${esc(`${b.from.toFixed(1)}–${b.to.toFixed(1)} · ${t("정상", "legit")} ${b.legit}`)}"/>
+        <rect x="${x0 + 4 + w}" y="${y(b.fraud)}" width="${w}" height="${y(0) - y(b.fraud)}" rx="2" fill="${C.fraud}" data-tip="${esc(`${b.from.toFixed(1)}–${b.to.toFixed(1)} · ${t("사기", "fraud")} ${b.fraud}`)}"/>
+        <text x="${x0 + bw / 2}" y="${H - B + 14}" text-anchor="middle" font-size="10.5" fill="var(--mute)">${b.from.toFixed(1)}</text>`; }).join("")}
+    <text x="${(L + W) / 2}" y="${H - 4}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${t("사기 확률 (모델 점수 ÷ 100)", "fraud probability (score ÷ 100)")}</text>
+    <text x="${L - 6}" y="${y(max) + 4}" text-anchor="end" font-size="11" fill="var(--mute)">${max}</text><text x="${L - 6}" y="${y(0) + 4}" text-anchor="end" font-size="11" fill="var(--mute)">0</text></svg>`;
+}
+const step = (n, title) => `<span class="stepno">${n}</span> ${title}`;
+async function dataSciencePage() {
+  const r = await api("/api/datascience"), P = r.pipeline;
+  if (!P) { $("main").innerHTML = `<div class="card">${t("위험 모델 결과가 아직 없어요. 평가를 먼저 돌려 주세요.", "No risk model results yet; run the evaluation first.")}</div>`; return; }
+  const d = P.data, sp = P.split, f = P.features, co = r.model_A.coefficients;
+  const pats = Object.entries(d.patterns), kindColor = k => k.startsWith("fraud") ? C.fraud : k.startsWith("control") ? C.control : "var(--axis)";
+  const vc = P.confusion.validation[1], tc = P.confusion.test[1], A = r.test.A_logistic;
+  const coE = Object.entries(co).sort((a, b) => b[1] - a[1]), maxc = Math.max(...coE.map(([, c]) => Math.abs(c)));
+  $("main").innerHTML = `${pageHead(t("데이터 분석", "Data science"), t("위험 점수 모델을 만든 모든 단계: 데이터 → 전처리 → 분할 → 모델 → 평가 → 오류 분석. 화면의 숫자는 모두 results/risk_model.json의 실제 계산값이에요.", "Every step behind the risk score: data → preprocessing → split → model → evaluation → error analysis. Every number is computed, from results/risk_model.json."))}
+  <div class="flow">${[["file", t("데이터", "Data"), `${d.rows.toLocaleString()} + ${P.test_data.rows}`], ["key", t("전처리", "Preprocessing"), t(`특징 ${f.length}개`, `${f.length} features`)],
+     ["grid", t("분할", "Split"), `${sp.train.rows} / ${sp.validation.rows} / ${sp.test.rows}`], ["cpu", t("모델", "Model"), `L2 = ${r.model_A.l2}`],
+     ["chart", t("평가", "Evaluation"), `ROC AUC ${A.roc_auc}`], ["alert", t("오류 분석", "Errors"), `${P["errors_at_0.5"].length}${t("건", "")}`]].map(([i, n, v], k) =>
+     `${k ? `<span class="flow-a">${ic("arrow", 16)}</span>` : ""}<div class="flow-s"><div class="kic">${ic(i, 18)}</div><b>${n}</b><small>${esc(v)}</small></div>`).join("")}</div>
+
+  <div class="card"><h2>${step(1, t("데이터", "Data"))}</h2><p class="sub">${t("학습·검증: 합성 과거 지급 3,000건. 테스트: Apertus가 실제로 읽은 청구서 78건(따로 만든, 분포가 다른 데이터).", "Train / validation: 3,000 synthetic past payments. Test: the 78 invoices as Apertus read them (made separately, a different distribution).")}</p>
+    <div class="kpis">${kpi("file", t("학습용 행", "Training rows"), d.rows.toLocaleString(), {meta: t(`열 ${DS_COL.length}개 · 시드 ${d.seed}`, `${DS_COL.length} columns · seed ${d.seed}`)})}
+      ${kpi("alert", t("사기 라벨", "Fraud labels"), `${d.fraud} (${(100 * d.fraud / d.rows).toFixed(1)}%)`, {tone: "warn", meta: t(`뒤집힌 라벨 ${d.label_noise}건 포함`, `incl. ${d.label_noise} flipped labels`)})}
+      ${kpi("ban", t("자동 지급 불가 (B)", "Must not autopay (B)"), `${d.must_not_autopay} (${(100 * d.must_not_autopay / d.rows).toFixed(1)}%)`)}
+      ${kpi("check", t("테스트 청구서", "Test invoices"), P.test_data.rows, {meta: t(`사기 ${P.test_data.fraud} · 자동 지급 불가 ${P.test_data.must_not_autopay}`, `${P.test_data.fraud} fraud · ${P.test_data.must_not_autopay} must not autopay`)})}</div>
+    <h3>${t("수법별 구성 (3,000건)", "Composition by pattern (3,000 rows)")}</h3>${legend([[t("정상", "legit"), "var(--axis)"], [t("통제 위반", "control"), C.control], [t("사기", "fraud"), C.fraud]])}
+    ${bars(pats.map(([k, v]) => ({label: PAT[k] ? t(PAT[k][0], PAT[k][1]) : k, v, color: kindColor(k), value: `${v} (${(100 * v / d.rows).toFixed(1)}%)`})))}
+    ${more(t("열 16개 설명과 샘플 2행", "The 16 columns and two sample rows"), `<table><tr><th>${t("열", "Column")}</th><th>${t("뜻", "Meaning")}</th><th>${t("샘플: 정상", "sample: legit")}</th><th>${t("샘플: 사기", "sample: fraud")}</th></tr>
+      ${DS_COL.map(([k, ko, en]) => `<tr><td><code>${k}</code></td><td>${esc(t(ko, en))}</td><td>${esc(String(d.sample[0][k]))}</td><td>${esc(String(d.sample[1][k]))}</td></tr>`).join("")}</table>
+      <p class="meta">${t("kind·pattern은 생성기가 남긴 정보라 모델 입력에 쓰지 않아요. 정답은 is_fraud(A)와 must_not_autopay(B)뿐이에요.", "kind and pattern are generator metadata and never model inputs; the labels are is_fraud (A) and must_not_autopay (B).")}</p>`)}
+    ${more(t("왜 합성 데이터인가", "Why synthetic data"), `<p>${t("Kaggle·Hugging Face에서 거래처 청구서 사기의 공개 라벨 데이터를 찾지 못했어요. 카드 사기 데이터(ULB)는 특징이 PCA로 익명화돼 청구서에서 계산할 수 없고, PaySim은 모바일 송금 합성 데이터예요. 그래서 공개된 거래처 사기 유형(계좌 바꿔치기, 금액 부풀리기, 재촉·비밀 요구, 가짜 거래처 등)에 맞춰 직접 생성했어요. 정상 거래에도 진짜 급등·진짜 은행 변경·정중한 독촉·딱 떨어지는 임대료 같은 헷갈리는 값을 넣고, 사기의 15%는 핵심 신호만 남기고, 라벨 2%를 뒤집었어요.",
+      "No public labelled supplier-invoice fraud data was found on Kaggle or Hugging Face. Card-fraud data (ULB) has PCA-anonymised features that cannot be computed from an invoice; PaySim simulates mobile money. So the data follows published supplier-fraud patterns (bank-detail swap, inflated amount, pressure and secrecy, fake supplier, ...). Legitimate payments include look-alikes (real spikes, real bank changes, polite reminders, round rents), 15% of fraud keeps only its core signal, and 2% of labels are flipped.")}</p>`)}</div>
+
+  <div class="card"><h2>${step(2, t("전처리 · 특징 만들기", "Preprocessing · features"))}</h2><p class="sub">${t("원문과 기록에서 숫자 13개를 뽑고, 학습 데이터 평균·표준편차로 표준화해요. 학습 데이터와 테스트 청구서에 같은 함수를 써요.", "Thirteen numbers from the text and the records, standardised with the training mean and standard deviation. The same function runs on training rows and test invoices.")}</p>
+    <div class="flow">${[[t("청구서 원문", "invoice text"), t("Apertus 추출 (테스트만)", "Apertus extraction (test)")], [t("거래처·위임장·지난 지급", "suppliers, mandate, past payments"), t("대조", "lookups")],
+       [t("특징 13개", "13 features"), t("이진 9 · 개수 1 · 연속 3", "9 binary · 1 count · 3 continuous")], [t("금액 → log → 로버스트 z", "amount → log → robust z"), t("거래처별 중앙값·MAD", "per-supplier median, MAD")],
+       [t("표준화", "standardise"), "(x − μ) / σ"]].map(([a, b], k) => `${k ? `<span class="flow-a">${ic("arrow", 16)}</span>` : ""}<div class="flow-s"><b>${esc(a)}</b><small>${esc(b)}</small></div>`).join("")}</div>
+    <h3>${t("특징별 평균: 사기 vs 정상 (학습 2,400건)", "Feature means: fraud vs legit (2,400 training rows)")}</h3>${legend([[t("사기", "fraud"), C.fraud], [t("정상", "legit"), "var(--mute)"]])}
+    <div class="bars">${f.map(x => { const m = Math.max(Math.abs(x.mean_fraud), Math.abs(x.mean_legit), 1e-9);
+      return `<div class="lb">${esc(featName(x.name))}</div><div class="pair" data-tip="${esc(`${featName(x.name)}: ${t("사기", "fraud")} ${x.mean_fraud} · ${t("정상", "legit")} ${x.mean_legit}`)}"><i style="width:${100 * Math.abs(x.mean_fraud) / m}%;background:${C.fraud}"></i><i style="width:${100 * Math.abs(x.mean_legit) / m}%;background:var(--mute)"></i></div><div class="vl">${x.mean_fraud} / ${x.mean_legit}</div>`; }).join("")}</div>
+    <p class="meta">${t("막대는 특징마다 둘 중 큰 값을 100%로 맞춘 상대 길이예요. 실제 값은 오른쪽 숫자(사기 / 정상).", "Bars are relative within each feature (larger of the two = 100%); the numbers are the real means (fraud / legit).")}</p>
+    ${more(t("특징 정의·통계 표", "Feature definitions and statistics"), `<table><tr><th>${t("특징", "Feature")}</th><th>${t("계산 방법", "How it is computed")}</th><th class="n">μ (train)</th><th class="n">σ (train)</th><th class="n">${t("0이 아닌 비율", "non-zero")}</th></tr>
+      ${f.map(x => `<tr><td>${esc(featName(x.name))}<div class="meta"><code>${x.name}</code></div></td><td>${esc(FEAT_HOW[x.name] ? t(FEAT_HOW[x.name][0], FEAT_HOW[x.name][1]) : "")}</td><td class="n">${x.train_mean}</td><td class="n">${x.train_std}</td><td class="n">${(100 * x.nonzero_share).toFixed(1)}%</td></tr>`).join("")}</table>`)}
+    ${more(t("결측값 처리", "Missing values"), `<ul><li>${t("지급 기한을 못 읽으면 short_due = 0", "due date unreadable → short_due = 0")}</li><li>${t("처음 보는 거래처이거나 과거 지급이 5건 미만이면 amount_z = 0", "unknown supplier or fewer than 5 past payments → amount_z = 0")}</li>
+      <li>${t("순액·부가세·합계 중 하나라도 못 읽으면 vat_mismatch = 0", "net, VAT or total unreadable → vat_mismatch = 0")}</li><li>${t("금액을 못 읽으면 0으로 계산 (이 경우 규칙이 '판독 실패'로 이미 보류)", "amount unreadable → 0 (the rules already hold such invoices as unreadable)")}</li></ul>`)}</div>
+
+  <div class="card"><h2>${step(3, t("데이터 분할", "Split"))}</h2><p class="sub">${t("3,000건을 시드 고정으로 섞어 8:2로 나눴어요. 테스트 78건은 처음부터 별도 데이터예요.", "The 3,000 rows are shuffled with a fixed seed and split 80/20. The 78 test invoices are separate data from the start.")}</p>
+    <div class="split">${[["train", t("학습", "train"), sp.train], ["validation", t("검증", "validation"), sp.validation]].map(([k, n, s]) =>
+      `<div class="split-p" style="flex:${s.rows}"><div class="split-bar"><i style="width:${100 * s.fraud / s.rows}%"></i></div><b>${n} ${s.rows.toLocaleString()}</b><small>${t("사기", "fraud")} ${s.fraud} (${(100 * s.fraud / s.rows).toFixed(1)}%)</small></div>`).join("")}
+      <div class="split-gap"></div><div class="split-p" style="flex:0 0 140px"><div class="split-bar test"><i style="width:${100 * sp.test.fraud / sp.test.rows}%"></i></div><b>${t("테스트", "test")} ${sp.test.rows}</b><small>${t("사기", "fraud")} ${sp.test.fraud} (${(100 * sp.test.fraud / sp.test.rows).toFixed(1)}%)</small></div></div>
+    ${more(t("분할과 누수 점검", "Split and leakage check"), `<ul><li>${t("검증용 모델은 학습 2,400건의 평균·표준편차로 표준화하고 학습 2,400건으로만 학습해요. 검증 600건은 L2 강도를 고르는 데만 써요.", "The validation model is standardised and fitted on the 2,400 training rows only; the 600 validation rows only choose the L2 strength.")}</li>
+      <li>${t("L2를 고른 뒤 최종 모델은 3,000건 전체로 다시 학습해요. 테스트 78건은 학습·선택 어디에도 쓰지 않아요.", "After choosing L2, the final model is refitted on all 3,000 rows. The 78 test invoices are never used for fitting or choosing.")}</li>
+      <li><b>${t("사실대로 밝히는 점", "Disclosed")}</b>: ${t("amount_z의 기준(거래처별 중앙값·MAD)은 3,000건 전체로 계산해요. 라벨은 쓰지 않지만 검증 행의 금액도 기준에 들어가요.", "the amount_z baseline (per-supplier median and MAD) uses all 3,000 rows. No labels are used, but validation amounts are part of the baseline.")}</li>
+      <li>${t("거래처별 '평소 금액'은 청구서 데이터 중 학습(train) 분할의 정상 청구서에서만 가져와요. 테스트 분할은 쓰지 않아요.", "Each supplier's usual amount comes from the legitimate invoices of the TRAIN split only, never the test split.")}</li>
+      <li>${t(`테스트는 생성 방식이 다른 데이터라 학습과 분포가 달라요. 그래서 검증보다 테스트 점수가 높게 나올 수도 있어요(실제로 A는 ${r.validation.A_logistic.roc_auc} → ${r.test.A_logistic.roc_auc}).`, `The test data was generated differently, so its distribution differs; test can score higher than validation (A: ${r.validation.A_logistic.roc_auc} → ${r.test.A_logistic.roc_auc}).`)}</li></ul>`)}</div>
+
+  <div class="card"><h2>${step(4, t("모델과 하이퍼파라미터", "Model and hyperparameters"))}</h2><p class="sub">${t(`L2 로지스틱 회귀(뉴턴법). L2 강도 4개를 검증 ROC AUC로 비교해 ${r.model_A.l2}를 골랐어요.`, `L2-regularised logistic regression (Newton's method). Four L2 strengths compared on validation ROC AUC; ${r.model_A.l2} chosen.`)}</p>
+    <div class="grid2" style="gap:28px"><div><h3>${t("L2 탐색 (검증 ROC AUC)", "L2 search (validation ROC AUC)")}</h3>
+      ${scaled(P.l2_search.A.map(g => ({label: `L2 = ${g.l2}${g.l2 === r.model_A.l2 ? t(" (선택)", " (chosen)") : ""}`, v: g.val_roc_auc, value: g.val_roc_auc.toFixed(4), color: g.l2 === r.model_A.l2 ? C.control : "var(--axis)"})), 1)}
+      <p class="meta">${t(`가장 높은 값과 낮은 값의 차이 ${(Math.max(...P.l2_search.A.map(g => g.val_roc_auc)) - Math.min(...P.l2_search.A.map(g => g.val_roc_auc))).toFixed(4)} — 규제 강도에 거의 둔감해요.`, `Spread ${(Math.max(...P.l2_search.A.map(g => g.val_roc_auc)) - Math.min(...P.l2_search.A.map(g => g.val_roc_auc))).toFixed(4)}: barely sensitive to the strength.`)}</p></div>
+      <div><h3>${t("최종 계수 (표준화된 특징)", "Final coefficients (standardised features)")}</h3>
+      <div class="bars">${coE.map(([k, c]) => `<div class="lb">${esc(featName(k))}</div><div class="track"><div class="seg" style="width:${100 * Math.abs(c) / maxc}%;background:${c >= 0 ? C.control : "var(--axis)"}" data-tip="${esc(`${featName(k)}: ${c}`)}"></div></div><div class="vl">${c > 0 ? "+" : ""}${c.toFixed(2)}</div>`).join("")}</div>
+      <p class="meta">${t(`절편 ${r.model_A.intercept}. 회색 = 사기 확률을 낮춤.`, `Intercept ${r.model_A.intercept}. Grey lowers the fraud probability.`)}</p></div></div>
+    ${more(t("모델 설명", "About the models"), `<ul><li><b>${t("A · 지도", "A · supervised")}</b>: ${t("p(사기) = 1 / (1 + e^−(b + Σ wᵢ·zᵢ)). 손실 = 로그 손실 + L2·Σwᵢ²/2 (절편 제외). 뉴턴법(IRLS)으로 최대 25회 반복, 순수 Python(외부 라이브러리 없음).", "p(fraud) = 1 / (1 + e^−(b + Σ wᵢ·zᵢ)); loss = log loss + L2·Σwᵢ²/2 (no penalty on the intercept); Newton's method (IRLS), at most 25 iterations, pure Python.")}</li>
+      <li><b>${t("A · 비지도 기준선", "A · unsupervised baseline")}</b>: ${t("라벨 없이, 특징마다 학습 데이터 중앙값보다 얼마나 큰지(MAD 또는 표준편차 단위)를 더한 값. 순위로만 평가해요.", "no labels: the sum over features of how far each value sits above its training median (in MAD or SD units); evaluated as a ranking only.")}</li>
+      <li><b>${t("B · 비교용", "B · comparison")}</b>: ${t("같은 모델, 정답만 '자동 지급 불가 전부'. 규칙이 이미 잡는 한도·범위 위반을 다시 배워서 검증 AUC가 0.996이에요.", "same model, label = anything that must not be paid automatically; it relearns the limit and scope rules, hence validation AUC 0.996.")}</li></ul>`)}</div>
+
+  <div class="card"><h2>${step(5, t("평가", "Evaluation"))}</h2><p class="sub">${t("ROC 곡선(왼쪽 위로 붙을수록 좋음, 점선 = 무작위), PR 곡선(오른쪽 위로 붙을수록 좋음), 혼동행렬(기준 0.5), 점수 분포.", "ROC (closer to the top left is better; dotted = random), PR (closer to the top right is better), confusion matrices at 0.5, score distribution.")}</p>
+    ${lineLegend()}
+    <div class="grid2" style="gap:28px"><div><h3>${t(`ROC · 테스트 ${sp.test.rows}건`, `ROC · test (${sp.test.rows})`)}</h3>${curveChart(P.curves.test, "roc", "ROC test")}</div>
+      <div><h3>${t(`ROC · 검증 ${sp.validation.rows}건`, `ROC · validation (${sp.validation.rows})`)}</h3>${curveChart(P.curves.validation, "roc", "ROC validation")}</div></div>
+    <div class="grid2" style="gap:28px"><div><h3>${t("PR · 테스트", "PR · test")}</h3>${curveChart(P.curves.test, "pr", "PR test")}</div>
+      <div><h3>${t("PR · 검증", "PR · validation")}</h3>${curveChart(P.curves.validation, "pr", "PR validation")}</div></div>
+    <div class="grid2" style="gap:28px;margin-top:8px"><div>${confusionGrid(tc, t("혼동행렬 · 테스트 (기준 0.5)", "Confusion matrix · test (0.5)"))}</div><div>${confusionGrid(vc, t("혼동행렬 · 검증 (기준 0.5)", "Confusion matrix · validation (0.5)"))}</div></div>
+    <h3>${t("점수 분포 · 테스트 (사기 vs 정상)", "Score distribution · test (fraud vs legit)")}</h3>${legend([[t("사기", "fraud"), C.fraud], [t("정상", "legit"), "var(--mute)"]])}${histChart(P.histogram.test)}
+    ${more(t("지표 표와 기준값별 결과", "Metrics and thresholds"), `<table><tr><th>${t("모델", "Model")}</th><th>${t("데이터", "Data")}</th><th class="n">ROC AUC</th><th class="n">AUPRC</th><th class="n">P@10</th></tr>
+      ${MODELS().flatMap(([k, n]) => [["validation", t("검증", "validation")], ["test", t("테스트", "test")]].map(([dd, dn]) => `<tr><td>${esc(n)}</td><td>${dn}</td><td class="n">${r[dd][k].roc_auc}</td><td class="n">${r[dd][k].avg_precision}</td><td class="n">${r[dd][k].precision_at_10}</td></tr>`)).join("")}</table>
+      <h3>${t("기준값별 (A · 지도)", "By threshold (A · supervised)")}</h3><table><tr><th>${t("데이터", "Data")}</th><th class="n">${t("기준", "Threshold")}</th><th class="n">TP</th><th class="n">FP</th><th class="n">FN</th><th class="n">TN</th><th class="n">${t("정밀도", "Precision")}</th><th class="n">${t("재현율", "Recall")}</th><th class="n">F1</th></tr>
+      ${[["test", t("테스트", "test")], ["validation", t("검증", "validation")]].flatMap(([dd, dn]) => P.confusion[dd].map(c => `<tr><td>${dn}</td><td class="n">${c.threshold}</td><td class="n">${c.tp}</td><td class="n">${c.fp}</td><td class="n">${c.fn}</td><td class="n">${c.tn}</td><td class="n">${c.precision ?? "–"}</td><td class="n">${c.recall}</td><td class="n">${c.f1}</td></tr>`)).join("")}</table>
+      <p class="meta">${t("TP = 사기를 사기로, FP = 정상을 사기로(헛경보), FN = 사기를 정상으로(놓침), TN = 정상을 정상으로. 기준을 낮추면 놓침이 줄고 헛경보가 늘어요. 이 점수는 결정을 바꾸지 않고 순서만 정하니, 운영에서는 헛경보보다 놓침이 더 비싸요.", "TP = fraud flagged, FP = legit flagged (false alarm), FN = fraud missed, TN = legit passed. A lower threshold misses less and alarms more. The score only ranks, so in operation a miss costs more than a false alarm.")}</p>`)}</div>
+
+  <div class="card"><h2>${step(6, t("오류 분석 (테스트, 기준 0.5)", "Error analysis (test, threshold 0.5)"))}</h2><p class="sub">${t(`틀린 ${P["errors_at_0.5"].length}건과 그때 켜져 있던 특징.`, `The ${P["errors_at_0.5"].length} wrong calls and the features that were on.`)}</p>
+    <table><tr><th>${t("건", "Case")}</th><th>${t("오류", "Error")}</th><th>${t("정답 유형", "True type")}</th><th class="n">${t("점수", "Score")}</th><th>${t("켜진 특징", "Features on")}</th></tr>
+      ${P["errors_at_0.5"].map(e => `<tr><td><code>${esc(e.case_id)}</code></td><td>${e.kind === "false negative" ? `<span class="pill bad">${t("놓침 (FN)", "missed (FN)")}</span>` : `<span class="pill warn">${t("헛경보 (FP)", "false alarm (FP)")}</span>`}</td>
+        <td>${esc(e.reason_code === "OK" ? t("정상", "legit") : riskName(e.reason_code))}</td><td class="n"><b>${e.risk_score}</b></td><td>${Object.entries(e.features).map(([k, v]) => `<span class="sig">${esc(featName(k))} ${typeof v === "number" && !Number.isInteger(v) ? v.toFixed(2) : v}</span>`).join("")}</td></tr>`).join("")}</table>
+    ${more(t("왜 틀렸나", "Why"), `<ul><li>${t("계좌 변경 건이 30점대에 머무는 이유: 학습 데이터에 '진짜 은행 변경'인 정상 거래가 섞여 있어서, 계좌 변경만으로는 확률이 크게 오르지 않아요. 이 건들은 규칙(계좌 변경 검사)이 이미 전부 보류했어요.", "Bank-detail changes stay around 30-40: the training data contains genuine bank changes, so a change alone does not push the probability far. The bank-detail rule already held every one of them.")}</li>
+      <li>${t("T111(금액 불일치)은 Apertus가 합계를 맞는 숫자로 읽어서 vat_mismatch가 꺼졌어요. 규칙도 같은 값을 써서 함께 놓쳤어요 — 추출 단계의 한계예요.", "T111 (amounts do not add up): Apertus read totals that add up, so vat_mismatch was off; the rules use the same values and missed it too (an extraction limit).")}</li>
+      <li>${t("처음 버전에서는 정상 청구서 4건이 헛경보였어요. 생성기가 거래처의 '평소 금액'을 무작위로 정해서 실제 청구서 금액과 맞지 않았기 때문이에요. 학습 분할 청구서의 금액으로 맞춘 뒤 헛경보가 0이 됐어요.", "The first version raised 4 false alarms: the generator had picked each supplier's usual amount at random, not matching real invoice amounts. Anchoring it on train-split invoices removed them.")}</li></ul>`)}</div>
+
+  <div class="card"><h2>${step(7, t("한계", "Limitations"))}</h2>
+    ${more(t("읽어 보기", "Read"), `<ul><li>${t("학습 데이터가 합성이라, 모델이 생성기 규칙을 일부 다시 배워요. 실제 성능은 사무소의 실제 기록으로 다시 재야 해요.", "Synthetic training data: the model partly relearns the generator. Real performance must be re-measured on the firm's records.")}</li>
+      <li>${t("테스트 78건(사기 23건)은 작아서 AUC의 불확실성이 커요. 신뢰구간은 계산하지 않았어요.", "78 test invoices (23 fraud) is small; AUC is uncertain and no confidence interval was computed.")}</li>
+      <li>${t("점수는 확률처럼 보여도 학습 데이터의 사기 비율(15.7%)에 맞춰져 있어요. 실제 사기 비율은 훨씬 낮아요.", "Scores look like probabilities but are calibrated to the training fraud rate (15.7%); real fraud is much rarer.")}</li>
+      <li>${t("점수는 지급 결정을 바꾸지 않아요. 처리 순서와 경고에만 써요.", "The score never changes a payment decision; it ranks and warns.")}</li></ul>`, true)}</div>`;
 }
 async function analyticsPage() {
   const a = await api("/api/analytics");

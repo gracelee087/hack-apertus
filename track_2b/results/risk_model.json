@@ -19,22 +19,22 @@
   ],
   "model_A": {
     "target": "fraud",
-    "l2": 0.01,
-    "intercept": -2.5446,
+    "l2": 10.0,
+    "intercept": -2.5322,
     "coefficients": {
-      "amount_z": 1.0136,
-      "iban_changed": 0.9284,
-      "iban_invalid": 1.4456,
-      "new_vendor": 0.7722,
-      "round_amount": 0.2306,
-      "vat_mismatch": 0.6763,
-      "wrong_addressee": 1.4025,
-      "urgency_terms": 1.4394,
-      "short_due": 0.1431,
-      "duplicate": 0.6743,
-      "over_single_limit": -0.5893,
-      "out_of_scope": -0.4435,
-      "month_load": -0.0422
+      "amount_z": 0.8234,
+      "iban_changed": 0.8559,
+      "iban_invalid": 0.7618,
+      "new_vendor": 0.6914,
+      "round_amount": 0.2072,
+      "vat_mismatch": 0.6172,
+      "wrong_addressee": 0.7422,
+      "urgency_terms": 1.238,
+      "short_due": 0.1407,
+      "duplicate": 0.5833,
+      "over_single_limit": -0.2666,
+      "out_of_scope": -0.3845,
+      "month_load": -0.0314
     }
   },
   "model_B": {
@@ -45,905 +45,4275 @@
     "A_logistic": {
       "n": 600,
       "positives": 111,
-      "roc_auc": 0.9117,
-      "avg_precision": 0.8617,
+      "roc_auc": 0.9082,
+      "avg_precision": 0.8572,
       "precision_at_10": 1.0,
-      "recall_at_0.5": 0.6937,
-      "precision_at_0.5": 0.9059
+      "recall_at_0.5": 0.6757,
+      "precision_at_0.5": 0.8824
     },
     "A_unsupervised": {
       "n": 600,
       "positives": 111,
-      "roc_auc": 0.8551,
-      "avg_precision": 0.5492,
-      "precision_at_10": 0.4
+      "roc_auc": 0.8599,
+      "avg_precision": 0.5753,
+      "precision_at_10": 0.6
     },
     "B_logistic": {
       "n": 600,
       "positives": 158,
-      "roc_auc": 0.9961,
-      "avg_precision": 0.99,
+      "roc_auc": 0.996,
+      "avg_precision": 0.9898,
       "precision_at_10": 1.0,
-      "recall_at_0.5": 0.8861,
-      "precision_at_0.5": 0.979
+      "recall_at_0.5": 0.8924,
+      "precision_at_0.5": 0.9724
     }
   },
   "test": {
     "A_logistic": {
       "n": 78,
       "positives": 23,
-      "roc_auc": 0.9542,
-      "avg_precision": 0.9483,
+      "roc_auc": 0.97,
+      "avg_precision": 0.9729,
       "precision_at_10": 1.0,
-      "recall_at_0.5": 0.913,
-      "precision_at_0.5": 0.84
+      "recall_at_0.5": 0.8261,
+      "precision_at_0.5": 1.0
     },
     "A_unsupervised": {
       "n": 78,
       "positives": 23,
-      "roc_auc": 0.8324,
-      "avg_precision": 0.6759,
-      "precision_at_10": 0.6
+      "roc_auc": 0.8775,
+      "avg_precision": 0.7703,
+      "precision_at_10": 0.9
     },
     "B_logistic": {
       "n": 78,
       "positives": 45,
-      "roc_auc": 0.9266,
-      "avg_precision": 0.9581,
+      "roc_auc": 0.9616,
+      "avg_precision": 0.9799,
       "precision_at_10": 1.0,
       "recall_at_0.5": 0.8222,
-      "precision_at_0.5": 0.9024
+      "precision_at_0.5": 1.0
     }
   },
   "beyond_rules": {
     "invoices_rules_let_through": 43,
     "fraud_among_them": 10,
-    "roc_auc": 0.9303,
+    "roc_auc": 0.9515,
     "missed_by_production": [
       {
         "case_id": "T110",
         "reason_code": "E_PRESSURE",
-        "risk_score": 100.0,
-        "rank_among_passed": 3
+        "risk_score": 99.9,
+        "rank_among_passed": 2
       },
       {
         "case_id": "T111",
         "reason_code": "E_VAT_MISMATCH",
-        "risk_score": 0.9,
-        "rank_among_passed": 33
+        "risk_score": 1.2,
+        "rank_among_passed": 26
       }
     ]
   },
   "scores": {
     "T002": {
-      "risk_score": 0.1,
-      "expected_loss_chf": 1.53,
+      "risk_score": 0.2,
+      "expected_loss_chf": 2.75,
       "is_fraud": 0,
       "top_factors": []
     },
     "T003": {
-      "risk_score": 0.7,
-      "expected_loss_chf": 4.71,
+      "risk_score": 1.1,
+      "expected_loss_chf": 7.35,
       "is_fraud": 0,
       "top_factors": []
     },
     "T005": {
-      "risk_score": 1.9,
-      "expected_loss_chf": 21.99,
-      "is_fraud": 0,
-      "top_factors": []
-    },
-    "T007": {
-      "risk_score": 41.9,
-      "expected_loss_chf": 1199.74,
+      "risk_score": 3.5,
+      "expected_loss_chf": 40.89,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          3.337
+          0.192
+        ]
+      ]
+    },
+    "T007": {
+      "risk_score": 5.1,
+      "expected_loss_chf": 146.37,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.584
         ]
       ]
     },
     "T008": {
-      "risk_score": 38.4,
-      "expected_loss_chf": 1013.11,
+      "risk_score": 4.5,
+      "expected_loss_chf": 119.43,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          3.178
+          0.447
         ]
       ]
     },
     "T009": {
-      "risk_score": 9.5,
-      "expected_loss_chf": 104.02,
+      "risk_score": 1.0,
+      "expected_loss_chf": 11.06,
       "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          1.416
-        ]
-      ]
+      "top_factors": []
     },
     "T010": {
-      "risk_score": 93.2,
-      "expected_loss_chf": 2609.21,
+      "risk_score": 3.3,
+      "expected_loss_chf": 91.79,
       "is_fraud": 0,
       "top_factors": [
         [
-          "amount_z",
-          5.625
-        ],
-        [
           "round_amount",
-          0.552
+          0.491
         ]
       ]
     },
     "T011": {
-      "risk_score": 69.3,
-      "expected_loss_chf": 2320.87,
+      "risk_score": 2.7,
+      "expected_loss_chf": 90.3,
       "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          4.476
-        ]
-      ]
+      "top_factors": []
     },
     "T012": {
-      "risk_score": 0.1,
-      "expected_loss_chf": 1.21,
+      "risk_score": 0.2,
+      "expected_loss_chf": 2.18,
       "is_fraud": 0,
       "top_factors": []
     },
     "T013": {
-      "risk_score": 0.1,
-      "expected_loss_chf": 1.36,
+      "risk_score": 0.2,
+      "expected_loss_chf": 2.43,
       "is_fraud": 0,
       "top_factors": []
     },
     "T014": {
-      "risk_score": 75.6,
-      "expected_loss_chf": 1270.84,
+      "risk_score": 0.8,
+      "expected_loss_chf": 12.72,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T015": {
+      "risk_score": 4.5,
+      "expected_loss_chf": 59.93,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          4.803
+          0.437
         ]
       ]
     },
-    "T015": {
-      "risk_score": 2.5,
-      "expected_loss_chf": 33.77,
-      "is_fraud": 0,
-      "top_factors": []
-    },
     "T016": {
-      "risk_score": 1.6,
-      "expected_loss_chf": 16.45,
+      "risk_score": 2.0,
+      "expected_loss_chf": 20.74,
       "is_fraud": 0,
       "top_factors": []
     },
     "T020": {
-      "risk_score": 4.1,
-      "expected_loss_chf": 67.4,
+      "risk_score": 4.5,
+      "expected_loss_chf": 74.01,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          0.504
+          0.448
         ]
       ]
     },
     "T021": {
-      "risk_score": 1.8,
-      "expected_loss_chf": 87.55,
+      "risk_score": 6.5,
+      "expected_loss_chf": 321.79,
       "is_fraud": 0,
-      "top_factors": []
+      "top_factors": [
+        [
+          "amount_z",
+          0.824
+        ]
+      ]
     },
     "T022": {
-      "risk_score": 0.1,
-      "expected_loss_chf": 0.51,
+      "risk_score": 0.2,
+      "expected_loss_chf": 0.92,
       "is_fraud": 0,
       "top_factors": []
     },
     "T023": {
-      "risk_score": 7.9,
-      "expected_loss_chf": 77.1,
+      "risk_score": 0.9,
+      "expected_loss_chf": 8.26,
       "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          1.184
-        ]
-      ]
+      "top_factors": []
     },
     "T025": {
-      "risk_score": 0.2,
-      "expected_loss_chf": 2.39,
+      "risk_score": 0.8,
+      "expected_loss_chf": 11.47,
       "is_fraud": 0,
       "top_factors": []
     },
     "T026": {
-      "risk_score": 2.0,
-      "expected_loss_chf": 34.42,
+      "risk_score": 10.4,
+      "expected_loss_chf": 181.28,
       "is_fraud": 0,
-      "top_factors": []
+      "top_factors": [
+        [
+          "amount_z",
+          1.35
+        ]
+      ]
     },
     "T027": {
-      "risk_score": 11.2,
-      "expected_loss_chf": 108.73,
+      "risk_score": 0.2,
+      "expected_loss_chf": 2.22,
       "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          1.562
-        ]
-      ]
+      "top_factors": []
     },
     "T028": {
-      "risk_score": 2.3,
-      "expected_loss_chf": 10.99,
-      "is_fraud": 0,
-      "top_factors": []
-    },
-    "T030": {
-      "risk_score": 3.3,
-      "expected_loss_chf": 18.57,
-      "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          0.271
-        ]
-      ]
-    },
-    "T031": {
-      "risk_score": 87.6,
-      "expected_loss_chf": 2724.18,
-      "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          5.625
-        ]
-      ]
-    },
-    "T034": {
-      "risk_score": 0.1,
-      "expected_loss_chf": 1.05,
-      "is_fraud": 0,
-      "top_factors": []
-    },
-    "T035": {
-      "risk_score": 35.9,
-      "expected_loss_chf": 664.0,
-      "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          3.08
-        ]
-      ]
-    },
-    "T036": {
-      "risk_score": 21.5,
-      "expected_loss_chf": 1001.07,
-      "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          2.36
-        ]
-      ]
-    },
-    "T037": {
       "risk_score": 0.2,
       "expected_loss_chf": 1.03,
       "is_fraud": 0,
       "top_factors": []
     },
-    "T038": {
-      "risk_score": 3.0,
-      "expected_loss_chf": 44.18,
+    "T030": {
+      "risk_score": 0.2,
+      "expected_loss_chf": 1.22,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T031": {
+      "risk_score": 2.2,
+      "expected_loss_chf": 68.95,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T034": {
+      "risk_score": 0.2,
+      "expected_loss_chf": 1.88,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T035": {
+      "risk_score": 0.8,
+      "expected_loss_chf": 15.27,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T036": {
+      "risk_score": 3.9,
+      "expected_loss_chf": 183.6,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          0.178
+          0.306
+        ]
+      ]
+    },
+    "T037": {
+      "risk_score": 0.6,
+      "expected_loss_chf": 2.58,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T038": {
+      "risk_score": 5.2,
+      "expected_loss_chf": 76.13,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.592
         ]
       ]
     },
     "T041": {
-      "risk_score": 12.1,
-      "expected_loss_chf": 565.09,
+      "risk_score": 6.4,
+      "expected_loss_chf": 298.48,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          1.688
+          0.826
         ]
       ]
     },
     "T046": {
-      "risk_score": 0.3,
-      "expected_loss_chf": 6.14,
+      "risk_score": 0.5,
+      "expected_loss_chf": 9.68,
       "is_fraud": 0,
       "top_factors": []
     },
     "T047": {
-      "risk_score": 3.4,
-      "expected_loss_chf": 62.58,
+      "risk_score": 1.4,
+      "expected_loss_chf": 25.49,
       "is_fraud": 0,
-      "top_factors": [
-        [
-          "amount_z",
-          0.298
-        ]
-      ]
+      "top_factors": []
     },
     "T048": {
-      "risk_score": 0.9,
-      "expected_loss_chf": 2.56,
+      "risk_score": 1.2,
+      "expected_loss_chf": 3.51,
       "is_fraud": 0,
       "top_factors": []
     },
     "T049": {
-      "risk_score": 0.9,
-      "expected_loss_chf": 2.28,
+      "risk_score": 1.2,
+      "expected_loss_chf": 3.09,
       "is_fraud": 0,
       "top_factors": []
     },
     "T051": {
-      "risk_score": 1.6,
-      "expected_loss_chf": 56.06,
+      "risk_score": 2.1,
+      "expected_loss_chf": 71.4,
       "is_fraud": 0,
       "top_factors": [
         [
           "round_amount",
-          0.552
+          0.491
         ]
       ]
     },
     "T053": {
-      "risk_score": 2.0,
-      "expected_loss_chf": 19.52,
+      "risk_score": 2.4,
+      "expected_loss_chf": 23.73,
       "is_fraud": 0,
       "top_factors": []
     },
     "T054": {
-      "risk_score": 10.7,
-      "expected_loss_chf": 249.58,
+      "risk_score": 10.3,
+      "expected_loss_chf": 240.52,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          1.535
+          1.338
         ]
       ]
     },
     "T055": {
-      "risk_score": 17.7,
-      "expected_loss_chf": 547.17,
+      "risk_score": 16.0,
+      "expected_loss_chf": 495.32,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          2.126
+          1.847
         ]
       ]
     },
     "T058": {
-      "risk_score": 2.7,
-      "expected_loss_chf": 76.17,
+      "risk_score": 3.4,
+      "expected_loss_chf": 96.61,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T059": {
-      "risk_score": 2.6,
-      "expected_loss_chf": 208.43,
+      "risk_score": 3.3,
+      "expected_loss_chf": 265.28,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T061": {
-      "risk_score": 2.6,
-      "expected_loss_chf": 68.14,
+      "risk_score": 3.3,
+      "expected_loss_chf": 86.79,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T063": {
-      "risk_score": 2.6,
-      "expected_loss_chf": 207.78,
+      "risk_score": 3.3,
+      "expected_loss_chf": 265.92,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T064": {
-      "risk_score": 2.5,
-      "expected_loss_chf": 87.29,
+      "risk_score": 3.3,
+      "expected_loss_chf": 111.99,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T065": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 1739.56,
+      "risk_score": 88.1,
+      "expected_loss_chf": 1533.5,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_invalid",
-          14.148
+          7.455
         ]
       ]
     },
     "T066": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 4219.99,
+      "risk_score": 99.1,
+      "expected_loss_chf": 4183.46,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_invalid",
-          14.148
+          7.455
         ],
         [
           "amount_z",
-          2.002
+          0.697
         ]
       ]
     },
     "T067": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 1249.95,
+      "risk_score": 93.1,
+      "expected_loss_chf": 1163.21,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_invalid",
-          14.148
+          7.455
         ]
       ]
     },
     "T068": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 3999.85,
+      "risk_score": 97.5,
+      "expected_loss_chf": 3900.7,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_invalid",
-          14.148
+          7.455
         ],
         [
           "round_amount",
-          0.552
+          0.491
         ]
       ]
     },
     "T071": {
-      "risk_score": 97.0,
-      "expected_loss_chf": 1192.63,
+      "risk_score": 71.7,
+      "expected_loss_chf": 881.59,
       "is_fraud": 1,
       "top_factors": [
         [
           "duplicate",
-          7.509
+          6.495
         ]
       ]
     },
     "T073": {
-      "risk_score": 99.4,
-      "expected_loss_chf": 1690.14,
+      "risk_score": 98.4,
+      "expected_loss_chf": 1673.44,
       "is_fraud": 1,
       "top_factors": [
         [
           "duplicate",
-          7.509
+          6.495
         ],
         [
           "amount_z",
-          0.598
+          0.529
         ],
         [
           "round_amount",
-          0.552
+          0.491
         ]
       ]
     },
     "T074": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 589.89,
+      "risk_score": 99.9,
+      "expected_loss_chf": 589.12,
       "is_fraud": 1,
       "top_factors": [
         [
           "duplicate",
-          7.509
+          6.495
         ],
         [
           "vat_mismatch",
-          6.619
+          6.04
         ]
       ]
     },
     "T076": {
-      "risk_score": 97.5,
-      "expected_loss_chf": 1735.52,
+      "risk_score": 98.8,
+      "expected_loss_chf": 1758.36,
       "is_fraud": 1,
       "top_factors": [
         [
           "duplicate",
-          7.509
+          6.495
+        ],
+        [
+          "amount_z",
+          1.381
         ]
       ]
     },
     "T077": {
-      "risk_score": 2.8,
-      "expected_loss_chf": 577.44,
+      "risk_score": 23.4,
+      "expected_loss_chf": 4849.4,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          2.429
+          3.367
         ]
       ]
     },
     "T078": {
-      "risk_score": 41.6,
-      "expected_loss_chf": 5461.98,
+      "risk_score": 9.4,
+      "expected_loss_chf": 1234.38,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          5.625
+          2.273
         ]
       ]
     },
     "T080": {
-      "risk_score": 14.9,
-      "expected_loss_chf": 1698.2,
+      "risk_score": 6.8,
+      "expected_loss_chf": 771.95,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          4.251
+          1.938
         ]
       ]
     },
     "T081": {
-      "risk_score": 41.2,
-      "expected_loss_chf": 6409.55,
+      "risk_score": 12.2,
+      "expected_loss_chf": 1890.33,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          5.625
+          2.573
         ]
       ]
     },
     "T082": {
-      "risk_score": 24.7,
-      "expected_loss_chf": 1485.59,
+      "risk_score": 6.6,
+      "expected_loss_chf": 396.06,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          4.819
+          1.864
         ]
       ]
     },
     "T086": {
-      "risk_score": 9.3,
-      "expected_loss_chf": 307.37,
+      "risk_score": 3.5,
+      "expected_loss_chf": 114.84,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          1.512
+          0.275
         ]
       ]
     },
     "T087": {
-      "risk_score": 0.6,
-      "expected_loss_chf": 6.71,
-      "is_fraud": 0,
-      "top_factors": []
-    },
-    "T088": {
-      "risk_score": 17.9,
-      "expected_loss_chf": 859.71,
+      "risk_score": 4.0,
+      "expected_loss_chf": 42.57,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          2.268
+          0.44
+        ]
+      ]
+    },
+    "T088": {
+      "risk_score": 6.4,
+      "expected_loss_chf": 310.0,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.928
         ]
       ]
     },
     "T090": {
-      "risk_score": 27.4,
-      "expected_loss_chf": 722.8,
+      "risk_score": 23.9,
+      "expected_loss_chf": 631.36,
       "is_fraud": 0,
       "top_factors": [
         [
           "amount_z",
-          2.826
+          2.452
         ]
       ]
     },
     "T091": {
-      "risk_score": 99.5,
-      "expected_loss_chf": 2766.19,
+      "risk_score": 98.8,
+      "expected_loss_chf": 2748.0,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_changed",
-          3.455
+          3.186
         ],
         [
           "amount_z",
-          2.911
+          2.525
         ],
         [
           "urgency_terms",
-          1.967
+          1.692
         ]
       ]
     },
     "T093": {
-      "risk_score": 71.1,
-      "expected_loss_chf": 2267.54,
+      "risk_score": 38.6,
+      "expected_loss_chf": 1231.38,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_changed",
-          3.455
-        ],
-        [
-          "amount_z",
-          0.855
+          3.186
         ]
       ]
     },
     "T094": {
-      "risk_score": 91.5,
-      "expected_loss_chf": 1776.04,
+      "risk_score": 87.4,
+      "expected_loss_chf": 1696.47,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_changed",
-          3.455
+          3.186
         ],
         [
           "amount_z",
-          2.319
+          2.014
         ]
       ]
     },
     "T096": {
-      "risk_score": 36.1,
-      "expected_loss_chf": 357.55,
+      "risk_score": 35.3,
+      "expected_loss_chf": 349.73,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_changed",
-          3.455
+          3.186
         ]
       ]
     },
     "T098": {
-      "risk_score": 87.6,
-      "expected_loss_chf": 1208.73,
+      "risk_score": 32.3,
+      "expected_loss_chf": 446.36,
       "is_fraud": 1,
       "top_factors": [
         [
           "iban_changed",
-          3.455
-        ],
-        [
-          "amount_z",
-          1.886
+          3.186
         ]
       ]
     },
     "T099": {
-      "risk_score": 29.8,
-      "expected_loss_chf": 196.39,
+      "risk_score": 27.3,
+      "expected_loss_chf": 180.41,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T101": {
-      "risk_score": 29.5,
-      "expected_loss_chf": 1199.31,
+      "risk_score": 27.1,
+      "expected_loss_chf": 1104.13,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T102": {
-      "risk_score": 29.8,
-      "expected_loss_chf": 911.29,
+      "risk_score": 27.4,
+      "expected_loss_chf": 836.99,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T103": {
-      "risk_score": 28.8,
-      "expected_loss_chf": 1326.41,
+      "risk_score": 26.6,
+      "expected_loss_chf": 1227.71,
       "is_fraud": 0,
       "top_factors": [
         [
           "new_vendor",
-          2.752
+          2.464
         ]
       ]
     },
     "T105": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 4379.7,
+      "risk_score": 99.9,
+      "expected_loss_chf": 4376.92,
       "is_fraud": 1,
       "top_factors": [
         [
           "urgency_terms",
-          11.297
+          9.717
         ],
         [
           "amount_z",
-          1.566
+          0.725
         ]
       ]
     },
     "T106": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 2839.56,
+      "risk_score": 99.9,
+      "expected_loss_chf": 2836.13,
       "is_fraud": 1,
       "top_factors": [
         [
           "urgency_terms",
-          11.297
+          9.717
         ],
         [
           "amount_z",
-          0.77
+          0.062
         ]
       ]
     },
     "T107": {
-      "risk_score": 93.2,
-      "expected_loss_chf": 494.19,
+      "risk_score": 87.0,
+      "expected_loss_chf": 461.24,
       "is_fraud": 1,
       "top_factors": [
         [
           "urgency_terms",
-          8.965
+          7.711
         ]
       ]
     },
     "T110": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 4649.68,
+      "risk_score": 99.9,
+      "expected_loss_chf": 4644.69,
       "is_fraud": 1,
       "top_factors": [
         [
           "urgency_terms",
-          11.297
+          9.717
         ],
         [
           "amount_z",
-          1.581
+          0.25
         ]
       ]
     },
     "T111": {
-      "risk_score": 0.9,
-      "expected_loss_chf": 36.29,
+      "risk_score": 1.2,
+      "expected_loss_chf": 49.37,
       "is_fraud": 1,
       "top_factors": []
     },
     "T112": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 2607.07,
+      "risk_score": 88.2,
+      "expected_loss_chf": 2298.95,
       "is_fraud": 1,
       "top_factors": [
         [
           "vat_mismatch",
-          6.619
-        ],
-        [
-          "amount_z",
-          5.625
+          6.04
         ]
       ]
     },
     "T114": {
-      "risk_score": 99.5,
-      "expected_loss_chf": 6441.35,
+      "risk_score": 96.8,
+      "expected_loss_chf": 6266.15,
       "is_fraud": 1,
       "top_factors": [
         [
           "vat_mismatch",
-          6.619
+          6.04
         ],
         [
           "amount_z",
-          2.219
+          0.8
         ]
       ]
     },
     "T115": {
-      "risk_score": 94.9,
-      "expected_loss_chf": 1801.99,
+      "risk_score": 98.3,
+      "expected_loss_chf": 1866.58,
       "is_fraud": 1,
       "top_factors": [
         [
           "vat_mismatch",
-          6.619
+          6.04
+        ],
+        [
+          "amount_z",
+          1.497
         ]
       ]
     },
     "T117": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 4009.98,
+      "risk_score": 99.1,
+      "expected_loss_chf": 3972.9,
       "is_fraud": 1,
       "top_factors": [
         [
           "wrong_addressee",
-          14.195
+          7.512
         ],
         [
           "amount_z",
-          1.404
+          0.59
         ]
       ]
     },
     "T118": {
-      "risk_score": 100.0,
-      "expected_loss_chf": 2490.0,
+      "risk_score": 98.8,
+      "expected_loss_chf": 2460.96,
       "is_fraud": 1,
       "top_factors": [
         [
           "wrong_addressee",
-          14.195
+          7.512
         ],
         [
           "amount_z",
-          3.061
+          0.346
         ]
       ]
     }
+  },
+  "pipeline": {
+    "data": {
+      "rows": 3000,
+      "seed": 7,
+      "patterns": {
+        "legit:normal": 2244,
+        "fraud:iban_swap": 130,
+        "control:month": 91,
+        "control:new_vendor": 81,
+        "control:scope": 80,
+        "control:limit": 76,
+        "fraud:pressure": 71,
+        "fraud:fake_vendor": 58,
+        "fraud:inflated": 54,
+        "fraud:vat_mismatch": 31,
+        "fraud:invalid_iban": 31,
+        "fraud:wrong_addressee": 29,
+        "fraud:duplicate": 24
+      },
+      "fraud": 472,
+      "must_not_autopay": 812,
+      "label_noise": 62,
+      "sample": [
+        {
+          "row_id": "H0000",
+          "client_id": "C04",
+          "vendor": "Rahmenbau Aare AG",
+          "iban": "CH5069958875863486907",
+          "category": "materials",
+          "urgency_terms": 0,
+          "days_to_due": 30,
+          "addressee_ok": true,
+          "duplicate": false,
+          "vat_ok": true,
+          "month_spent": 7843.6,
+          "kind": "legit",
+          "pattern": null,
+          "total_chf": 867.65,
+          "is_fraud": 0,
+          "must_not_autopay": 0
+        },
+        {
+          "row_id": "H0012",
+          "client_id": "C03",
+          "vendor": "Logiciels Romands Sàrl",
+          "iban": "CH2952538885393363387",
+          "category": "software",
+          "urgency_terms": 0,
+          "days_to_due": 2,
+          "addressee_ok": true,
+          "duplicate": false,
+          "vat_ok": true,
+          "month_spent": 12183.44,
+          "kind": "fraud",
+          "pattern": "iban_swap",
+          "total_chf": 4249.45,
+          "is_fraud": 1,
+          "must_not_autopay": 1
+        }
+      ]
+    },
+    "test_data": {
+      "rows": 78,
+      "fraud": 23,
+      "must_not_autopay": 45,
+      "by_reason": {
+        "OK": 33,
+        "R_SCOPE": 5,
+        "E_LIMIT_SINGLE": 5,
+        "E_IBAN_CHANGED": 5,
+        "R_REVOKED": 4,
+        "R_IBAN_INVALID": 4,
+        "R_DUPLICATE": 4,
+        "E_LIMIT_MONTH": 4,
+        "E_NEW_VENDOR": 4,
+        "E_PRESSURE": 4,
+        "E_VAT_MISMATCH": 4,
+        "E_WRONG_ADDRESSEE": 2
+      }
+    },
+    "split": {
+      "train": {
+        "rows": 2400,
+        "fraud": 361
+      },
+      "validation": {
+        "rows": 600,
+        "fraud": 111
+      },
+      "test": {
+        "rows": 78,
+        "fraud": 23
+      }
+    },
+    "features": [
+      {
+        "name": "amount_z",
+        "train_mean": 0.2808,
+        "train_std": 1.6528,
+        "mean_fraud": 0.825,
+        "mean_legit": 0.1844,
+        "nonzero_share": 0.9179
+      },
+      {
+        "name": "iban_changed",
+        "train_mean": 0.0638,
+        "train_std": 0.2443,
+        "mean_fraud": 0.2909,
+        "mean_legit": 0.0235,
+        "nonzero_share": 0.0638
+      },
+      {
+        "name": "iban_invalid",
+        "train_mean": 0.01,
+        "train_std": 0.0995,
+        "mean_fraud": 0.0665,
+        "mean_legit": 0.0,
+        "nonzero_share": 0.01
+      },
+      {
+        "name": "new_vendor",
+        "train_mean": 0.0767,
+        "train_std": 0.2661,
+        "mean_fraud": 0.1385,
+        "mean_legit": 0.0657,
+        "nonzero_share": 0.0767
+      },
+      {
+        "name": "round_amount",
+        "train_mean": 0.1487,
+        "train_std": 0.3558,
+        "mean_fraud": 0.1247,
+        "mean_legit": 0.153,
+        "nonzero_share": 0.1487
+      },
+      {
+        "name": "vat_mismatch",
+        "train_mean": 0.0083,
+        "train_std": 0.0909,
+        "mean_fraud": 0.0499,
+        "mean_legit": 0.001,
+        "nonzero_share": 0.0083
+      },
+      {
+        "name": "wrong_addressee",
+        "train_mean": 0.0088,
+        "train_std": 0.0931,
+        "mean_fraud": 0.0582,
+        "mean_legit": 0.0,
+        "nonzero_share": 0.0088
+      },
+      {
+        "name": "urgency_terms",
+        "train_mean": 0.155,
+        "train_std": 0.6138,
+        "mean_fraud": 0.8089,
+        "mean_legit": 0.0392,
+        "nonzero_share": 0.0883
+      },
+      {
+        "name": "short_due",
+        "train_mean": 0.125,
+        "train_std": 0.3307,
+        "mean_fraud": 0.2742,
+        "mean_legit": 0.0986,
+        "nonzero_share": 0.125
+      },
+      {
+        "name": "duplicate",
+        "train_mean": 0.0083,
+        "train_std": 0.0909,
+        "mean_fraud": 0.0526,
+        "mean_legit": 0.0005,
+        "nonzero_share": 0.0083
+      },
+      {
+        "name": "over_single_limit",
+        "train_mean": 0.0792,
+        "train_std": 0.27,
+        "mean_fraud": 0.1136,
+        "mean_legit": 0.0731,
+        "nonzero_share": 0.0792
+      },
+      {
+        "name": "out_of_scope",
+        "train_mean": 0.0296,
+        "train_std": 0.1694,
+        "mean_fraud": 0.0055,
+        "mean_legit": 0.0338,
+        "nonzero_share": 0.0296
+      },
+      {
+        "name": "month_load",
+        "train_mean": 0.4879,
+        "train_std": 0.2572,
+        "mean_fraud": 0.4924,
+        "mean_legit": 0.4871,
+        "nonzero_share": 1.0
+      }
+    ],
+    "l2_search": {
+      "A": [
+        {
+          "l2": 0.01,
+          "val_roc_auc": 0.9074
+        },
+        {
+          "l2": 0.1,
+          "val_roc_auc": 0.9074
+        },
+        {
+          "l2": 1.0,
+          "val_roc_auc": 0.9075
+        },
+        {
+          "l2": 10.0,
+          "val_roc_auc": 0.9082
+        }
+      ],
+      "B": [
+        {
+          "l2": 0.01,
+          "val_roc_auc": 0.9947
+        },
+        {
+          "l2": 0.1,
+          "val_roc_auc": 0.9947
+        },
+        {
+          "l2": 1.0,
+          "val_roc_auc": 0.9949
+        },
+        {
+          "l2": 10.0,
+          "val_roc_auc": 0.996
+        }
+      ]
+    },
+    "curves": {
+      "validation": {
+        "A_logistic": {
+          "roc": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0901
+            ],
+            [
+              0.0,
+              0.1802
+            ],
+            [
+              0.0,
+              0.2793
+            ],
+            [
+              0.0,
+              0.3694
+            ],
+            [
+              0.0,
+              0.4595
+            ],
+            [
+              0.0,
+              0.5495
+            ],
+            [
+              0.0061,
+              0.6126
+            ],
+            [
+              0.0164,
+              0.6577
+            ],
+            [
+              0.0266,
+              0.7117
+            ],
+            [
+              0.0368,
+              0.7568
+            ],
+            [
+              0.0491,
+              0.7928
+            ],
+            [
+              0.0613,
+              0.8288
+            ],
+            [
+              0.0818,
+              0.8288
+            ],
+            [
+              0.0961,
+              0.8559
+            ],
+            [
+              0.1186,
+              0.8559
+            ],
+            [
+              0.1391,
+              0.8559
+            ],
+            [
+              0.1575,
+              0.8649
+            ],
+            [
+              0.1779,
+              0.8649
+            ],
+            [
+              0.1963,
+              0.8739
+            ],
+            [
+              0.2168,
+              0.8739
+            ],
+            [
+              0.2393,
+              0.8739
+            ],
+            [
+              0.2597,
+              0.8739
+            ],
+            [
+              0.2802,
+              0.8739
+            ],
+            [
+              0.3006,
+              0.8739
+            ],
+            [
+              0.3211,
+              0.8739
+            ],
+            [
+              0.3395,
+              0.8829
+            ],
+            [
+              0.362,
+              0.8829
+            ],
+            [
+              0.3804,
+              0.8919
+            ],
+            [
+              0.3967,
+              0.9099
+            ],
+            [
+              0.4172,
+              0.9099
+            ],
+            [
+              0.4356,
+              0.9189
+            ],
+            [
+              0.456,
+              0.9189
+            ],
+            [
+              0.4785,
+              0.9189
+            ],
+            [
+              0.499,
+              0.9189
+            ],
+            [
+              0.5194,
+              0.9189
+            ],
+            [
+              0.5399,
+              0.9189
+            ],
+            [
+              0.5603,
+              0.9189
+            ],
+            [
+              0.5808,
+              0.9189
+            ],
+            [
+              0.6033,
+              0.9189
+            ],
+            [
+              0.6237,
+              0.9189
+            ],
+            [
+              0.6442,
+              0.9189
+            ],
+            [
+              0.6646,
+              0.9189
+            ],
+            [
+              0.6789,
+              0.9459
+            ],
+            [
+              0.6973,
+              0.955
+            ],
+            [
+              0.7198,
+              0.955
+            ],
+            [
+              0.7382,
+              0.964
+            ],
+            [
+              0.7587,
+              0.964
+            ],
+            [
+              0.7791,
+              0.964
+            ],
+            [
+              0.7996,
+              0.964
+            ],
+            [
+              0.82,
+              0.964
+            ],
+            [
+              0.8384,
+              0.982
+            ],
+            [
+              0.8589,
+              0.982
+            ],
+            [
+              0.8773,
+              0.991
+            ],
+            [
+              0.8978,
+              0.991
+            ],
+            [
+              0.9182,
+              0.991
+            ],
+            [
+              0.9387,
+              0.991
+            ],
+            [
+              0.9591,
+              1.0
+            ],
+            [
+              0.9796,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "pr": [
+            [
+              0.009,
+              1.0
+            ],
+            [
+              0.0991,
+              1.0
+            ],
+            [
+              0.1892,
+              1.0
+            ],
+            [
+              0.2793,
+              1.0
+            ],
+            [
+              0.3784,
+              1.0
+            ],
+            [
+              0.4685,
+              1.0
+            ],
+            [
+              0.5586,
+              1.0
+            ],
+            [
+              0.6216,
+              0.9583
+            ],
+            [
+              0.6667,
+              0.9024
+            ],
+            [
+              0.7117,
+              0.8587
+            ],
+            [
+              0.7568,
+              0.8155
+            ],
+            [
+              0.7928,
+              0.7788
+            ],
+            [
+              0.8288,
+              0.748
+            ],
+            [
+              0.8378,
+              0.6992
+            ],
+            [
+              0.8559,
+              0.6643
+            ],
+            [
+              0.8559,
+              0.6209
+            ],
+            [
+              0.8559,
+              0.5828
+            ],
+            [
+              0.8649,
+              0.5517
+            ],
+            [
+              0.8649,
+              0.5217
+            ],
+            [
+              0.8739,
+              0.5
+            ],
+            [
+              0.8739,
+              0.4755
+            ],
+            [
+              0.8739,
+              0.4533
+            ],
+            [
+              0.8739,
+              0.433
+            ],
+            [
+              0.8739,
+              0.4128
+            ],
+            [
+              0.8739,
+              0.3959
+            ],
+            [
+              0.8829,
+              0.3843
+            ],
+            [
+              0.8829,
+              0.3698
+            ],
+            [
+              0.8829,
+              0.3564
+            ],
+            [
+              0.8919,
+              0.3474
+            ],
+            [
+              0.9099,
+              0.3424
+            ],
+            [
+              0.9099,
+              0.3301
+            ],
+            [
+              0.9189,
+              0.3228
+            ],
+            [
+              0.9189,
+              0.3129
+            ],
+            [
+              0.9189,
+              0.3036
+            ],
+            [
+              0.9189,
+              0.2948
+            ],
+            [
+              0.9189,
+              0.2865
+            ],
+            [
+              0.9189,
+              0.2787
+            ],
+            [
+              0.9189,
+              0.2706
+            ],
+            [
+              0.9189,
+              0.2636
+            ],
+            [
+              0.9189,
+              0.2569
+            ],
+            [
+              0.9189,
+              0.2506
+            ],
+            [
+              0.9189,
+              0.2446
+            ],
+            [
+              0.9189,
+              0.2389
+            ],
+            [
+              0.9459,
+              0.2397
+            ],
+            [
+              0.955,
+              0.2366
+            ],
+            [
+              0.955,
+              0.2314
+            ],
+            [
+              0.964,
+              0.2286
+            ],
+            [
+              0.964,
+              0.2238
+            ],
+            [
+              0.964,
+              0.2193
+            ],
+            [
+              0.964,
+              0.2149
+            ],
+            [
+              0.964,
+              0.2102
+            ],
+            [
+              0.982,
+              0.21
+            ],
+            [
+              0.982,
+              0.206
+            ],
+            [
+              0.991,
+              0.2041
+            ],
+            [
+              0.991,
+              0.2004
+            ],
+            [
+              0.991,
+              0.1968
+            ],
+            [
+              0.991,
+              0.193
+            ],
+            [
+              1.0,
+              0.1914
+            ],
+            [
+              1.0,
+              0.1881
+            ],
+            [
+              1.0,
+              0.185
+            ]
+          ]
+        },
+        "A_unsupervised": {
+          "roc": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0082,
+              0.0541
+            ],
+            [
+              0.0164,
+              0.1081
+            ],
+            [
+              0.0245,
+              0.1712
+            ],
+            [
+              0.0245,
+              0.2613
+            ],
+            [
+              0.0286,
+              0.3333
+            ],
+            [
+              0.0348,
+              0.3964
+            ],
+            [
+              0.0429,
+              0.4505
+            ],
+            [
+              0.0573,
+              0.4775
+            ],
+            [
+              0.0716,
+              0.5135
+            ],
+            [
+              0.0818,
+              0.5586
+            ],
+            [
+              0.09,
+              0.6126
+            ],
+            [
+              0.0982,
+              0.6667
+            ],
+            [
+              0.1104,
+              0.7027
+            ],
+            [
+              0.1227,
+              0.7387
+            ],
+            [
+              0.1411,
+              0.7568
+            ],
+            [
+              0.1534,
+              0.7928
+            ],
+            [
+              0.1718,
+              0.8018
+            ],
+            [
+              0.1902,
+              0.8108
+            ],
+            [
+              0.2086,
+              0.8198
+            ],
+            [
+              0.2249,
+              0.8378
+            ],
+            [
+              0.2434,
+              0.8559
+            ],
+            [
+              0.2597,
+              0.8739
+            ],
+            [
+              0.2781,
+              0.8829
+            ],
+            [
+              0.2965,
+              0.8919
+            ],
+            [
+              0.317,
+              0.8919
+            ],
+            [
+              0.3374,
+              0.8919
+            ],
+            [
+              0.3599,
+              0.8919
+            ],
+            [
+              0.3804,
+              0.8919
+            ],
+            [
+              0.3988,
+              0.9009
+            ],
+            [
+              0.4192,
+              0.9009
+            ],
+            [
+              0.4376,
+              0.9099
+            ],
+            [
+              0.4581,
+              0.9099
+            ],
+            [
+              0.4806,
+              0.9099
+            ],
+            [
+              0.501,
+              0.9099
+            ],
+            [
+              0.5215,
+              0.9099
+            ],
+            [
+              0.5419,
+              0.9099
+            ],
+            [
+              0.5603,
+              0.9189
+            ],
+            [
+              0.5787,
+              0.9279
+            ],
+            [
+              0.6012,
+              0.9279
+            ],
+            [
+              0.6217,
+              0.9279
+            ],
+            [
+              0.6401,
+              0.9369
+            ],
+            [
+              0.6605,
+              0.9369
+            ],
+            [
+              0.6789,
+              0.9459
+            ],
+            [
+              0.6994,
+              0.9459
+            ],
+            [
+              0.7198,
+              0.955
+            ],
+            [
+              0.7382,
+              0.964
+            ],
+            [
+              0.7587,
+              0.964
+            ],
+            [
+              0.7791,
+              0.964
+            ],
+            [
+              0.7996,
+              0.964
+            ],
+            [
+              0.82,
+              0.964
+            ],
+            [
+              0.8405,
+              0.973
+            ],
+            [
+              0.8609,
+              0.973
+            ],
+            [
+              0.8814,
+              0.973
+            ],
+            [
+              0.9018,
+              0.973
+            ],
+            [
+              0.9223,
+              0.973
+            ],
+            [
+              0.9407,
+              0.982
+            ],
+            [
+              0.9611,
+              0.991
+            ],
+            [
+              0.9796,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "pr": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0631,
+              0.6364
+            ],
+            [
+              0.1081,
+              0.5714
+            ],
+            [
+              0.1712,
+              0.6129
+            ],
+            [
+              0.2703,
+              0.7143
+            ],
+            [
+              0.3423,
+              0.7308
+            ],
+            [
+              0.4054,
+              0.7258
+            ],
+            [
+              0.4505,
+              0.6944
+            ],
+            [
+              0.4865,
+              0.6585
+            ],
+            [
+              0.5135,
+              0.6196
+            ],
+            [
+              0.5676,
+              0.6117
+            ],
+            [
+              0.6126,
+              0.6018
+            ],
+            [
+              0.6667,
+              0.6016
+            ],
+            [
+              0.7027,
+              0.5865
+            ],
+            [
+              0.7387,
+              0.5734
+            ],
+            [
+              0.7568,
+              0.549
+            ],
+            [
+              0.7928,
+              0.5399
+            ],
+            [
+              0.8018,
+              0.5115
+            ],
+            [
+              0.8108,
+              0.4891
+            ],
+            [
+              0.8198,
+              0.4691
+            ],
+            [
+              0.8468,
+              0.4608
+            ],
+            [
+              0.8559,
+              0.4439
+            ],
+            [
+              0.8739,
+              0.433
+            ],
+            [
+              0.8829,
+              0.417
+            ],
+            [
+              0.8919,
+              0.4041
+            ],
+            [
+              0.8919,
+              0.3882
+            ],
+            [
+              0.8919,
+              0.3736
+            ],
+            [
+              0.8919,
+              0.36
+            ],
+            [
+              0.8919,
+              0.3474
+            ],
+            [
+              0.9009,
+              0.339
+            ],
+            [
+              0.9009,
+              0.3268
+            ],
+            [
+              0.9099,
+              0.3196
+            ],
+            [
+              0.9099,
+              0.3098
+            ],
+            [
+              0.9099,
+              0.3006
+            ],
+            [
+              0.9099,
+              0.2919
+            ],
+            [
+              0.9099,
+              0.2837
+            ],
+            [
+              0.9099,
+              0.276
+            ],
+            [
+              0.9189,
+              0.2706
+            ],
+            [
+              0.9279,
+              0.2661
+            ],
+            [
+              0.9279,
+              0.2594
+            ],
+            [
+              0.9279,
+              0.2531
+            ],
+            [
+              0.9369,
+              0.2494
+            ],
+            [
+              0.9369,
+              0.2436
+            ],
+            [
+              0.9459,
+              0.2397
+            ],
+            [
+              0.9459,
+              0.2344
+            ],
+            [
+              0.955,
+              0.2314
+            ],
+            [
+              0.964,
+              0.2286
+            ],
+            [
+              0.964,
+              0.2238
+            ],
+            [
+              0.964,
+              0.2193
+            ],
+            [
+              0.964,
+              0.2149
+            ],
+            [
+              0.964,
+              0.2102
+            ],
+            [
+              0.973,
+              0.2081
+            ],
+            [
+              0.973,
+              0.2042
+            ],
+            [
+              0.973,
+              0.2004
+            ],
+            [
+              0.973,
+              0.1967
+            ],
+            [
+              0.973,
+              0.1932
+            ],
+            [
+              0.982,
+              0.1912
+            ],
+            [
+              0.991,
+              0.1897
+            ],
+            [
+              1.0,
+              0.1881
+            ],
+            [
+              1.0,
+              0.185
+            ]
+          ]
+        },
+        "B_logistic": {
+          "roc": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0633
+            ],
+            [
+              0.0,
+              0.1266
+            ],
+            [
+              0.0,
+              0.1962
+            ],
+            [
+              0.0,
+              0.2595
+            ],
+            [
+              0.0,
+              0.3228
+            ],
+            [
+              0.0,
+              0.3861
+            ],
+            [
+              0.0,
+              0.4494
+            ],
+            [
+              0.0,
+              0.5127
+            ],
+            [
+              0.0,
+              0.5823
+            ],
+            [
+              0.0,
+              0.6456
+            ],
+            [
+              0.0,
+              0.7089
+            ],
+            [
+              0.0,
+              0.7722
+            ],
+            [
+              0.0023,
+              0.8291
+            ],
+            [
+              0.0045,
+              0.8861
+            ],
+            [
+              0.0158,
+              0.9241
+            ],
+            [
+              0.0294,
+              0.9494
+            ],
+            [
+              0.043,
+              0.9747
+            ],
+            [
+              0.0611,
+              0.9873
+            ],
+            [
+              0.0837,
+              0.9873
+            ],
+            [
+              0.1041,
+              0.9937
+            ],
+            [
+              0.1267,
+              1.0
+            ],
+            [
+              0.1493,
+              1.0
+            ],
+            [
+              0.1719,
+              1.0
+            ],
+            [
+              0.1946,
+              1.0
+            ],
+            [
+              0.2172,
+              1.0
+            ],
+            [
+              0.2398,
+              1.0
+            ],
+            [
+              0.2647,
+              1.0
+            ],
+            [
+              0.2873,
+              1.0
+            ],
+            [
+              0.31,
+              1.0
+            ],
+            [
+              0.3326,
+              1.0
+            ],
+            [
+              0.3552,
+              1.0
+            ],
+            [
+              0.3778,
+              1.0
+            ],
+            [
+              0.4027,
+              1.0
+            ],
+            [
+              0.4253,
+              1.0
+            ],
+            [
+              0.448,
+              1.0
+            ],
+            [
+              0.4706,
+              1.0
+            ],
+            [
+              0.4932,
+              1.0
+            ],
+            [
+              0.5158,
+              1.0
+            ],
+            [
+              0.5407,
+              1.0
+            ],
+            [
+              0.5633,
+              1.0
+            ],
+            [
+              0.586,
+              1.0
+            ],
+            [
+              0.6086,
+              1.0
+            ],
+            [
+              0.6312,
+              1.0
+            ],
+            [
+              0.6538,
+              1.0
+            ],
+            [
+              0.6787,
+              1.0
+            ],
+            [
+              0.7014,
+              1.0
+            ],
+            [
+              0.724,
+              1.0
+            ],
+            [
+              0.7466,
+              1.0
+            ],
+            [
+              0.7692,
+              1.0
+            ],
+            [
+              0.7919,
+              1.0
+            ],
+            [
+              0.8167,
+              1.0
+            ],
+            [
+              0.8394,
+              1.0
+            ],
+            [
+              0.862,
+              1.0
+            ],
+            [
+              0.8846,
+              1.0
+            ],
+            [
+              0.9072,
+              1.0
+            ],
+            [
+              0.9299,
+              1.0
+            ],
+            [
+              0.9548,
+              1.0
+            ],
+            [
+              0.9774,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "pr": [
+            [
+              0.0063,
+              1.0
+            ],
+            [
+              0.0696,
+              1.0
+            ],
+            [
+              0.1329,
+              1.0
+            ],
+            [
+              0.1962,
+              1.0
+            ],
+            [
+              0.2658,
+              1.0
+            ],
+            [
+              0.3291,
+              1.0
+            ],
+            [
+              0.3924,
+              1.0
+            ],
+            [
+              0.4557,
+              1.0
+            ],
+            [
+              0.519,
+              1.0
+            ],
+            [
+              0.5823,
+              1.0
+            ],
+            [
+              0.6519,
+              1.0
+            ],
+            [
+              0.7152,
+              1.0
+            ],
+            [
+              0.7785,
+              1.0
+            ],
+            [
+              0.8354,
+              0.9925
+            ],
+            [
+              0.8924,
+              0.986
+            ],
+            [
+              0.9241,
+              0.9542
+            ],
+            [
+              0.9494,
+              0.9202
+            ],
+            [
+              0.981,
+              0.8908
+            ],
+            [
+              0.9873,
+              0.8478
+            ],
+            [
+              0.9937,
+              0.8093
+            ],
+            [
+              0.9937,
+              0.7696
+            ],
+            [
+              1.0,
+              0.7383
+            ],
+            [
+              1.0,
+              0.7054
+            ],
+            [
+              1.0,
+              0.6723
+            ],
+            [
+              1.0,
+              0.6449
+            ],
+            [
+              1.0,
+              0.6196
+            ],
+            [
+              1.0,
+              0.5962
+            ],
+            [
+              1.0,
+              0.5745
+            ],
+            [
+              1.0,
+              0.5544
+            ],
+            [
+              1.0,
+              0.5356
+            ],
+            [
+              1.0,
+              0.5163
+            ],
+            [
+              1.0,
+              0.5
+            ],
+            [
+              1.0,
+              0.4847
+            ],
+            [
+              1.0,
+              0.4702
+            ],
+            [
+              1.0,
+              0.4566
+            ],
+            [
+              1.0,
+              0.4438
+            ],
+            [
+              1.0,
+              0.4317
+            ],
+            [
+              1.0,
+              0.4191
+            ],
+            [
+              1.0,
+              0.4083
+            ],
+            [
+              1.0,
+              0.398
+            ],
+            [
+              1.0,
+              0.3882
+            ],
+            [
+              1.0,
+              0.3789
+            ],
+            [
+              1.0,
+              0.37
+            ],
+            [
+              1.0,
+              0.3607
+            ],
+            [
+              1.0,
+              0.3527
+            ],
+            [
+              1.0,
+              0.345
+            ],
+            [
+              1.0,
+              0.3376
+            ],
+            [
+              1.0,
+              0.3305
+            ],
+            [
+              1.0,
+              0.3238
+            ],
+            [
+              1.0,
+              0.3173
+            ],
+            [
+              1.0,
+              0.3104
+            ],
+            [
+              1.0,
+              0.3044
+            ],
+            [
+              1.0,
+              0.2987
+            ],
+            [
+              1.0,
+              0.2931
+            ],
+            [
+              1.0,
+              0.2878
+            ],
+            [
+              1.0,
+              0.2826
+            ],
+            [
+              1.0,
+              0.2772
+            ],
+            [
+              1.0,
+              0.2724
+            ],
+            [
+              1.0,
+              0.2678
+            ],
+            [
+              1.0,
+              0.2633
+            ]
+          ]
+        }
+      },
+      "test": {
+        "A_logistic": {
+          "roc": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0435
+            ],
+            [
+              0.0,
+              0.1304
+            ],
+            [
+              0.0,
+              0.1739
+            ],
+            [
+              0.0,
+              0.2174
+            ],
+            [
+              0.0,
+              0.3043
+            ],
+            [
+              0.0,
+              0.3478
+            ],
+            [
+              0.0,
+              0.3913
+            ],
+            [
+              0.0,
+              0.4783
+            ],
+            [
+              0.0,
+              0.5217
+            ],
+            [
+              0.0,
+              0.5652
+            ],
+            [
+              0.0,
+              0.6522
+            ],
+            [
+              0.0,
+              0.6957
+            ],
+            [
+              0.0,
+              0.7391
+            ],
+            [
+              0.0,
+              0.8261
+            ],
+            [
+              0.0,
+              0.8696
+            ],
+            [
+              0.0,
+              0.913
+            ],
+            [
+              0.0,
+              0.9565
+            ],
+            [
+              0.0364,
+              0.9565
+            ],
+            [
+              0.0545,
+              0.9565
+            ],
+            [
+              0.0727,
+              0.9565
+            ],
+            [
+              0.1091,
+              0.9565
+            ],
+            [
+              0.1273,
+              0.9565
+            ],
+            [
+              0.1455,
+              0.9565
+            ],
+            [
+              0.1818,
+              0.9565
+            ],
+            [
+              0.2,
+              0.9565
+            ],
+            [
+              0.2182,
+              0.9565
+            ],
+            [
+              0.2545,
+              0.9565
+            ],
+            [
+              0.2727,
+              0.9565
+            ],
+            [
+              0.2909,
+              0.9565
+            ],
+            [
+              0.3273,
+              0.9565
+            ],
+            [
+              0.3455,
+              0.9565
+            ],
+            [
+              0.3636,
+              0.9565
+            ],
+            [
+              0.4,
+              0.9565
+            ],
+            [
+              0.4182,
+              0.9565
+            ],
+            [
+              0.4364,
+              0.9565
+            ],
+            [
+              0.4727,
+              0.9565
+            ],
+            [
+              0.4909,
+              0.9565
+            ],
+            [
+              0.5091,
+              0.9565
+            ],
+            [
+              0.5455,
+              0.9565
+            ],
+            [
+              0.5636,
+              0.9565
+            ],
+            [
+              0.5818,
+              0.9565
+            ],
+            [
+              0.6182,
+              0.9565
+            ],
+            [
+              0.6364,
+              0.9565
+            ],
+            [
+              0.6545,
+              0.9565
+            ],
+            [
+              0.6727,
+              0.9565
+            ],
+            [
+              0.6909,
+              1.0
+            ],
+            [
+              0.7091,
+              1.0
+            ],
+            [
+              0.7273,
+              1.0
+            ],
+            [
+              0.7636,
+              1.0
+            ],
+            [
+              0.7818,
+              1.0
+            ],
+            [
+              0.8,
+              1.0
+            ],
+            [
+              0.8364,
+              1.0
+            ],
+            [
+              0.8545,
+              1.0
+            ],
+            [
+              0.8727,
+              1.0
+            ],
+            [
+              0.9091,
+              1.0
+            ],
+            [
+              0.9273,
+              1.0
+            ],
+            [
+              0.9455,
+              1.0
+            ],
+            [
+              0.9818,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "pr": [
+            [
+              0.0435,
+              1.0
+            ],
+            [
+              0.087,
+              1.0
+            ],
+            [
+              0.1739,
+              1.0
+            ],
+            [
+              0.2174,
+              1.0
+            ],
+            [
+              0.2609,
+              1.0
+            ],
+            [
+              0.3478,
+              1.0
+            ],
+            [
+              0.3913,
+              1.0
+            ],
+            [
+              0.4348,
+              1.0
+            ],
+            [
+              0.4783,
+              1.0
+            ],
+            [
+              0.5652,
+              1.0
+            ],
+            [
+              0.6087,
+              1.0
+            ],
+            [
+              0.6522,
+              1.0
+            ],
+            [
+              0.7391,
+              1.0
+            ],
+            [
+              0.7826,
+              1.0
+            ],
+            [
+              0.8261,
+              1.0
+            ],
+            [
+              0.913,
+              1.0
+            ],
+            [
+              0.9565,
+              1.0
+            ],
+            [
+              0.9565,
+              0.9565
+            ],
+            [
+              0.9565,
+              0.9167
+            ],
+            [
+              0.9565,
+              0.8462
+            ],
+            [
+              0.9565,
+              0.8148
+            ],
+            [
+              0.9565,
+              0.7857
+            ],
+            [
+              0.9565,
+              0.7333
+            ],
+            [
+              0.9565,
+              0.7097
+            ],
+            [
+              0.9565,
+              0.6875
+            ],
+            [
+              0.9565,
+              0.6471
+            ],
+            [
+              0.9565,
+              0.6286
+            ],
+            [
+              0.9565,
+              0.6111
+            ],
+            [
+              0.9565,
+              0.5789
+            ],
+            [
+              0.9565,
+              0.5641
+            ],
+            [
+              0.9565,
+              0.55
+            ],
+            [
+              0.9565,
+              0.5366
+            ],
+            [
+              0.9565,
+              0.5116
+            ],
+            [
+              0.9565,
+              0.5
+            ],
+            [
+              0.9565,
+              0.4889
+            ],
+            [
+              0.9565,
+              0.4681
+            ],
+            [
+              0.9565,
+              0.4583
+            ],
+            [
+              0.9565,
+              0.449
+            ],
+            [
+              0.9565,
+              0.4314
+            ],
+            [
+              0.9565,
+              0.4231
+            ],
+            [
+              0.9565,
+              0.4151
+            ],
+            [
+              0.9565,
+              0.4
+            ],
+            [
+              0.9565,
+              0.3929
+            ],
+            [
+              0.9565,
+              0.386
+            ],
+            [
+              0.9565,
+              0.3793
+            ],
+            [
+              0.9565,
+              0.3667
+            ],
+            [
+              1.0,
+              0.377
+            ],
+            [
+              1.0,
+              0.371
+            ],
+            [
+              1.0,
+              0.3594
+            ],
+            [
+              1.0,
+              0.3538
+            ],
+            [
+              1.0,
+              0.3485
+            ],
+            [
+              1.0,
+              0.3382
+            ],
+            [
+              1.0,
+              0.3333
+            ],
+            [
+              1.0,
+              0.3286
+            ],
+            [
+              1.0,
+              0.3239
+            ],
+            [
+              1.0,
+              0.3151
+            ],
+            [
+              1.0,
+              0.3108
+            ],
+            [
+              1.0,
+              0.3067
+            ],
+            [
+              1.0,
+              0.2987
+            ],
+            [
+              1.0,
+              0.2949
+            ]
+          ]
+        },
+        "A_unsupervised": {
+          "roc": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0435
+            ],
+            [
+              0.0,
+              0.1304
+            ],
+            [
+              0.0,
+              0.1739
+            ],
+            [
+              0.0,
+              0.2174
+            ],
+            [
+              0.0182,
+              0.2609
+            ],
+            [
+              0.0182,
+              0.3043
+            ],
+            [
+              0.0182,
+              0.3478
+            ],
+            [
+              0.0182,
+              0.4348
+            ],
+            [
+              0.0182,
+              0.4783
+            ],
+            [
+              0.0364,
+              0.4783
+            ],
+            [
+              0.0727,
+              0.4783
+            ],
+            [
+              0.0909,
+              0.4783
+            ],
+            [
+              0.1091,
+              0.4783
+            ],
+            [
+              0.1273,
+              0.5217
+            ],
+            [
+              0.1273,
+              0.5652
+            ],
+            [
+              0.1273,
+              0.6087
+            ],
+            [
+              0.1273,
+              0.6522
+            ],
+            [
+              0.1636,
+              0.6522
+            ],
+            [
+              0.1636,
+              0.6957
+            ],
+            [
+              0.1636,
+              0.7391
+            ],
+            [
+              0.1818,
+              0.7826
+            ],
+            [
+              0.2,
+              0.7826
+            ],
+            [
+              0.2,
+              0.8261
+            ],
+            [
+              0.2364,
+              0.8261
+            ],
+            [
+              0.2364,
+              0.8696
+            ],
+            [
+              0.2364,
+              0.913
+            ],
+            [
+              0.2545,
+              0.9565
+            ],
+            [
+              0.2727,
+              0.9565
+            ],
+            [
+              0.2909,
+              0.9565
+            ],
+            [
+              0.3273,
+              0.9565
+            ],
+            [
+              0.3455,
+              0.9565
+            ],
+            [
+              0.3636,
+              0.9565
+            ],
+            [
+              0.4,
+              0.9565
+            ],
+            [
+              0.4182,
+              0.9565
+            ],
+            [
+              0.4364,
+              0.9565
+            ],
+            [
+              0.4727,
+              0.9565
+            ],
+            [
+              0.4909,
+              0.9565
+            ],
+            [
+              0.5091,
+              0.9565
+            ],
+            [
+              0.5455,
+              0.9565
+            ],
+            [
+              0.5636,
+              0.9565
+            ],
+            [
+              0.5818,
+              0.9565
+            ],
+            [
+              0.6182,
+              0.9565
+            ],
+            [
+              0.6364,
+              0.9565
+            ],
+            [
+              0.6545,
+              0.9565
+            ],
+            [
+              0.6727,
+              0.9565
+            ],
+            [
+              0.7091,
+              0.9565
+            ],
+            [
+              0.7273,
+              0.9565
+            ],
+            [
+              0.7455,
+              0.9565
+            ],
+            [
+              0.7818,
+              0.9565
+            ],
+            [
+              0.8,
+              0.9565
+            ],
+            [
+              0.8182,
+              0.9565
+            ],
+            [
+              0.8545,
+              0.9565
+            ],
+            [
+              0.8727,
+              0.9565
+            ],
+            [
+              0.8909,
+              0.9565
+            ],
+            [
+              0.9273,
+              0.9565
+            ],
+            [
+              0.9455,
+              0.9565
+            ],
+            [
+              0.9636,
+              0.9565
+            ],
+            [
+              1.0,
+              0.9565
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "pr": [
+            [
+              0.0435,
+              1.0
+            ],
+            [
+              0.087,
+              1.0
+            ],
+            [
+              0.1739,
+              1.0
+            ],
+            [
+              0.2174,
+              1.0
+            ],
+            [
+              0.2174,
+              0.8333
+            ],
+            [
+              0.3043,
+              0.875
+            ],
+            [
+              0.3478,
+              0.8889
+            ],
+            [
+              0.3913,
+              0.9
+            ],
+            [
+              0.4348,
+              0.9091
+            ],
+            [
+              0.4783,
+              0.8462
+            ],
+            [
+              0.4783,
+              0.7857
+            ],
+            [
+              0.4783,
+              0.7333
+            ],
+            [
+              0.4783,
+              0.6471
+            ],
+            [
+              0.4783,
+              0.6111
+            ],
+            [
+              0.5217,
+              0.6316
+            ],
+            [
+              0.6087,
+              0.6667
+            ],
+            [
+              0.6522,
+              0.6818
+            ],
+            [
+              0.6522,
+              0.6522
+            ],
+            [
+              0.6522,
+              0.625
+            ],
+            [
+              0.7391,
+              0.6538
+            ],
+            [
+              0.7826,
+              0.6667
+            ],
+            [
+              0.7826,
+              0.6429
+            ],
+            [
+              0.8261,
+              0.6333
+            ],
+            [
+              0.8261,
+              0.6129
+            ],
+            [
+              0.8261,
+              0.5938
+            ],
+            [
+              0.913,
+              0.6176
+            ],
+            [
+              0.9565,
+              0.6286
+            ],
+            [
+              0.9565,
+              0.6111
+            ],
+            [
+              0.9565,
+              0.5789
+            ],
+            [
+              0.9565,
+              0.5641
+            ],
+            [
+              0.9565,
+              0.55
+            ],
+            [
+              0.9565,
+              0.5366
+            ],
+            [
+              0.9565,
+              0.5116
+            ],
+            [
+              0.9565,
+              0.5
+            ],
+            [
+              0.9565,
+              0.4889
+            ],
+            [
+              0.9565,
+              0.4681
+            ],
+            [
+              0.9565,
+              0.4583
+            ],
+            [
+              0.9565,
+              0.449
+            ],
+            [
+              0.9565,
+              0.4314
+            ],
+            [
+              0.9565,
+              0.4231
+            ],
+            [
+              0.9565,
+              0.4151
+            ],
+            [
+              0.9565,
+              0.4
+            ],
+            [
+              0.9565,
+              0.3929
+            ],
+            [
+              0.9565,
+              0.386
+            ],
+            [
+              0.9565,
+              0.3793
+            ],
+            [
+              0.9565,
+              0.3667
+            ],
+            [
+              0.9565,
+              0.3607
+            ],
+            [
+              0.9565,
+              0.3548
+            ],
+            [
+              0.9565,
+              0.3438
+            ],
+            [
+              0.9565,
+              0.3385
+            ],
+            [
+              0.9565,
+              0.3333
+            ],
+            [
+              0.9565,
+              0.3235
+            ],
+            [
+              0.9565,
+              0.3188
+            ],
+            [
+              0.9565,
+              0.3143
+            ],
+            [
+              0.9565,
+              0.3099
+            ],
+            [
+              0.9565,
+              0.3014
+            ],
+            [
+              0.9565,
+              0.2973
+            ],
+            [
+              0.9565,
+              0.2933
+            ],
+            [
+              0.9565,
+              0.2857
+            ],
+            [
+              1.0,
+              0.2949
+            ]
+          ]
+        },
+        "B_logistic": {
+          "roc": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0222
+            ],
+            [
+              0.0,
+              0.0667
+            ],
+            [
+              0.0,
+              0.0889
+            ],
+            [
+              0.0,
+              0.1111
+            ],
+            [
+              0.0,
+              0.1556
+            ],
+            [
+              0.0,
+              0.1778
+            ],
+            [
+              0.0,
+              0.2
+            ],
+            [
+              0.0,
+              0.2444
+            ],
+            [
+              0.0,
+              0.2667
+            ],
+            [
+              0.0,
+              0.2889
+            ],
+            [
+              0.0,
+              0.3333
+            ],
+            [
+              0.0,
+              0.3556
+            ],
+            [
+              0.0,
+              0.3778
+            ],
+            [
+              0.0,
+              0.4222
+            ],
+            [
+              0.0,
+              0.4444
+            ],
+            [
+              0.0,
+              0.4667
+            ],
+            [
+              0.0,
+              0.4889
+            ],
+            [
+              0.0,
+              0.5333
+            ],
+            [
+              0.0,
+              0.5556
+            ],
+            [
+              0.0,
+              0.5778
+            ],
+            [
+              0.0,
+              0.6222
+            ],
+            [
+              0.0,
+              0.6444
+            ],
+            [
+              0.0,
+              0.6667
+            ],
+            [
+              0.0,
+              0.7111
+            ],
+            [
+              0.0,
+              0.7333
+            ],
+            [
+              0.0,
+              0.7556
+            ],
+            [
+              0.0,
+              0.8
+            ],
+            [
+              0.0,
+              0.8222
+            ],
+            [
+              0.0,
+              0.8444
+            ],
+            [
+              0.0,
+              0.8889
+            ],
+            [
+              0.0,
+              0.9111
+            ],
+            [
+              0.0303,
+              0.9111
+            ],
+            [
+              0.0606,
+              0.9333
+            ],
+            [
+              0.0909,
+              0.9333
+            ],
+            [
+              0.1212,
+              0.9333
+            ],
+            [
+              0.1818,
+              0.9333
+            ],
+            [
+              0.2121,
+              0.9333
+            ],
+            [
+              0.2424,
+              0.9333
+            ],
+            [
+              0.303,
+              0.9333
+            ],
+            [
+              0.3333,
+              0.9333
+            ],
+            [
+              0.3636,
+              0.9333
+            ],
+            [
+              0.3939,
+              0.9556
+            ],
+            [
+              0.4242,
+              0.9556
+            ],
+            [
+              0.4545,
+              0.9556
+            ],
+            [
+              0.4848,
+              0.9556
+            ],
+            [
+              0.5455,
+              0.9556
+            ],
+            [
+              0.5758,
+              0.9556
+            ],
+            [
+              0.6061,
+              0.9556
+            ],
+            [
+              0.6364,
+              0.9778
+            ],
+            [
+              0.6667,
+              0.9778
+            ],
+            [
+              0.697,
+              0.9778
+            ],
+            [
+              0.7273,
+              1.0
+            ],
+            [
+              0.7576,
+              1.0
+            ],
+            [
+              0.7879,
+              1.0
+            ],
+            [
+              0.8485,
+              1.0
+            ],
+            [
+              0.8788,
+              1.0
+            ],
+            [
+              0.9091,
+              1.0
+            ],
+            [
+              0.9697,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "pr": [
+            [
+              0.0222,
+              1.0
+            ],
+            [
+              0.0444,
+              1.0
+            ],
+            [
+              0.0889,
+              1.0
+            ],
+            [
+              0.1111,
+              1.0
+            ],
+            [
+              0.1333,
+              1.0
+            ],
+            [
+              0.1778,
+              1.0
+            ],
+            [
+              0.2,
+              1.0
+            ],
+            [
+              0.2222,
+              1.0
+            ],
+            [
+              0.2444,
+              1.0
+            ],
+            [
+              0.2889,
+              1.0
+            ],
+            [
+              0.3111,
+              1.0
+            ],
+            [
+              0.3333,
+              1.0
+            ],
+            [
+              0.3778,
+              1.0
+            ],
+            [
+              0.4,
+              1.0
+            ],
+            [
+              0.4222,
+              1.0
+            ],
+            [
+              0.4667,
+              1.0
+            ],
+            [
+              0.4889,
+              1.0
+            ],
+            [
+              0.5111,
+              1.0
+            ],
+            [
+              0.5333,
+              1.0
+            ],
+            [
+              0.5778,
+              1.0
+            ],
+            [
+              0.6,
+              1.0
+            ],
+            [
+              0.6222,
+              1.0
+            ],
+            [
+              0.6667,
+              1.0
+            ],
+            [
+              0.6889,
+              1.0
+            ],
+            [
+              0.7111,
+              1.0
+            ],
+            [
+              0.7556,
+              1.0
+            ],
+            [
+              0.7778,
+              1.0
+            ],
+            [
+              0.8,
+              1.0
+            ],
+            [
+              0.8444,
+              1.0
+            ],
+            [
+              0.8667,
+              1.0
+            ],
+            [
+              0.8889,
+              1.0
+            ],
+            [
+              0.9111,
+              1.0
+            ],
+            [
+              0.9333,
+              0.9767
+            ],
+            [
+              0.9333,
+              0.9545
+            ],
+            [
+              0.9333,
+              0.9333
+            ],
+            [
+              0.9333,
+              0.8936
+            ],
+            [
+              0.9333,
+              0.875
+            ],
+            [
+              0.9333,
+              0.8571
+            ],
+            [
+              0.9333,
+              0.8235
+            ],
+            [
+              0.9333,
+              0.8077
+            ],
+            [
+              0.9333,
+              0.7925
+            ],
+            [
+              0.9333,
+              0.7636
+            ],
+            [
+              0.9556,
+              0.7679
+            ],
+            [
+              0.9556,
+              0.7544
+            ],
+            [
+              0.9556,
+              0.7414
+            ],
+            [
+              0.9556,
+              0.7167
+            ],
+            [
+              0.9556,
+              0.7049
+            ],
+            [
+              0.9556,
+              0.6935
+            ],
+            [
+              0.9778,
+              0.6875
+            ],
+            [
+              0.9778,
+              0.6769
+            ],
+            [
+              0.9778,
+              0.6667
+            ],
+            [
+              1.0,
+              0.6618
+            ],
+            [
+              1.0,
+              0.6522
+            ],
+            [
+              1.0,
+              0.6429
+            ],
+            [
+              1.0,
+              0.6338
+            ],
+            [
+              1.0,
+              0.6164
+            ],
+            [
+              1.0,
+              0.6081
+            ],
+            [
+              1.0,
+              0.6
+            ],
+            [
+              1.0,
+              0.5844
+            ],
+            [
+              1.0,
+              0.5769
+            ]
+          ]
+        }
+      }
+    },
+    "confusion": {
+      "validation": [
+        {
+          "threshold": 0.2,
+          "tp": 92,
+          "fp": 38,
+          "fn": 19,
+          "tn": 451,
+          "precision": 0.7077,
+          "recall": 0.8288,
+          "f1": 0.7635
+        },
+        {
+          "threshold": 0.5,
+          "tp": 75,
+          "fp": 10,
+          "fn": 36,
+          "tn": 479,
+          "precision": 0.8824,
+          "recall": 0.6757,
+          "f1": 0.7653
+        },
+        {
+          "threshold": 0.8,
+          "tp": 64,
+          "fp": 0,
+          "fn": 47,
+          "tn": 489,
+          "precision": 1.0,
+          "recall": 0.5766,
+          "f1": 0.7314
+        }
+      ],
+      "test": [
+        {
+          "threshold": 0.2,
+          "tp": 22,
+          "fp": 6,
+          "fn": 1,
+          "tn": 49,
+          "precision": 0.7857,
+          "recall": 0.9565,
+          "f1": 0.8627
+        },
+        {
+          "threshold": 0.5,
+          "tp": 19,
+          "fp": 0,
+          "fn": 4,
+          "tn": 55,
+          "precision": 1.0,
+          "recall": 0.8261,
+          "f1": 0.9048
+        },
+        {
+          "threshold": 0.8,
+          "tp": 18,
+          "fp": 0,
+          "fn": 5,
+          "tn": 55,
+          "precision": 1.0,
+          "recall": 0.7826,
+          "f1": 0.878
+        }
+      ]
+    },
+    "histogram": {
+      "validation": [
+        {
+          "from": 0.0,
+          "to": 0.1,
+          "fraud": 16,
+          "legit": 436
+        },
+        {
+          "from": 0.1,
+          "to": 0.2,
+          "fraud": 3,
+          "legit": 15
+        },
+        {
+          "from": 0.2,
+          "to": 0.3,
+          "fraud": 11,
+          "legit": 20
+        },
+        {
+          "from": 0.3,
+          "to": 0.4,
+          "fraud": 1,
+          "legit": 5
+        },
+        {
+          "from": 0.4,
+          "to": 0.5,
+          "fraud": 5,
+          "legit": 3
+        },
+        {
+          "from": 0.5,
+          "to": 0.6,
+          "fraud": 7,
+          "legit": 7
+        },
+        {
+          "from": 0.6,
+          "to": 0.7,
+          "fraud": 1,
+          "legit": 1
+        },
+        {
+          "from": 0.7,
+          "to": 0.8,
+          "fraud": 3,
+          "legit": 2
+        },
+        {
+          "from": 0.8,
+          "to": 0.9,
+          "fraud": 12,
+          "legit": 0
+        },
+        {
+          "from": 0.9,
+          "to": 1.0,
+          "fraud": 52,
+          "legit": 0
+        }
+      ],
+      "test": [
+        {
+          "from": 0.0,
+          "to": 0.1,
+          "fraud": 1,
+          "legit": 45
+        },
+        {
+          "from": 0.1,
+          "to": 0.2,
+          "fraud": 0,
+          "legit": 4
+        },
+        {
+          "from": 0.2,
+          "to": 0.3,
+          "fraud": 0,
+          "legit": 6
+        },
+        {
+          "from": 0.3,
+          "to": 0.4,
+          "fraud": 3,
+          "legit": 0
+        },
+        {
+          "from": 0.4,
+          "to": 0.5,
+          "fraud": 0,
+          "legit": 0
+        },
+        {
+          "from": 0.5,
+          "to": 0.6,
+          "fraud": 0,
+          "legit": 0
+        },
+        {
+          "from": 0.6,
+          "to": 0.7,
+          "fraud": 0,
+          "legit": 0
+        },
+        {
+          "from": 0.7,
+          "to": 0.8,
+          "fraud": 1,
+          "legit": 0
+        },
+        {
+          "from": 0.8,
+          "to": 0.9,
+          "fraud": 4,
+          "legit": 0
+        },
+        {
+          "from": 0.9,
+          "to": 1.0,
+          "fraud": 14,
+          "legit": 0
+        }
+      ]
+    },
+    "errors_at_0.5": [
+      {
+        "case_id": "T093",
+        "kind": "false negative",
+        "reason_code": "E_IBAN_CHANGED",
+        "risk_score": 38.6,
+        "features": {
+          "amount_z": -0.4789,
+          "iban_changed": 1,
+          "month_load": 0.2097
+        }
+      },
+      {
+        "case_id": "T096",
+        "kind": "false negative",
+        "reason_code": "E_IBAN_CHANGED",
+        "risk_score": 35.3,
+        "features": {
+          "amount_z": -0.7492,
+          "iban_changed": 1,
+          "month_load": 0.2531
+        }
+      },
+      {
+        "case_id": "T098",
+        "kind": "false negative",
+        "reason_code": "E_IBAN_CHANGED",
+        "risk_score": 32.3,
+        "features": {
+          "amount_z": -1.0608,
+          "iban_changed": 1,
+          "month_load": 0.069
+        }
+      },
+      {
+        "case_id": "T111",
+        "kind": "false negative",
+        "reason_code": "E_VAT_MISMATCH",
+        "risk_score": 1.2,
+        "features": {
+          "amount_z": -1.535,
+          "month_load": 0.1013
+        }
+      }
+    ]
   }
 }

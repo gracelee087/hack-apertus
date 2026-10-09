@@ -484,6 +484,12 @@ def analytics():
             "risk_model": {k: v for k, v in _read(RESULTS / "risk_model.json", {}).items() if k != "scores"}}
 
 
+@app.get("/api/datascience")
+def datascience():
+    """The risk model's full pipeline: data, features, split, search, curves, confusion matrices, errors."""
+    return {k: v for k, v in _read(RESULTS / "risk_model.json", {}).items() if k != "scores"}
+
+
 @app.get("/api/ledger")
 def ledger():
     ok, bad = verify(LEDGER.entries)
