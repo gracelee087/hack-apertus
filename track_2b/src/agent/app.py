@@ -182,6 +182,7 @@ def overview():
         for code, r in c["risks"].items():
             total[code] += r["count"]
     names_by_id = {c["client_id"]: c["name"] for c in clients}
+    scores = _read(RESULTS / "risk_model.json", {}).get("scores", {})
     alerts = []  # open approvals, fraud signals first, then by amount
     for i in queue_items():
         if i["status"] != "open":
@@ -194,6 +195,9 @@ def overview():
                        "vendor": i["vendor"], "amount_chf": i["amount_chf"], "fraud": fraud,
                        "due_date": i.get("due_date"), "days_left": days_left, "days_needed": need,
                        "slack": None if days_left is None else days_left - need,
+                       "risk_score": (scores.get(i["case_id"]) or {}).get("risk_score"),
+                       "expected_loss_chf": (scores.get(i["case_id"]) or {}).get("expected_loss_chf"),
+                       "risk_factors": (scores.get(i["case_id"]) or {}).get("top_factors", []),
                        "risks": [{"code": c, "label": RISKS[c][0], "kind": RISKS[c][1]} for c in codes]})
     # priority: fraud first, then least time to spare before the due date, then amount
     alerts.sort(key=lambda a: (not a["fraud"], a["slack"] if a["slack"] is not None else 10**6, -(a["amount_chf"] or 0)))
@@ -476,7 +480,8 @@ def analytics():
     outliers.sort(key=lambda o: -o["ratio"])
     return {"production": production, "n_test": len(preds),
             "caught": {k: {"code": c["code"], "review": c["review"], "missed": c["missed"]} for k, c in caught.items()},
-            "ibans_seen": len(by_iban), "iban_reuse": reused, "outlier_ratio": OUTLIER_RATIO, "outliers": outliers}
+            "ibans_seen": len(by_iban), "iban_reuse": reused, "outlier_ratio": OUTLIER_RATIO, "outliers": outliers,
+            "risk_model": {k: v for k, v in _read(RESULTS / "risk_model.json", {}).items() if k != "scores"}}
 
 
 @app.get("/api/ledger")

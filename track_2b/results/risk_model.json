@@ -1,0 +1,949 @@
+{
+  "train_rows": 3000,
+  "train_fraud_rate": 0.1573,
+  "train_must_not_autopay_rate": 0.2707,
+  "features": [
+    "amount_z",
+    "iban_changed",
+    "iban_invalid",
+    "new_vendor",
+    "round_amount",
+    "vat_mismatch",
+    "wrong_addressee",
+    "urgency_terms",
+    "short_due",
+    "duplicate",
+    "over_single_limit",
+    "out_of_scope",
+    "month_load"
+  ],
+  "model_A": {
+    "target": "fraud",
+    "l2": 0.01,
+    "intercept": -2.5446,
+    "coefficients": {
+      "amount_z": 1.0136,
+      "iban_changed": 0.9284,
+      "iban_invalid": 1.4456,
+      "new_vendor": 0.7722,
+      "round_amount": 0.2306,
+      "vat_mismatch": 0.6763,
+      "wrong_addressee": 1.4025,
+      "urgency_terms": 1.4394,
+      "short_due": 0.1431,
+      "duplicate": 0.6743,
+      "over_single_limit": -0.5893,
+      "out_of_scope": -0.4435,
+      "month_load": -0.0422
+    }
+  },
+  "model_B": {
+    "target": "must not be paid automatically",
+    "l2": 10.0
+  },
+  "validation": {
+    "A_logistic": {
+      "n": 600,
+      "positives": 111,
+      "roc_auc": 0.9117,
+      "avg_precision": 0.8617,
+      "precision_at_10": 1.0,
+      "recall_at_0.5": 0.6937,
+      "precision_at_0.5": 0.9059
+    },
+    "A_unsupervised": {
+      "n": 600,
+      "positives": 111,
+      "roc_auc": 0.8551,
+      "avg_precision": 0.5492,
+      "precision_at_10": 0.4
+    },
+    "B_logistic": {
+      "n": 600,
+      "positives": 158,
+      "roc_auc": 0.9961,
+      "avg_precision": 0.99,
+      "precision_at_10": 1.0,
+      "recall_at_0.5": 0.8861,
+      "precision_at_0.5": 0.979
+    }
+  },
+  "test": {
+    "A_logistic": {
+      "n": 78,
+      "positives": 23,
+      "roc_auc": 0.9542,
+      "avg_precision": 0.9483,
+      "precision_at_10": 1.0,
+      "recall_at_0.5": 0.913,
+      "precision_at_0.5": 0.84
+    },
+    "A_unsupervised": {
+      "n": 78,
+      "positives": 23,
+      "roc_auc": 0.8324,
+      "avg_precision": 0.6759,
+      "precision_at_10": 0.6
+    },
+    "B_logistic": {
+      "n": 78,
+      "positives": 45,
+      "roc_auc": 0.9266,
+      "avg_precision": 0.9581,
+      "precision_at_10": 1.0,
+      "recall_at_0.5": 0.8222,
+      "precision_at_0.5": 0.9024
+    }
+  },
+  "beyond_rules": {
+    "invoices_rules_let_through": 43,
+    "fraud_among_them": 10,
+    "roc_auc": 0.9303,
+    "missed_by_production": [
+      {
+        "case_id": "T110",
+        "reason_code": "E_PRESSURE",
+        "risk_score": 100.0,
+        "rank_among_passed": 3
+      },
+      {
+        "case_id": "T111",
+        "reason_code": "E_VAT_MISMATCH",
+        "risk_score": 0.9,
+        "rank_among_passed": 33
+      }
+    ]
+  },
+  "scores": {
+    "T002": {
+      "risk_score": 0.1,
+      "expected_loss_chf": 1.53,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T003": {
+      "risk_score": 0.7,
+      "expected_loss_chf": 4.71,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T005": {
+      "risk_score": 1.9,
+      "expected_loss_chf": 21.99,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T007": {
+      "risk_score": 41.9,
+      "expected_loss_chf": 1199.74,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          3.337
+        ]
+      ]
+    },
+    "T008": {
+      "risk_score": 38.4,
+      "expected_loss_chf": 1013.11,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          3.178
+        ]
+      ]
+    },
+    "T009": {
+      "risk_score": 9.5,
+      "expected_loss_chf": 104.02,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          1.416
+        ]
+      ]
+    },
+    "T010": {
+      "risk_score": 93.2,
+      "expected_loss_chf": 2609.21,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          5.625
+        ],
+        [
+          "round_amount",
+          0.552
+        ]
+      ]
+    },
+    "T011": {
+      "risk_score": 69.3,
+      "expected_loss_chf": 2320.87,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          4.476
+        ]
+      ]
+    },
+    "T012": {
+      "risk_score": 0.1,
+      "expected_loss_chf": 1.21,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T013": {
+      "risk_score": 0.1,
+      "expected_loss_chf": 1.36,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T014": {
+      "risk_score": 75.6,
+      "expected_loss_chf": 1270.84,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          4.803
+        ]
+      ]
+    },
+    "T015": {
+      "risk_score": 2.5,
+      "expected_loss_chf": 33.77,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T016": {
+      "risk_score": 1.6,
+      "expected_loss_chf": 16.45,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T020": {
+      "risk_score": 4.1,
+      "expected_loss_chf": 67.4,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.504
+        ]
+      ]
+    },
+    "T021": {
+      "risk_score": 1.8,
+      "expected_loss_chf": 87.55,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T022": {
+      "risk_score": 0.1,
+      "expected_loss_chf": 0.51,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T023": {
+      "risk_score": 7.9,
+      "expected_loss_chf": 77.1,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          1.184
+        ]
+      ]
+    },
+    "T025": {
+      "risk_score": 0.2,
+      "expected_loss_chf": 2.39,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T026": {
+      "risk_score": 2.0,
+      "expected_loss_chf": 34.42,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T027": {
+      "risk_score": 11.2,
+      "expected_loss_chf": 108.73,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          1.562
+        ]
+      ]
+    },
+    "T028": {
+      "risk_score": 2.3,
+      "expected_loss_chf": 10.99,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T030": {
+      "risk_score": 3.3,
+      "expected_loss_chf": 18.57,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.271
+        ]
+      ]
+    },
+    "T031": {
+      "risk_score": 87.6,
+      "expected_loss_chf": 2724.18,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          5.625
+        ]
+      ]
+    },
+    "T034": {
+      "risk_score": 0.1,
+      "expected_loss_chf": 1.05,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T035": {
+      "risk_score": 35.9,
+      "expected_loss_chf": 664.0,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          3.08
+        ]
+      ]
+    },
+    "T036": {
+      "risk_score": 21.5,
+      "expected_loss_chf": 1001.07,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          2.36
+        ]
+      ]
+    },
+    "T037": {
+      "risk_score": 0.2,
+      "expected_loss_chf": 1.03,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T038": {
+      "risk_score": 3.0,
+      "expected_loss_chf": 44.18,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.178
+        ]
+      ]
+    },
+    "T041": {
+      "risk_score": 12.1,
+      "expected_loss_chf": 565.09,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          1.688
+        ]
+      ]
+    },
+    "T046": {
+      "risk_score": 0.3,
+      "expected_loss_chf": 6.14,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T047": {
+      "risk_score": 3.4,
+      "expected_loss_chf": 62.58,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          0.298
+        ]
+      ]
+    },
+    "T048": {
+      "risk_score": 0.9,
+      "expected_loss_chf": 2.56,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T049": {
+      "risk_score": 0.9,
+      "expected_loss_chf": 2.28,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T051": {
+      "risk_score": 1.6,
+      "expected_loss_chf": 56.06,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "round_amount",
+          0.552
+        ]
+      ]
+    },
+    "T053": {
+      "risk_score": 2.0,
+      "expected_loss_chf": 19.52,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T054": {
+      "risk_score": 10.7,
+      "expected_loss_chf": 249.58,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          1.535
+        ]
+      ]
+    },
+    "T055": {
+      "risk_score": 17.7,
+      "expected_loss_chf": 547.17,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          2.126
+        ]
+      ]
+    },
+    "T058": {
+      "risk_score": 2.7,
+      "expected_loss_chf": 76.17,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T059": {
+      "risk_score": 2.6,
+      "expected_loss_chf": 208.43,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T061": {
+      "risk_score": 2.6,
+      "expected_loss_chf": 68.14,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T063": {
+      "risk_score": 2.6,
+      "expected_loss_chf": 207.78,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T064": {
+      "risk_score": 2.5,
+      "expected_loss_chf": 87.29,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T065": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 1739.56,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_invalid",
+          14.148
+        ]
+      ]
+    },
+    "T066": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 4219.99,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_invalid",
+          14.148
+        ],
+        [
+          "amount_z",
+          2.002
+        ]
+      ]
+    },
+    "T067": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 1249.95,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_invalid",
+          14.148
+        ]
+      ]
+    },
+    "T068": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 3999.85,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_invalid",
+          14.148
+        ],
+        [
+          "round_amount",
+          0.552
+        ]
+      ]
+    },
+    "T071": {
+      "risk_score": 97.0,
+      "expected_loss_chf": 1192.63,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "duplicate",
+          7.509
+        ]
+      ]
+    },
+    "T073": {
+      "risk_score": 99.4,
+      "expected_loss_chf": 1690.14,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "duplicate",
+          7.509
+        ],
+        [
+          "amount_z",
+          0.598
+        ],
+        [
+          "round_amount",
+          0.552
+        ]
+      ]
+    },
+    "T074": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 589.89,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "duplicate",
+          7.509
+        ],
+        [
+          "vat_mismatch",
+          6.619
+        ]
+      ]
+    },
+    "T076": {
+      "risk_score": 97.5,
+      "expected_loss_chf": 1735.52,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "duplicate",
+          7.509
+        ]
+      ]
+    },
+    "T077": {
+      "risk_score": 2.8,
+      "expected_loss_chf": 577.44,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          2.429
+        ]
+      ]
+    },
+    "T078": {
+      "risk_score": 41.6,
+      "expected_loss_chf": 5461.98,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          5.625
+        ]
+      ]
+    },
+    "T080": {
+      "risk_score": 14.9,
+      "expected_loss_chf": 1698.2,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          4.251
+        ]
+      ]
+    },
+    "T081": {
+      "risk_score": 41.2,
+      "expected_loss_chf": 6409.55,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          5.625
+        ]
+      ]
+    },
+    "T082": {
+      "risk_score": 24.7,
+      "expected_loss_chf": 1485.59,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          4.819
+        ]
+      ]
+    },
+    "T086": {
+      "risk_score": 9.3,
+      "expected_loss_chf": 307.37,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          1.512
+        ]
+      ]
+    },
+    "T087": {
+      "risk_score": 0.6,
+      "expected_loss_chf": 6.71,
+      "is_fraud": 0,
+      "top_factors": []
+    },
+    "T088": {
+      "risk_score": 17.9,
+      "expected_loss_chf": 859.71,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          2.268
+        ]
+      ]
+    },
+    "T090": {
+      "risk_score": 27.4,
+      "expected_loss_chf": 722.8,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "amount_z",
+          2.826
+        ]
+      ]
+    },
+    "T091": {
+      "risk_score": 99.5,
+      "expected_loss_chf": 2766.19,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_changed",
+          3.455
+        ],
+        [
+          "amount_z",
+          2.911
+        ],
+        [
+          "urgency_terms",
+          1.967
+        ]
+      ]
+    },
+    "T093": {
+      "risk_score": 71.1,
+      "expected_loss_chf": 2267.54,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_changed",
+          3.455
+        ],
+        [
+          "amount_z",
+          0.855
+        ]
+      ]
+    },
+    "T094": {
+      "risk_score": 91.5,
+      "expected_loss_chf": 1776.04,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_changed",
+          3.455
+        ],
+        [
+          "amount_z",
+          2.319
+        ]
+      ]
+    },
+    "T096": {
+      "risk_score": 36.1,
+      "expected_loss_chf": 357.55,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_changed",
+          3.455
+        ]
+      ]
+    },
+    "T098": {
+      "risk_score": 87.6,
+      "expected_loss_chf": 1208.73,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "iban_changed",
+          3.455
+        ],
+        [
+          "amount_z",
+          1.886
+        ]
+      ]
+    },
+    "T099": {
+      "risk_score": 29.8,
+      "expected_loss_chf": 196.39,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T101": {
+      "risk_score": 29.5,
+      "expected_loss_chf": 1199.31,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T102": {
+      "risk_score": 29.8,
+      "expected_loss_chf": 911.29,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T103": {
+      "risk_score": 28.8,
+      "expected_loss_chf": 1326.41,
+      "is_fraud": 0,
+      "top_factors": [
+        [
+          "new_vendor",
+          2.752
+        ]
+      ]
+    },
+    "T105": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 4379.7,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "urgency_terms",
+          11.297
+        ],
+        [
+          "amount_z",
+          1.566
+        ]
+      ]
+    },
+    "T106": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 2839.56,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "urgency_terms",
+          11.297
+        ],
+        [
+          "amount_z",
+          0.77
+        ]
+      ]
+    },
+    "T107": {
+      "risk_score": 93.2,
+      "expected_loss_chf": 494.19,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "urgency_terms",
+          8.965
+        ]
+      ]
+    },
+    "T110": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 4649.68,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "urgency_terms",
+          11.297
+        ],
+        [
+          "amount_z",
+          1.581
+        ]
+      ]
+    },
+    "T111": {
+      "risk_score": 0.9,
+      "expected_loss_chf": 36.29,
+      "is_fraud": 1,
+      "top_factors": []
+    },
+    "T112": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 2607.07,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "vat_mismatch",
+          6.619
+        ],
+        [
+          "amount_z",
+          5.625
+        ]
+      ]
+    },
+    "T114": {
+      "risk_score": 99.5,
+      "expected_loss_chf": 6441.35,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "vat_mismatch",
+          6.619
+        ],
+        [
+          "amount_z",
+          2.219
+        ]
+      ]
+    },
+    "T115": {
+      "risk_score": 94.9,
+      "expected_loss_chf": 1801.99,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "vat_mismatch",
+          6.619
+        ]
+      ]
+    },
+    "T117": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 4009.98,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "wrong_addressee",
+          14.195
+        ],
+        [
+          "amount_z",
+          1.404
+        ]
+      ]
+    },
+    "T118": {
+      "risk_score": 100.0,
+      "expected_loss_chf": 2490.0,
+      "is_fraud": 1,
+      "top_factors": [
+        [
+          "wrong_addressee",
+          14.195
+        ],
+        [
+          "amount_z",
+          3.061
+        ]
+      ]
+    }
+  }
+}

@@ -26,6 +26,9 @@ Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 
 must not pay (CHF 138,781); with the harness 7 (CHF 26,771), and 2 (CHF 9,290) with two lessons
 promoted to hard checks, with no legitimate payment missed. Twelve attack types on the agent's
 identity and authority: 420 / 420 blocked, 35 / 35 legitimate requests accepted.
+A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) ranks the
+approval queue without changing any decision: ROC AUC 0.954 for fraud on the 78 test invoices
+(unsupervised baseline 0.832), and it ranks 3rd the pressure-fraud invoice the rules and Apertus missed.
 See `results/summary.md` and `technical_report.md`.
 
 ## Run
@@ -45,8 +48,8 @@ Tests: `pip install pytest && python -m pytest tests`.
 
 | Path | Content |
 |---|---|
-| `src/agent/` | datagen, llm client (record/replay), badge, decide, lessons, identity, gate, desk, security, ledger, pain001, evaluate, web app |
-| `data/` | synthetic mandates, suppliers, 120 invoices (labels + reviewer notes), recorded Apertus responses |
+| `src/agent/` | datagen, llm client (record/replay), badge, decide, lessons, risk (score model), identity, gate, desk, security, ledger, pain001, evaluate, web app |
+| `data/` | synthetic mandates, suppliers, 120 invoices (labels + reviewer notes), recorded Apertus responses, 3,000 past payments for the risk model (`history/`) |
 | `results/` | metrics, predictions, payment files, ledger from the reference run |
 | `tests/` | offline tests for the deterministic parts |
 

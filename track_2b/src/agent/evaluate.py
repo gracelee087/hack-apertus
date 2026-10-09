@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from . import badge, decide, identity, lessons, llm, pain001, prompts, security
+from . import badge, decide, identity, lessons, llm, pain001, prompts, risk, security
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256, write_jsonl
 from .datagen import TODAY
 from .desk import Desk
@@ -210,6 +210,21 @@ def _num(x):
         return None
 
 
+def risk_md(r) -> str:
+    rows = [("fraud, supervised (logistic regression)", "A_logistic"), ("fraud, unsupervised baseline", "A_unsupervised"),
+            ("must not autopay, supervised (comparison)", "B_logistic")]
+    lines = [f"\n## Risk score (data-science layer, {r['train_rows']} synthetic past payments, ranks only)\n",
+             "| Model | ROC AUC validation | ROC AUC test | Avg precision test |", "|---|---|---|---|"]
+    lines += [f"| {name} | {r['validation'][k]['roc_auc']} | {r['test'][k]['roc_auc']} | {r['test'][k]['avg_precision']} |"
+              for name, k in rows]
+    b = r["beyond_rules"]
+    lines.append(f"\nOn the {b['invoices_rules_let_through']} test invoices the rules let through ({b['fraud_among_them']} fraud): "
+                 f"ROC AUC {b['roc_auc']}. Missed by production: "
+                 + ", ".join(f"{m['case_id']} ({m['reason_code']}) score {m['risk_score']}, rank {m['rank_among_passed']}"
+                             for m in b["missed_by_production"]) + "\n")
+    return "\n".join(lines)
+
+
 def summary_md(metrics, extraction, lesson_info, files, ledger_ok, n_test, gate_codes, attacks, audit):
     rows = "\n".join(
         f"| {name} | {SYSTEMS[name]} | {m['accuracy']:.3f} | {m['wrong_payment_rate']:.3f} "
@@ -284,11 +299,12 @@ def run():
     extraction = extraction_scores(preds)
     files, ledger_ok, gate_codes, audit = write_outputs(test, preds, mandates, manual1, lesson_info, out)
     attacks = security.run(preds, mandates, out)
+    risk_model = risk.run(preds, {c["case_id"]: c for c in test}, PRODUCTION)
     report = {"model": llm.model_name(), "llm_mode": llm.mode(), "n_test": len(test), "metrics": metrics,
               "extraction": extraction, "lessons": lesson_info, "payment_files": files, "ledger_verifies": ledger_ok,
               "gate_reference_run": gate_codes, "identity_audit": audit, "attacks": attacks}
     (out / "metrics.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    md = summary_md(metrics, extraction, lesson_info, files, ledger_ok, len(test), gate_codes, attacks, audit)
+    md = summary_md(metrics, extraction, lesson_info, files, ledger_ok, len(test), gate_codes, attacks, audit)         + risk_md(risk_model)
     (out / "summary.md").write_text(md, encoding="utf-8")
     print(md, flush=True)
     return report

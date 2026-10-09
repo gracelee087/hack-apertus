@@ -6,9 +6,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from agent import badge, credential, datagen, identity, lessons, pain001  # noqa: E402
+from agent import badge, credential, datagen, identity, lessons, pain001, risk  # noqa: E402
 from agent.desk import Desk, seat_of  # noqa: E402
-from agent.common import iban_valid, make_ch_iban  # noqa: E402
+from agent.common import DATA, iban_valid, load_json, make_ch_iban  # noqa: E402
 from agent.ledger import Ledger, audit_identities, verify  # noqa: E402
 
 MANDATES, VENDORS, CASES = datagen.build()
@@ -157,3 +157,17 @@ def test_mask_removes_identifiers():
     out = lessons.mask(note, ["Mühle Rüti AG"])
     for secret in ("1234", "Mühle", "1'234", "CH86"):
         assert secret not in out, out
+
+
+def test_risk_score_learns_fraud_patterns():
+    rows = risk.generate_history(n=600, seed=1)
+    assert rows == risk.generate_history(n=600, seed=1)  # fixed seed, same data
+    mandates = {m["client_id"]: m for m in load_json(DATA / "mandates.json")}
+    vendors = load_json(DATA / "vendors.json")
+    base = risk.amount_baseline(rows)
+    X = [risk.features(r, mandates[r["client_id"]], vendors[r["client_id"]], base) for r in rows]
+    y = [r["is_fraud"] for r in rows]
+    Xs, _ = risk.standardize(X)
+    w = risk.fit_logistic(Xs, y, 1.0)
+    assert risk.roc_auc(y, risk.predict(w, Xs)) > 0.85
+    assert w[1 + risk.FEATURES.index("iban_changed")] > 0 and w[1 + risk.FEATURES.index("urgency_terms")] > 0

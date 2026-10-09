@@ -198,6 +198,11 @@ const ATTACK_KO = {"legitimate request (control)": "정상 요청 (대조군)", 
 const EXTRACT_KO = {iban: "IBAN", total_chf: "합계 금액", invoice_no: "청구서 번호", vendor: "거래처", addressee: "수신인", parsed: "올바른 JSON"};
 const EXTRACT_EN = {iban: "IBAN", total_chf: "total amount", invoice_no: "invoice number", vendor: "supplier", addressee: "addressee", parsed: "valid JSON"};
 const CAT_KO = {ingredients: "원재료", materials: "자재", utilities: "공과금", rent: "임대료", software: "소프트웨어", cloud: "클라우드", telecom: "통신", insurance: "보험", consulting: "자문"};
+const FEAT = {amount_z: ["평소 대비 금액", "amount vs usual"], iban_changed: ["계좌 변경", "bank details changed"], iban_invalid: ["잘못된 IBAN", "invalid IBAN"],
+  new_vendor: ["처음 보는 거래처", "unknown supplier"], round_amount: ["딱 떨어지는 금액", "round amount"], vat_mismatch: ["금액 합계 불일치", "amounts do not add up"],
+  wrong_addressee: ["다른 회사 앞", "addressed to another company"], urgency_terms: ["재촉·비밀 표현", "pressure / secrecy words"], short_due: ["짧은 지급 기한", "short due date"],
+  duplicate: ["중복 청구", "duplicate"], over_single_limit: ["건당 한도 초과", "above single limit"], out_of_scope: ["위임 범위 밖", "outside the mandate"], month_load: ["월 한도 소진율", "monthly limit used"]};
+const featName = f => FEAT[f] ? t(FEAT[f][0], FEAT[f][1]) : f;
 const DEC_KO = {pay: "지급", escalate: "보류", reject: "거절"};
 const riskName = (code, en) => t(RISK_KO[code] || en || code, en || code);
 const gateName = g => LANG === "ko" && GATE_KO[g] ? `${GATE_KO[g]}` : g;
@@ -385,10 +390,11 @@ async function dashboard() {
 function alertTable(rows) {
   if (!rows.length) return `<p class="mute">${t("대기 건 없음", "nothing waiting")}</p>`;
   const spare = a => a.slack == null ? `<span class="mute">–</span>` : `<b class="${a.slack <= URGENT ? "bad" : a.slack <= 7 ? "warn" : ""}">${a.slack}${t("일", "d")}</b>`;
-  return `<div class="alerts"><table><tr><th>#</th><th>${t("심각도", "Severity")}</th><th>${t("건", "Case")}</th><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("신호", "Signals")}</th><th>${t("마감", "Due")}</th><th class="n">${t("여유", "Spare")}</th><th class="n">CHF</th><th></th></tr>
+  return `<div class="alerts"><table><tr><th>#</th><th>${t("심각도", "Severity")}</th><th>${t("건", "Case")}</th><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("신호", "Signals")}</th><th class="n">${t("위험 점수", "Risk score")}</th><th>${t("마감", "Due")}</th><th class="n">${t("여유", "Spare")}</th><th class="n">CHF</th><th></th></tr>
     ${rows.map(a => `<tr><td><span class="rank ${a.rank <= 3 ? "top" : ""}">${a.rank}</span></td><td>${a.fraud ? `<span class="pill bad">${t("사기 의심", "Fraud risk")}</span>` : `<span class="pill warn">${t("통제·한도", "Control")}</span>`}</td>
       <td><code>${esc(a.case_id)}</code></td><td><a href="#/c/${a.client_id}">${esc(a.client)}</a></td><td>${esc(a.vendor)}</td>
       <td>${a.risks.map(r => `<span class="sig ${r.kind === "fraud" ? "bad" : "warn"}">${esc(riskName(r.code, r.label))}</span>`).join("")}</td>
+      <td class="n" style="white-space:nowrap" data-tip="${esc(a.risk_score == null ? "" : `${t("예상 손실", "expected loss")} CHF ${chf0(a.expected_loss_chf)} · ${a.risk_factors.map(([f]) => featName(f)).join(", ")}`)}">${a.risk_score == null ? `<span class="mute">–</span>` : `<b class="${a.risk_score >= 50 ? "bad" : a.risk_score >= 20 ? "warn" : "mute"}">${Math.round(a.risk_score)}</b>`}</td>
       <td style="white-space:nowrap">${a.days_left == null ? "–" : `D-${a.days_left} <span class="meta">${esc(a.due_date.slice(5).replace("-", "/"))}</span>`}</td>
       <td class="n" style="white-space:nowrap" data-tip="${esc(t(`마감까지 ${a.days_left}일 − 확인·은행 ${a.days_needed}일`, `${a.days_left} days to due − ${a.days_needed} to verify and bank`))}">${spare(a)}</td>
       <td class="n"><b>${chf(a.amount_chf)}</b></td>
@@ -610,16 +616,44 @@ async function ledgerPage() {
       " and the ledger key, then every client mandate in full and each agent's entity card and badge as issued. The identity audit checks from the ledger alone that every executed agent action came from an agent the firm issued and had not revoked:")} ${esc(Object.values(l.audit.agents_issued).join(", "))}.</p>`)}
     ${more(t("기록 목록", "Entries"), ledgerTable(l.entries))}</div>`;
 }
+function riskModelCard(rm) {
+  const M = [["A_logistic", t("사기 · 지도 학습 (로지스틱 회귀)", "Fraud · supervised (logistic regression)")], ["A_unsupervised", t("사기 · 비지도 기준선", "Fraud · unsupervised baseline")],
+             ["B_logistic", t("자동 지급 불가 전부 · 지도 (비교용)", "Must not autopay · supervised (comparison)")]];
+  const co = Object.entries(rm.model_A.coefficients).sort((x, y) => y[1] - x[1]), maxc = Math.max(...co.map(([, c]) => Math.abs(c)));
+  const b = rm.beyond_rules, A = rm.test.A_logistic, U = rm.test.A_unsupervised;
+  return `<div class="card"><h2>${ic("chart", 17)} ${t("위험 점수 모델 (데이터과학)", "Risk score model (data science)")}</h2>
+    <p class="sub">${t(`합성 과거 지급 ${rm.train_rows.toLocaleString()}건(사기 ${(100 * rm.train_fraud_rate).toFixed(1)}%)으로 학습하고, Apertus가 실제로 읽은 테스트 청구서 ${A.n}건(사기 ${A.positives}건)으로 시험. 점수는 처리 순서와 경고에만 쓰고 지급 결정은 바꾸지 않아요.`,
+      `Trained on ${rm.train_rows.toLocaleString()} synthetic past payments (${(100 * rm.train_fraud_rate).toFixed(1)}% fraud), tested on the ${A.n} test invoices as Apertus read them (${A.positives} fraud). The score ranks and warns; it never changes a payment decision.`)}</p>
+    <div class="kpis">${kpi("check", t("테스트 ROC AUC · 지도", "Test ROC AUC · supervised"), A.roc_auc.toFixed(3), {tone: "good", meta: t(`비지도 기준선 ${U.roc_auc.toFixed(3)}`, `unsupervised ${U.roc_auc.toFixed(3)}`)})}
+      ${kpi("chart", t("평균 정밀도 (AUPRC)", "Average precision"), A.avg_precision.toFixed(3), {meta: t(`비지도 ${U.avg_precision.toFixed(3)}`, `unsupervised ${U.avg_precision.toFixed(3)}`)})}
+      ${kpi("shield", t("규칙 통과분에서 ROC AUC", "ROC AUC where rules said pay"), b.roc_auc.toFixed(3), {meta: t(`${b.invoices_rules_let_through}건 중 사기 ${b.fraud_among_them}건`, `${b.fraud_among_them} fraud of ${b.invoices_rules_let_through}`)})}
+      ${kpi("alert", t("운영이 놓친 건의 점수", "Score of what production missed"), b.missed_by_production.map(m => Math.round(m.risk_score)).join(" · "), {tone: "warn", meta: b.missed_by_production.map(m => `${m.case_id} ${riskName(m.reason_code)}${m.rank_among_passed ? t(` ${m.rank_among_passed}위`, ` #${m.rank_among_passed}`) : ""}`).join(" · ")})}</div>
+    <div class="grid2" style="gap:28px">
+      <div><h3>${t("모델별 ROC AUC", "ROC AUC by model")}</h3>${legend([[t("검증 (학습과 같은 합성 분포)", "validation (same synthetic distribution)"), C.fraud], [t("테스트 (Apertus가 읽은 청구서)", "test (invoices as Apertus read them)"), C.control]])}
+        <div class="bars">${M.map(([k, n]) => { const v = rm.validation[k].roc_auc, s = rm.test[k].roc_auc;
+          return `<div class="lb">${esc(n)}</div><div class="pair" data-tip="${esc(`${n}: ${t("검증", "validation")} ${v} · ${t("테스트", "test")} ${s}`)}"><i style="width:${100 * v}%;background:${C.fraud}"></i><i style="width:${100 * s}%;background:${C.control}"></i></div><div class="vl">${v.toFixed(2)} / ${s.toFixed(2)}</div>`; }).join("")}</div>
+        <p class="meta">${t("비교용 B는 검증에서 거의 1.0 — 규칙이 이미 잡는 한도·범위 위반을 다시 배운 것이라 높게 나와요. 메인은 A(사기).", "The comparison model B is near 1.0 on validation because it relearns limit and scope violations the rules already catch. The main model is A (fraud).")}</p></div>
+      <div><h3>${t("무엇이 위험 점수를 올리나 (계수)", "What raises the score (coefficients)")}</h3>
+        <div class="bars">${co.map(([f, c]) => `<div class="lb">${esc(featName(f))}</div><div class="track"><div class="seg" style="width:${100 * Math.abs(c) / maxc}%;background:${c >= 0 ? C.control : "var(--axis)"}" data-tip="${esc(`${featName(f)}: ${c}`)}"></div></div><div class="vl">${c > 0 ? "+" : ""}${c.toFixed(2)}</div>`).join("")}</div>
+        <p class="meta">${t("표준화한 특징값의 계수. 회색 = 점수를 낮춤(한도·범위 위반은 사기가 아니라 통제 문제라서).", "Coefficients on standardised features. Grey lowers the score (limit and scope breaches are control issues, not fraud).")}</p></div>
+    </div>
+    ${more(t("지표 표", "Metrics table"), `<table><tr><th>${t("모델", "Model")}</th><th>${t("데이터", "Data")}</th><th class="n">n</th><th class="n">${t("양성", "Positives")}</th><th class="n">ROC AUC</th><th class="n">AUPRC</th><th class="n">P@10</th><th class="n">${t("재현율@0.5", "Recall@0.5")}</th><th class="n">${t("정밀도@0.5", "Precision@0.5")}</th></tr>
+      ${M.flatMap(([k, n]) => [["validation", t("검증", "validation")], ["test", t("테스트", "test")]].map(([d, dn]) => { const r = rm[d][k];
+        return `<tr><td>${esc(n)}</td><td>${dn}</td><td class="n">${r.n}</td><td class="n">${r.positives}</td><td class="n">${r.roc_auc}</td><td class="n">${r.avg_precision}</td><td class="n">${r.precision_at_10}</td><td class="n">${r["recall_at_0.5"] ?? "–"}</td><td class="n">${r["precision_at_0.5"] ?? "–"}</td></tr>`; })).join("")}</table>
+      <p class="meta">${t("학습·검증 = 합성 과거 지급(8:2 분할, 규제 강도는 검증으로 선택). 테스트 = 처음 보는 청구서 78건. 합성 데이터라 실제 성능은 실데이터로 다시 재야 해요.", "Train / validation = synthetic past payments (80/20 split, regularisation chosen on validation). Test = 78 unseen invoices. Synthetic data: real performance must be re-measured on real data.")}</p>`)}</div>`;
+}
 async function analyticsPage() {
   const a = await api("/api/analytics");
   const types = Object.entries(a.caught), sum = k => types.reduce((s, [, c]) => s + c[k], 0);
   const hatch = "repeating-linear-gradient(45deg, var(--st-crit) 0 2px, transparent 2px 6px)";
   const total = sum("code") + sum("review") + sum("missed");
+  const rm = a.risk_model || {};
   $("main").innerHTML = `${pageHead(t("위험 분석", "Risk analytics"), t(`사기·통제 위험을 누가 잡았는지, 고객사를 가로지르는 신호. 탐지 성과는 테스트 청구서 ${a.n_test}건(정답 라벨 있음) 기준, 나머지는 장부 기준.`, `Who caught which risk, and signals across clients. Detection uses the ${a.n_test} labelled test invoices; the rest comes from the ledger.`))}
   <div class="kpis">${kpi("ban", t("자동 지급하면 안 되는 건", "Must not be paid automatically"), total)}
     ${kpi("key", t("코드 검사가 잡음", "Caught by code checks"), sum("code"), {meta: t("위임장·계좌·한도·중복·승격된 교훈", "mandate, account, limits, duplicates, promoted lessons")})}
     ${kpi("cpu", t("Apertus 검토가 잡음", "Caught by Apertus review"), sum("review"), {meta: t("재촉·비밀 요구 등 내용", "pressure, secrecy and other content")})}
     ${kpi("alert", t("놓침 (잘못 지급)", "Missed (paid wrongly)"), sum("missed"), {tone: "crit", cls: "bad"})}</div>
+  ${rm.test ? riskModelCard(rm) : ""}
   <div class="card"><h2>${t("위험 유형별로 누가 잡았나", "Who caught each risk type")}</h2><p class="sub">${t("운영 구성(교훈 승격 포함 ✱) 기준. 빗금 = 놓쳐서 지급된 건.", "Production configuration (lessons promoted ✱). Hatched = paid although it should not have been.")}</p>
     ${legend([[t("코드 검사", "code checks"), C.control], [t("Apertus 검토", "Apertus review"), C.fraud], [t("놓침", "missed"), hatch]])}
     ${stacked(types.sort((x, y) => (y[1].code + y[1].review + y[1].missed) - (x[1].code + x[1].review + x[1].missed)).map(([k, c]) => ({label: riskName(k), parts: [

@@ -32,5 +32,7 @@ jobs:
           mkdir -p ci-results
           docker run --rm -v "$PWD/ci-results:/app/results" payagent python -m agent eval
 
-      - name: Metrics match the committed reference run
-        run: diff --strip-trailing-cr results/metrics.json ci-results/metrics.json
+      - name: Metrics and risk model match the committed reference run
+        run: |
+          diff --strip-trailing-cr results/metrics.json ci-results/metrics.json
+          diff --strip-trailing-cr results/risk_model.json ci-results/risk_model.json
