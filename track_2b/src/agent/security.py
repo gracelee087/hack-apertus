@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from . import credential, identity
 from .common import normalize_iban
 from .datagen import TODAY
-from .desk import Desk
+from .desk import Desk, seat_of
 from .ledger import Ledger
 
 START = datetime(TODAY.year, TODAY.month, TODAY.day, 10, 0, tzinfo=timezone.utc)
@@ -47,10 +47,16 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
     attacker = identity.key("attacker")
     results = {}
 
+    active = [cid for cid, m in mandates.items() if not m["revoked"]]
+
     def desk(mands=None, clock=None):
         d = Desk(led, {k: copy.deepcopy(v) for k, v in (mands or mandates).items()}, clock=clock or _clock())
-        d.hire(manual_sha256="security-run")
+        for cid in active:
+            d.hire(cid, manual_sha256="security-run")
         return d
+
+    def key(d, p):
+        return d.agent_key(seat_of(p["client_id"]))
 
     def attempt(name, fn):
         r = results.setdefault(name, {"attempts": 0, "accepted": 0, "codes": Counter()})
@@ -62,33 +68,33 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
 
     def legit(p):
         d = desk()
-        res = d.request("payment.decide", p["client_id"], _payload(p), attack="none")
+        res = d.request(p["client_id"], "payment.decide", _payload(p), attack="none")
         return res["ok"], res["gate"]
 
     def forged(p):
         d = desk()
         st = identity.stamp(attacker, "payment.decide", p["client_id"], _payload(p), d.clock())
-        st["agent"] = d.agent_did  # claims to be the agent, signed with another key
+        st["agent"] = d.agent_did(seat_of(p["client_id"]))  # claims to be the agent, signed with another key
         res = d.submit(st, _payload(p), attack="forged_signature")
         return res["ok"], res["gate"]
 
     def tampered(p):
         d = desk()
-        st = identity.stamp(d.agent_key, "payment.decide", p["client_id"], _payload(p), d.clock())
+        st = identity.stamp(key(d, p), "payment.decide", p["client_id"], _payload(p), d.clock())
         changed = {**_payload(p), "iban": "CH9300762011623852957", "amount_chf": _payload(p)["amount_chf"] * 10}
         res = d.submit(st, changed, attack="tampered_payload")
         return res["ok"], res["gate"]
 
     def replay(p):
         d = desk()
-        st = identity.stamp(d.agent_key, "payment.decide", p["client_id"], _payload(p), d.clock())
+        st = identity.stamp(key(d, p), "payment.decide", p["client_id"], _payload(p), d.clock())
         d.submit(st, _payload(p), attack="replay_original")
         res = d.submit(st, _payload(p), attack="replay")
         return res["ok"], res["gate"]
 
     def stale(p):
         d = desk()
-        st = identity.stamp(d.agent_key, "payment.decide", p["client_id"], _payload(p), d.clock() - timedelta(hours=1))
+        st = identity.stamp(key(d, p), "payment.decide", p["client_id"], _payload(p), d.clock() - timedelta(hours=1))
         res = d.submit(st, _payload(p), attack="stale_stamp")
         return res["ok"], res["gate"]
 
@@ -100,54 +106,56 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
 
     def revoked_agent(p):
         d = desk()
-        old = d.agent_key
-        d.kill("security run")
-        d.hire(manual_sha256="security-run")  # v2 takes the seat; v1's key still exists somewhere
+        old = key(d, p)
+        d.kill(p["client_id"], "security run")
+        d.hire(p["client_id"], manual_sha256="security-run")  # v2 takes the seat; v1's key still exists
         st = identity.stamp(old, "payment.decide", p["client_id"], _payload(p), d.clock())
         res = d.submit(st, _payload(p), attack="revoked_agent")
         return res["ok"], res["gate"]
 
     def other_client(p):
         d = desk()
-        res = d.request("payment.decide", "C04", _payload(p, "C04"), attack="client_not_delegated")
+        other = next(c for c in active if c != p["client_id"])  # this client's agent acts for another client
+        st = identity.stamp(key(d, p), "payment.decide", other, _payload(p, other), d.clock())
+        res = d.submit(st, _payload(p, other), attack="cross_client")
         return res["ok"], res["gate"]
 
     def above_cap(p):
         d = desk()
-        res = d.request("payment.decide", p["client_id"], {**_payload(p), "amount_chf": 50000.0},
+        res = d.request(p["client_id"], "payment.decide", {**_payload(p), "amount_chf": 50000.0},
                         attack="above_badge_cap_without_grant")
         return res["ok"], res["gate"]
 
     def expired_badge(p):
         d = desk(clock=_clock(datetime(2027, 1, 15, 10, 0, tzinfo=timezone.utc)))
-        res = d.request("payment.decide", p["client_id"], _payload(p), attack="expired_badge")
+        res = d.request(p["client_id"], "payment.decide", _payload(p), attack="expired_badge")
         return res["ok"], res["gate"]
 
     def tampered_mandate(p):
         mands = copy.deepcopy(mandates)
         mands[p["client_id"]]["single_limit_chf"] = 10**7  # raised without the client's signature
         d = desk(mands)
-        res = d.request("payment.decide", p["client_id"], _payload(p), attack="tampered_mandate")
+        res = d.request(p["client_id"], "payment.decide", _payload(p), attack="tampered_mandate")
         return res["ok"], res["gate"]
 
     def foreign_delegate(p):
         mands = copy.deepcopy(mandates)
         mands[p["client_id"]] = _resign(mands[p["client_id"]], delegate=identity.did_of(attacker))
         d = desk(mands)
-        res = d.request("payment.decide", p["client_id"], _payload(p), attack="mandate_for_other_delegate")
+        res = d.request(p["client_id"], "payment.decide", _payload(p), attack="mandate_for_other_delegate")
         return res["ok"], res["gate"]
 
     def revoked_mandate(p):
         d = desk()
         d.mandates[p["client_id"]] = _resign(d.mandates[p["client_id"]], revoked=True, revoked_at=TODAY.isoformat())
-        res = d.request("payment.decide", p["client_id"], _payload(p), attack="mandate_revoked_after_hire")
+        res = d.request(p["client_id"], "payment.decide", _payload(p), attack="mandate_revoked_after_hire")
         return res["ok"], res["gate"]
 
     attempt("legitimate request (control)", legit)
     for name, fn in [("forged signature", forged), ("tampered amount / IBAN after signing", tampered),
                      ("replayed request", replay), ("stale request (1 h old)", stale),
                      ("unknown agent key", unknown_agent), ("revoked agent (v1 after kill switch)", revoked_agent),
-                     ("client not delegated to this agent", other_client),
+                     ("agent of one client acting for another client", other_client),
                      ("amount above badge cap, no human grant", above_cap), ("expired badge", expired_badge),
                      ("mandate limits tampered", tampered_mandate), ("mandate delegated to someone else", foreign_delegate),
                      ("mandate revoked by client", revoked_mandate)]:

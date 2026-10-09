@@ -185,12 +185,15 @@
   "ledger_verifies": true,
   "gate_reference_run": {
     "OK": 78,
-    "G4_CLIENT_NOT_COVERED": 4
+    "G3_NO_AGENT_FOR_CLIENT": 4
   },
   "identity_audit": {
     "firm_did": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
     "agents_issued": {
-      "did:key:z6MkrauM73rpFTZ833R5hLG2eup3BqZQqdwiWXV5uPMoMghQ": "payments-desk.v1"
+      "did:key:z6MkfxyrWjWLaZuf4EpLEyFB5o6E5J3e7F6iYTcN7efuKUNF": "payments-c01.v1",
+      "did:key:z6MkrDpeJw2ziwT5g3mMCbHcQ2RyVYNbYtThSKJaTZ2XiK7e": "payments-c02.v1",
+      "did:key:z6MkvsFV42Mgq489eT6vSUEfa72RgGRC4RLz6y1qnxyx8WNd": "payments-c03.v1",
+      "did:key:z6Mked6Mv7Y7DyZYYx9Fta9j2L9jxRqqKKpWp8AAJP6sW6Fr": "payments-c05.v1"
     },
     "agents_revoked": [],
     "agent_actions": 78,
@@ -254,7 +257,7 @@
         "G3_AGENT_REVOKED": 35
       }
     },
-    "client not delegated to this agent": {
+    "agent of one client acting for another client": {
       "attempts": 35,
       "accepted": 0,
       "blocked": 35,

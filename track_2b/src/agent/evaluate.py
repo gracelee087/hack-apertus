@@ -143,7 +143,9 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                manual_sha256=lesson_info["manual_gen0_sha256"])
     led.append(actor=identity.RESPONSIBLE_HUMAN, action="manual.published", generation=1,
                manual_sha256=lesson_info["manual_gen1_sha256"], based_on_overrules=lesson_info["overruled"])
-    desk.hire(manual_sha256=lesson_info["manual_gen1_sha256"])
+    for cid, m in mandates.items():  # one seat per client still delegating to the firm
+        if not m["revoked"]:
+            desk.hire(cid, manual_sha256=lesson_info["manual_gen1_sha256"])
     by_case = {c["case_id"]: c for c in test}
     payments, queue, gate_codes = defaultdict(list), [], Counter()
     for p in preds:
@@ -152,7 +154,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
         payload = {"case_id": c["case_id"], "decision": h["decision"], "vendor": f.get("vendor_name"),
                    "iban": normalize_iban(f.get("vendor_iban")), "amount_chf": _num(f.get("total_chf")),
                    "executes_payment": h["decision"] == "pay"}
-        res = desk.request("payment.decide", m["client_id"], payload, case_id=c["case_id"], decision=h["decision"],
+        res = desk.request(m["client_id"], "payment.decide", payload, case_id=c["case_id"], decision=h["decision"],
                            vendor=f.get("vendor_name"), iban=payload["iban"], amount_chf=payload["amount_chf"],
                            reason=h.get("reason", ""), checks=[x["code"] for x in h.get("findings", [])],
                            manual_sha256=lesson_info["manual_gen1_sha256"], model=llm.model_name())
@@ -166,7 +168,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
         elif h["decision"] == "escalate":
             queue.append({"case_id": c["case_id"], "client_id": m["client_id"], "client": m["name"],
                           "vendor": f.get("vendor_name"), "amount_chf": f.get("total_chf"),
-                          "iban": payload["iban"],
+                          "iban": payload["iban"], "checks": [x["code"] for x in h.get("findings", [])],
                           "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"})
     pay_dir = out / "payments"
     shutil.rmtree(pay_dir, ignore_errors=True)
@@ -177,7 +179,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                             datetime(TODAY.year, TODAY.month, TODAY.day, 9, 0), TODAY.isoformat())
         info = {"transactions": len(pays), "total_chf": round(sum(p["amount_chf"] for p in pays), 2),
                 "validation_errors": pain001.validate(xml)}
-        res = desk.request("payment.file", cid, {"file_sha256": sha256(xml), **info},
+        res = desk.request(cid, "payment.file", {"file_sha256": sha256(xml), **info},
                            file=f"payments/{cid}_pain001.xml", transactions=info["transactions"],
                            total_chf=info["total_chf"])
         gate_codes[res["gate"]] += 1

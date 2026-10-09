@@ -3,72 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Payment Agent Desk</title>
+<title>Treuhand Payment Agents</title>
 <style>
-:root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --mute:#5b6470; --line:#dde1e6; --acc:#c8102e;
-        --ok:#1a7f37; --warn:#9a6700; --bad:#cf222e; --chip:#eef1f4; }
+:root { --bg:#f5f6f8; --card:#fff; --ink:#1b1f24; --mute:#5b6470; --line:#dde1e6; --acc:#c8102e;
+        --ok:#1a7f37; --warn:#9a6700; --bad:#cf222e; --chip:#eef1f4; --heat:200,16,46; }
 @media (prefers-color-scheme: dark) { :root { --bg:#0f1216; --card:#171b21; --ink:#e6e9ed; --mute:#98a1ad;
-        --line:#2a3039; --acc:#ff4d61; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --chip:#222831; } }
+        --line:#2a3039; --acc:#ff4d61; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --chip:#222831; --heat:255,77,97; } }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+a { color:inherit; }
 header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
-         padding:16px; border-bottom:1px solid var(--line); background:var(--card); }
-header h1 { font-size:18px; margin:0; } header h1 span { color:var(--acc); }
-.meta { color:var(--mute); font-size:13px; }
-nav { display:flex; gap:4px; flex-wrap:wrap; padding:8px 16px; background:var(--card); border-bottom:1px solid var(--line); }
-nav button { border:0; background:none; color:var(--mute); padding:8px 12px; border-radius:6px; cursor:pointer; font:inherit; }
-nav button.on { background:var(--chip); color:var(--ink); font-weight:600; }
-main { max-width:1100px; margin:0 auto; padding:16px; }
-section { display:none; } section.on { display:block; }
+         padding:12px 16px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; z-index:2; }
+header h1 { font-size:17px; margin:0; } header h1 .mark { color:var(--acc); }
+.top { display:flex; gap:4px; flex-wrap:wrap; }
+.top a, .tabs a { text-decoration:none; color:var(--mute); padding:6px 12px; border-radius:6px; }
+.top a.on, .tabs a.on { background:var(--chip); color:var(--ink); font-weight:600; }
+.meta { color:var(--mute); font-size:12.5px; }
+main { max-width:1180px; margin:0 auto; padding:16px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; overflow-x:auto; }
-table { border-collapse:collapse; width:100%; font-size:14px; }
+h2 { font-size:16px; margin:0 0 8px; } h3 { font-size:14px; margin:14px 0 6px; }
+table { border-collapse:collapse; width:100%; font-size:13.5px; }
 th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-th { color:var(--mute); font-weight:600; } td.n { font-variant-numeric:tabular-nums; text-align:right; }
-.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; background:var(--chip); }
-.pay { color:var(--ok); } .escalate { color:var(--warn); } .reject { color:var(--bad); }
+th { color:var(--mute); font-weight:600; } td.n, th.n { font-variant-numeric:tabular-nums; text-align:right; }
+.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; background:var(--chip); white-space:nowrap; }
+.pay, .ok { color:var(--ok); } .escalate, .warn { color:var(--warn); } .reject, .bad { color:var(--bad); }
+.mute { color:var(--mute); } code { font-size:12px; }
 pre { white-space:pre-wrap; background:var(--chip); padding:10px; border-radius:6px; font-size:12.5px; margin:8px 0; }
-textarea, select, input { width:100%; font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:8px; }
-textarea { min-height:220px; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
+textarea, input, select { font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px; }
+textarea { width:100%; min-height:200px; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
 .btn { border:1px solid var(--line); background:var(--chip); color:var(--ink); border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; }
 .btn.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+.btn:disabled { opacity:.5; cursor:default; }
 .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
-.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
-.kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
-.kpi b { display:block; font-size:26px; } .kpi small { color:var(--mute); }
-h2 { font-size:16px; margin:0 0 8px; } .mute { color:var(--mute); }
-code { font-size:12.5px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+.kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+.kpi b { display:block; font-size:20px; white-space:nowrap; } .kpi small { color:var(--mute); }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-bottom:16px; }
+.client { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; text-decoration:none; display:block; }
+.client:hover { border-color:var(--acc); }
+.client.off { opacity:.6; }
+.client h3 { margin:0; font-size:15px; }
+.bar { height:8px; background:var(--chip); border-radius:99px; overflow:hidden; margin:6px 0 2px; }
+.bar i { display:block; height:100%; background:var(--ok); }
+.chips { display:flex; gap:4px; flex-wrap:wrap; margin-top:8px; }
+.chip { font-size:11.5px; padding:1px 7px; border-radius:99px; background:var(--chip); }
+.chip.fraud { color:var(--bad); } .chip.control { color:var(--warn); }
+.tabs { display:flex; gap:4px; flex-wrap:wrap; margin:8px 0 16px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+.heat td.n { min-width:52px; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:760px) { .two { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>■</span> Payment Agent Desk <span class="meta">— fiduciary back office</span></h1>
+  <h1><span class="mark">■</span> <span id="firm">Treuhand</span> <span class="meta">— payment agents</span></h1>
+  <nav class="top" id="top"></nav>
   <div class="meta" id="meta"></div>
 </header>
-<nav id="nav"></nav>
-<main>
-  <section id="overview"></section>
-  <section id="agent"></section>
-  <section id="queue"></section>
-  <section id="process">
-    <div class="card"><h2>Process a new invoice</h2>
-      <p class="mute">Apertus reads the invoice, the badge enforces the client's mandate, then Apertus reviews the content against the current manual. Every decision is written to the ledger.</p>
-      <label>Client</label><select id="pclient"></select>
-      <label style="display:block;margin-top:8px">Invoice text</label><textarea id="ptext"></textarea>
-      <div class="row"><button class="btn primary" onclick="processInvoice()">Run agent</button><span id="pstatus" class="mute"></span></div>
-    </div>
-    <div id="presult"></div>
-  </section>
-  <section id="mandates"></section>
-  <section id="lessons"></section>
-  <section id="ledger"></section>
-  <section id="files"></section>
-</main>
+<main id="main"></main>
 <script>
-const TABS = [["overview","Evaluation"],["agent","Agent identity"],["queue","Approval queue"],["process","Process invoice"],
-              ["mandates","Mandates"],["lessons","Lessons"],["ledger","Ledger"],["files","Payment files"]];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const chf0 = x => x == null ? "–" : Number(x).toLocaleString("de-CH",{maximumFractionDigits:0});
 const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
 const dec = d => `<span class="pill ${esc(d)}">${esc(d)}</span>`;
 async function api(path, opts) {
@@ -76,181 +73,238 @@ async function api(path, opts) {
   if (!r.ok) throw new Error(j.detail || r.statusText); return j;
 }
 const post = (path, body) => api(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})});
+const RISK_ORDER = ["E_IBAN_CHANGED","R_IBAN_INVALID","R_DUPLICATE","E_VAT_MISMATCH","E_WRONG_ADDRESSEE","MODEL_FLAGGED",
+                    "E_NEW_VENDOR","E_LIMIT_SINGLE","E_LIMIT_MONTH","R_SCOPE"];
 
-function show(id) {
-  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === id));
-  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.id === id));
-  ({overview, agent, queue, mandates, lessons, ledger, files, process: loadClients})[id]();
+// ---------------------------------------------------------------- routing
+function route() {
+  const h = location.hash.replace(/^#\/?/, "").split("/");
+  document.querySelectorAll(".top a").forEach(a => a.classList.toggle("on", a.dataset.r === (h[0] === "c" ? "" : h[0] || "")));
+  if (h[0] === "c") return clientPage(h[1], h[2] || "overview");
+  if (h[0] === "evaluation") return evaluation();
+  if (h[0] === "ledger") return ledgerPage();
+  return dashboard();
 }
-$("nav").innerHTML = TABS.map(([id, t]) => `<button data-id="${id}" onclick="show('${id}')">${t}</button>`).join("");
+$("top").innerHTML = [["", "Clients"], ["evaluation", "Evaluation"], ["ledger", "Ledger"]]
+  .map(([r, t]) => `<a href="#/${r}" data-r="${r}">${t}</a>`).join("");
+window.addEventListener("hashchange", route);
 
-async function overview() {
-  const s = await api("/api/summary"); const m = s.metrics;
-  $("meta").textContent = `${s.model} · LLM mode: ${s.llm_mode}`;
-  if (!m.metrics) { $("overview").innerHTML = `<div class="card">No evaluation results yet.</div>`; return; }
-  const b = m.metrics.baseline, h = m.metrics.harness_gen1_promoted || m.metrics.harness_gen1;
-  const sys = Object.keys(m.metrics);
-  const codes = Object.keys(b.by_reason_code);
-  $("overview").innerHTML = `
+// ---------------------------------------------------------------- dashboard
+async function dashboard() {
+  const o = await api("/api/overview");
+  $("firm").textContent = o.firm; $("meta").textContent = `${o.model} · ${o.llm_mode}`;
+  const t = o.totals, active = o.clients.filter(c => !c.mandate.revoked);
+  const codes = RISK_ORDER.filter(c => o.risk_totals[c]);
+  const max = Math.max(1, ...o.clients.flatMap(c => codes.map(k => c.risks[k]?.count || 0)));
+  $("main").innerHTML = `
   <div class="kpis">
-    <div class="kpi"><small>Wrong payments, Apertus alone</small><b class="reject">${b.wrong_payments} · CHF ${chf(b.wrong_payment_chf)}</b></div>
-    <div class="kpi"><small>Wrong payments, Apertus + harness</small><b class="pay">${h.wrong_payments} · CHF ${chf(h.wrong_payment_chf)}</b></div>
-    <div class="kpi"><small>Accuracy alone → harness</small><b>${b.accuracy.toFixed(2)} → ${h.accuracy.toFixed(2)}</b></div>
-    <div class="kpi"><small>Test invoices (4 languages)</small><b>${m.n_test}</b></div>
+    <div class="kpi"><small>Clients (active)</small><b>${o.clients.length} (${active.length})</b></div>
+    <div class="kpi"><small>Invoices processed</small><b>${t.invoices}</b></div>
+    <div class="kpi"><small>Paid automatically</small><b class="ok">CHF ${chf0(t.paid_chf)}</b><small>${t.paid} invoices</small></div>
+    <div class="kpi"><small>Held back</small><b class="warn">CHF ${chf0(t.held_chf)}</b><small>${t.escalated} escalated · ${t.rejected} rejected</small></div>
+    <div class="kpi"><small>Fraud signals detected</small><b class="bad">${t.fraud_signals}</b></div>
+    <div class="kpi"><small>Waiting for a human</small><b>${t.queue_open}</b></div>
+    <div class="kpi"><small>Refused by the gate</small><b>${t.gate_rejections}</b></div>
+    <div class="kpi"><small>Ledger</small><b class="${o.ledger_ok && o.audit_ok ? "ok" : "bad"}">${o.ledger_ok && o.audit_ok ? "verified" : "BROKEN"}</b><small>signatures + identity audit</small></div>
   </div>
-  <div class="card"><h2>Systems compared</h2><table>
-    <tr><th>System</th><th>Accuracy</th><th>Wrong-payment rate</th><th>Wrongly paid CHF</th><th>Missed-payment rate</th><th>Paid w/ wrong details</th><th>Model failures</th></tr>
-    ${sys.map(k => { const x = m.metrics[k]; return `<tr><td>${k}</td><td class="n">${x.accuracy.toFixed(3)}</td>
-      <td class="n">${x.wrong_payment_rate.toFixed(3)} (${x.wrong_payments})</td><td class="n">${chf(x.wrong_payment_chf)}</td>
-      <td class="n">${x.missed_payment_rate.toFixed(3)}</td><td class="n">${x.paid_with_wrong_details ?? "n/a"}</td><td class="n">${x.model_failures}</td></tr>`; }).join("")}
-  </table></div>
-  <div class="card"><h2>Correct decisions by case type</h2><table>
-    <tr><th>Case type</th>${sys.map(k => `<th>${k}</th>`).join("")}</tr>
-    ${codes.map(c => `<tr><td>${c}</td>${sys.map(k => `<td class="n">${m.metrics[k].by_reason_code[c].toFixed(2)}</td>`).join("")}</tr>`).join("")}
-  </table></div>
-  <div class="card"><h2>Extraction accuracy (Apertus)</h2>
-    <table><tr>${Object.keys(m.extraction).map(k => `<th>${k}</th>`).join("")}</tr>
-    <tr>${Object.values(m.extraction).map(v => `<td class="n">${v.toFixed(3)}</td>`).join("")}</tr></table></div>
-  ${m.attacks ? `<div class="card"><h2>Agent verification: attacks against the gate</h2>
-    <p class="mute">Each attack replayed over every invoice the agent paid. No model calls involved.</p><table>
-    <tr><th>Scenario</th><th>Attempts</th><th>Blocked</th><th>Caught by</th></tr>
-    ${Object.entries(m.attacks).map(([k, r]) => `<tr><td>${esc(k)}</td><td class="n">${r.attempts}</td>
-      <td class="n ${k.startsWith("legitimate") ? "" : (r.blocked === r.attempts ? "pay" : "reject")}">${k.startsWith("legitimate") ? `accepted ${r.accepted}` : r.blocked}</td>
-      <td>${Object.keys(r.codes).join(", ")}</td></tr>`).join("")}</table></div>` : ""}
-  <div class="card"><h2>Current manual</h2><p class="mute">sha256 <code>${s.manual_sha256}</code></p><pre>${esc(s.manual)}</pre></div>`;
+  <h2>Clients</h2>
+  <div class="grid">${o.clients.map(clientCard).join("")}</div>
+  <div class="card heat"><h2>Risk signals by client</h2>
+    <p class="mute">What the agents held back, by signal. Red = fraud signal, amber = control limit. Counted from the signed ledger.</p>
+    <table><tr><th>Signal</th>${o.clients.map(c => `<th class="n"><a href="#/c/${c.client_id}">${c.client_id}</a></th>`).join("")}<th class="n">Total</th></tr>
+    ${codes.map(k => `<tr><td class="${o.risk_totals[k].kind === "fraud" ? "bad" : "warn"}">${esc(o.risk_totals[k].label)}</td>
+      ${o.clients.map(c => { const n = c.risks[k]?.count || 0;
+        return `<td class="n" style="background:rgba(var(--heat),${n ? .12 + .5 * n / max : 0})">${n || ""}</td>`; }).join("")}
+      <td class="n"><b>${o.risk_totals[k].count}</b></td></tr>`).join("")}</table></div>`;
+}
+function clientCard(c) {
+  const pct = Math.min(100, Math.round(100 * c.paid_chf / c.mandate.monthly_limit_chf));
+  const top = Object.entries(c.risks).sort((a, b) => b[1].count - a[1].count).slice(0, 4);
+  return `<a class="client ${c.mandate.revoked ? "off" : ""}" href="#/c/${c.client_id}">
+    <div class="row" style="justify-content:space-between;margin:0"><h3>${esc(c.name)}</h3>
+      ${c.mandate.revoked ? `<span class="pill bad">mandate revoked</span>` : c.agent.active ? `<span class="pill ok">agent v${c.agent.generation}</span>` : `<span class="pill bad">agent off</span>`}</div>
+    <div class="meta">${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()}</div>
+    ${c.mandate.revoked ? `<p class="mute">No agent works for this client. ${c.gate_rejections} requests refused.</p>` : `
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="meta">Paid CHF ${chf0(c.paid_chf)} of CHF ${chf0(c.mandate.monthly_limit_chf)} monthly limit</div>
+    <div class="row" style="margin-top:6px;font-size:13px"><span class="ok">${c.paid} paid</span> · <span class="warn">${c.escalated} held</span> · <span class="bad">${c.rejected} rejected</span> · ${c.queue_open} waiting</div>`}
+    <div class="chips">${top.map(([k, r]) => `<span class="chip ${r.kind}">${esc(r.label)} ${r.count}</span>`).join("")}</div></a>`;
 }
 
-async function agent() {
-  const a = await api("/api/agent");
-  const b = a.badge || {}, c = a.card || {};
-  $("agent").innerHTML = `<div class="card"><h2>Agent ${esc(c.name || "–")} ${a.active ? `<span class="pill pay">active</span>` : `<span class="pill reject">revoked</span>`}</h2>
-    <p class="mute">Every action this agent takes is a request signed with its own key and checked by the gate:
-      G1 signature · G2 replay · G3 identity · G4 badge · G5 client mandate. Requests that fail are not executed.</p>
-    <table>
-      <tr><th>DID (agent key)</th><td><code>${esc(a.did)}</code></td></tr>
-      <tr><th>Seat · generation</th><td>${esc(a.seat)} · v${a.generation}</td></tr>
-      <tr><th>Entity card</th><td>operator ${esc(c.operator)}, responsible: ${esc(c.responsible_human)} · signed by firm <code>${short(c.issuer)}</code> ${a.card_ok ? "✓" : "✗"}</td></tr>
-      <tr><th>Badge</th><td>actions ${esc((b.actions || []).join(", "))} · clients ${esc((b.clients || []).join(", "))} · cap CHF ${chf(b.max_single_chf)} without a human grant · valid ${esc(b.valid_from)} – ${esc(b.valid_until)} ${a.badge_ok ? "✓" : "✗"}</td></tr>
-      <tr><th>Ledger key</th><td><code>${short(a.ledger_did)}</code></td></tr>
-      <tr><th>Revoked generations</th><td>${a.revoked_agents.map(short).join("<br>") || "none"}</td></tr>
-    </table>
-    <div class="row"><input id="killnote" placeholder="Reason for the kill switch (becomes a lesson)" style="flex:1">
-      <button class="btn primary" onclick="killAgent()">Kill switch</button>
-      <button class="btn" onclick="replaceAgent()">Replace with v${a.generation + 1}</button></div></div>
-    <div class="card"><h2>Try to break it</h2>
-      <div class="row"><button class="btn" onclick="attackGate('replay')">Replay the last request</button>
-      <button class="btn" onclick="attackGate('forged')">Forge a payment in the agent's name</button>
-      <span id="astatus" class="mute"></span></div>
-      <p class="mute">Requests rejected by the gate so far: <b>${a.requests_rejected}</b></p>
-      <table><tr><th>#</th><th>Gate</th><th>Client</th><th>Case / attack</th></tr>${a.last_rejections.slice().reverse().map(e =>
-        `<tr><td>${e.seq}</td><td class="reject">${esc(e.gate)}</td><td>${esc(e.client_id || "")}</td><td>${esc(e.case_id || e.attack || "")}</td></tr>`).join("")}</table></div>`;
+// ---------------------------------------------------------------- client page
+const CTABS = [["overview","Overview"],["invoices","Invoices & decisions"],["queue","Approvals"],["agent","Agent settings"],["files","Payment files"],["ledger","Ledger"]];
+async function clientPage(cid, tab) {
+  const c = await api(`/api/clients/${cid}`);
+  const status = c.mandate.revoked ? `<span class="pill bad">mandate revoked ${esc(c.mandate.revoked_at)}</span>`
+    : c.agent.active ? `<span class="pill ok">agent ${esc(c.agent.seat)} v${c.agent.generation} active</span>` : `<span class="pill bad">agent switched off</span>`;
+  const body = ({overview: cOverview, invoices: cInvoices, queue: cQueue, agent: cAgent, files: cFiles, ledger: cLedger}[tab] || cOverview)(c);
+  $("main").innerHTML = `<p class="meta"><a href="#/">← all clients</a></p>
+    <div class="row" style="justify-content:space-between;margin:0 0 4px"><h2 style="font-size:20px;margin:0">${esc(c.name)}</h2>${status}</div>
+    <div class="meta">${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()} · client DID <code>${short(c.mandate.client_did)}</code></div>
+    <nav class="tabs">${CTABS.map(([k, t]) => `<a href="#/c/${cid}/${k}" class="${k === tab ? "on" : ""}">${t}${k === "queue" && c.queue_open ? ` (${c.queue_open})` : ""}</a>`).join("")}</nav>
+    ${body}`;
+  if (tab === "invoices" && $("ptext")) $("ptext").value = SAMPLES[cid] || "";
 }
-async function killAgent() {
-  try { await post("/api/agent/kill", {note: $("killnote").value}); agent(); } catch (e) { alert(e.message); }
+function cOverview(c) {
+  const risks = Object.entries(c.risks);
+  return `<div class="kpis">
+    <div class="kpi"><small>Invoices processed</small><b>${c.invoices}</b></div>
+    <div class="kpi"><small>Paid automatically</small><b class="ok">CHF ${chf0(c.paid_chf)}</b><small>${c.paid} invoices</small></div>
+    <div class="kpi"><small>Held back</small><b class="warn">CHF ${chf0(c.held_chf)}</b><small>${c.escalated} escalated · ${c.rejected} rejected</small></div>
+    <div class="kpi"><small>Fraud signals</small><b class="bad">${c.fraud_signals}</b></div>
+    <div class="kpi"><small>Approved by a human</small><b>${c.approved_by_human}</b></div>
+    <div class="kpi"><small>Refused by the gate</small><b>${c.gate_rejections}</b></div></div>
+  <div class="two"><div class="card"><h2>Risk signals</h2>${risks.length ? `<table>${risks.map(([k, r]) =>
+      `<tr><td class="${r.kind === "fraud" ? "bad" : "warn"}">${esc(r.label)}</td><td class="mute">${r.kind}</td><td class="n"><b>${r.count}</b></td></tr>`).join("")}</table>` : `<p class="mute">none</p>`}</div>
+    <div class="card"><h2>Mandate (signed by the client)</h2><table>
+      <tr><th>Delegated expenses</th><td>${esc(c.mandate.allowed_categories.join(", "))}</td></tr>
+      <tr><th>Single / monthly limit</th><td>CHF ${chf0(c.mandate.single_limit_chf)} / ${chf0(c.mandate.monthly_limit_chf)}</td></tr>
+      <tr><th>Valid</th><td>${esc(c.mandate.valid_from)} – ${esc(c.mandate.valid_until)}</td></tr>
+      <tr><th>Client signature</th><td class="${c.mandate_ok ? "ok" : "bad"}">${c.mandate_ok ? "verified" : "INVALID"}</td></tr></table></div></div>
+  <div class="card"><h2>What the agent held back and why</h2>${riskTable(c.risky)}</div>`;
 }
-async function replaceAgent() {
-  try { await post("/api/agent/replace"); agent(); } catch (e) { alert(e.message); }
+function riskTable(rows) {
+  if (!rows.length) return `<p class="mute">nothing held back</p>`;
+  return `<table><tr><th>Case</th><th>Supplier</th><th class="n">CHF</th><th>Decision</th><th>Signals</th><th>Reason</th></tr>${rows.map(e =>
+    `<tr><td>${esc(e.case_id)}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td><td>${dec(e.decision)}</td>
+     <td>${e.risk.map(r => `<span class="chip ${r.kind}">${esc(r.label)}</span>`).join(" ")}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table>`;
 }
-async function attackGate(kind) {
-  try { const r = await post(`/api/attack/${kind}`); $("astatus").textContent = r.ok ? "accepted?!" : `blocked: ${r.gate}`; setTimeout(agent, 900); }
-  catch (e) { $("astatus").textContent = e.message; }
+function cInvoices(c) {
+  return `<div class="card"><h2>Process a new invoice</h2>
+    <p class="mute">Apertus reads it, the badge checks the mandate, Apertus reviews the content; the agent signs the decision and the gate checks the signature before it is recorded.</p>
+    <textarea id="ptext"></textarea>
+    <div class="row"><button class="btn primary" onclick="processInvoice('${c.client_id}')" ${c.agent.active ? "" : "disabled"}>Run agent</button><span id="pstatus" class="mute"></span></div>
+    <div id="presult"></div></div>
+  <div class="card"><h2>All decisions (${c.decisions.length})</h2><table>
+    <tr><th>#</th><th>Case</th><th>Supplier</th><th class="n">CHF</th><th>Decision</th><th>Checks</th><th>Gate</th><th>Reason</th></tr>
+    ${c.decisions.map(e => `<tr><td>${e.seq}</td><td>${esc(e.case_id)}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td>
+      <td>${e.decision ? dec(e.decision) : ""}</td><td class="mute">${esc((e.checks || []).join(", "))}</td>
+      <td class="${e.gate === "OK" ? "ok" : "bad"}">${esc(e.gate)}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table></div>`;
 }
-
-async function queue() {
-  const q = await api("/api/queue");
-  const open = q.filter(i => i.status === "open");
-  $("queue").innerHTML = `<div class="card"><h2>Waiting for a human (${open.length} open of ${q.length})</h2>
-    <p class="mute">The agent may not pay these on its own. Approving adds the payment to the client's approved pain.001 file; a reject note feeds the next manual generation.</p></div>` +
-    q.map(i => `<div class="card"><div class="row" style="justify-content:space-between;margin:0">
-      <div><b>${esc(i.client)}</b> · ${esc(i.vendor)} · CHF ${chf(i.amount_chf)} · <span class="mute">${i.case_id}</span></div>
-      ${i.status === "open" ? dec("escalate") : `<span class="pill ${i.status === "approved" ? "pay" : "reject"}">${i.status}</span>`}</div>
-      <p><b>Why:</b> ${esc(i.reason)}</p>
-      <details><summary>Invoice</summary><pre>${esc(i.invoice_text)}</pre></details>
-      ${i.status === "open" ? `<input id="n-${i.case_id}" placeholder="Reviewer note (why), used for lessons">
-      <div class="row"><button class="btn" onclick="act('${i.case_id}','approve')">Approve payment</button>
-      <button class="btn primary" onclick="act('${i.case_id}','reject')">Reject</button></div>` : i.note ? `<p class="mute">Note: ${esc(i.note)}</p>` : ""}
-    </div>`).join("");
-}
-async function act(id, action) {
-  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); queue(); } catch (e) { alert(e.message); }
-}
-
-let clientsLoaded = false;
-async function loadClients() {
-  if (clientsLoaded) return;
-  const ms = await api("/api/mandates");
-  $("pclient").innerHTML = ms.map(m => `<option value="${m.client_id}">${esc(m.name)}${m.revoked ? " (revoked)" : ""}</option>`).join("");
-  $("ptext").value = "Mühle Rüti AG\nMühlestrasse 12\n8630 Rüti ZH\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-5555\nDatum: 08.10.2026\n\nPos. 1  Weizenmehl Typ 550, 25 kg  CHF 1'200.00\n\nTotal exkl. MWST: CHF 1'200.00\nMWST 8.1%: CHF 97.20\nRechnungsbetrag: CHF 1'297.20\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH86 7434 3949 3341 8924 5\nZahlbar bis: 07.11.2026";
-  clientsLoaded = true;
-}
-async function processInvoice() {
+async function processInvoice(cid) {
   $("pstatus").textContent = "running…"; $("presult").innerHTML = "";
   try {
-    const h = await post("/api/process", {client_id: $("pclient").value, invoice_text: $("ptext").value});
+    const h = await post(`/api/clients/${cid}/process`, {invoice_text: $("ptext").value});
     $("pstatus").textContent = "";
-    $("presult").innerHTML = `<div class="card"><h2>Decision: ${dec(h.decision)}</h2><p>${esc(h.reason)}</p>
-      <p>Signed by agent v${h.generation} <code>${short(h.agent_did)}</code> · gate: ${h.executed ? `<span class="pay">${esc(h.gate)} — recorded</span>` : `<span class="reject">${esc(h.gate)} — not executed</span>`}</p>
-      <h2>Badge checks</h2>${h.findings.length ? `<table><tr><th>Severity</th><th>Check</th><th>Detail</th></tr>${h.findings.map(f =>
-        `<tr><td>${dec(f.severity)}</td><td>${f.code}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="pay">all hard checks passed</p>`}
-      <h2>Fields read by Apertus</h2><pre>${esc(JSON.stringify(h.fields, null, 2))}</pre></div>`;
+    $("presult").innerHTML = `<h3>Decision: ${dec(h.decision)}</h3><p>${esc(h.reason)}</p>
+      <p>Signed by agent v${h.generation} <code>${short(h.agent_did)}</code> · gate: ${h.executed ? `<span class="ok">${esc(h.gate)} — recorded</span>` : `<span class="bad">${esc(h.gate)} — not executed</span>`}</p>
+      ${h.findings.length ? `<table><tr><th>Check</th><th>Detail</th></tr>${h.findings.map(f => `<tr><td class="${f.severity === "reject" ? "bad" : "warn"}">${esc(f.code)}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="ok">all hard checks passed</p>`}
+      <details><summary>Fields read by Apertus</summary><pre>${esc(JSON.stringify(h.fields, null, 2))}</pre></details>`;
   } catch (e) { $("pstatus").textContent = e.message; }
 }
-
-async function mandates() {
-  const ms = await api("/api/mandates");
-  $("mandates").innerHTML = `<div class="card"><h2>Client mandates (delegation credentials)</h2>
-    <p class="mute">What each client delegated to the firm, signed with the client's own key (did:key) and naming the firm as delegate. The gate checks it on every request; revoking it stops the agent for that client at once.</p>
-    <table><tr><th>Client</th><th>Allowed categories</th><th>Single limit</th><th>Monthly limit</th><th>Valid</th><th>Status</th><th></th></tr>
-    ${ms.map(m => `<tr><td>${esc(m.name)}</td><td>${m.allowed_categories.join(", ")}</td><td class="n">${chf(m.single_limit_chf)}</td>
-      <td class="n">${chf(m.monthly_limit_chf)}</td><td>${m.valid_from} – ${m.valid_until}</td>
-      <td>${m.revoked ? `<span class="pill reject">revoked ${m.revoked_at}</span>` : `<span class="pill pay">active</span>`} ${m.signature_ok ? "✓ client sig" : "✗ sig"}<br><code>${short(m.client_did)}</code></td>
-      <td>${m.revoked ? "" : `<button class="btn" onclick="revoke('${m.client_id}')">Revoke</button>`}</td></tr>`).join("")}</table></div>`;
+function cQueue(c) {
+  if (!c.queue.length) return `<div class="card mute">Nothing waiting for this client.</div>`;
+  return c.queue.map(i => `<div class="card"><div class="row" style="justify-content:space-between;margin:0">
+      <div><b>${esc(i.vendor)}</b> · CHF ${chf(i.amount_chf)} · <span class="mute">${i.case_id}</span></div>
+      ${i.status === "open" ? dec("escalate") : `<span class="pill ${i.status === "approved" ? "ok" : "bad"}">${i.status}</span>`}</div>
+      <p><b>Why held:</b> ${esc(i.reason)}</p>
+      <details><summary>Invoice</summary><pre>${esc(i.invoice_text)}</pre></details>
+      ${i.status === "open" ? `<input id="n-${i.case_id}" placeholder="Reviewer note (why) — becomes a lesson for this client's agent" style="width:100%">
+      <div class="row"><button class="btn" onclick="act('${i.case_id}','approve')">Approve payment</button>
+      <button class="btn primary" onclick="act('${i.case_id}','reject')">Reject</button></div>` : i.note ? `<p class="mute">Note: ${esc(i.note)}</p>` : ""}</div>`).join("");
 }
-async function revoke(cid) {
-  if (!confirm("Revoke this mandate? The agent will reject every further invoice for this client.")) return;
-  await post(`/api/mandates/${cid}/revoke`); clientsLoaded = false; mandates();
+async function act(id, action) {
+  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); route(); } catch (e) { alert(e.message); }
 }
-
-async function lessons() {
-  const l = await api("/api/lessons");
-  $("lessons").innerHTML = `<div class="card"><h2>Lesson layer — manual generation ${l.generation}</h2>
-    <p class="mute">Reviewer overrules are masked (no names, amounts, IBANs), distilled by Apertus into rules, and appended to the manual. The manual's sha256 is written to the ledger. No model weights change.</p>
-    <h2>Lessons binding seat ${esc(l.seat)} (inherited by every new generation)</h2><ol>${l.lessons.filter(x => x.seat === l.seat).map(x => `<li>${esc(x.rule)} <span class="mute">(manual gen ${x.from_manual_generation})</span></li>`).join("") || "<li class='mute'>none</li>"}</ol>
-    ${l.lessons.some(x => x.seat !== l.seat) ? `<h2>Other seats (reference only)</h2><ul>${l.lessons.filter(x => x.seat !== l.seat).map(x => `<li>[${esc(x.seat)}] ${esc(x.rule)}</li>`).join("")}</ul>` : ""}
-    <h2>Pending reviewer notes (${l.pending_notes.length})</h2><ul>${l.pending_notes.map(n => `<li>${esc(n)}</li>`).join("") || "<li class='mute'>none — reject an item in the queue with a note</li>"}</ul>
-    <div class="row"><button class="btn primary" onclick="publish()">Publish next manual generation</button><span id="lstatus" class="mute"></span></div></div>
-    <div class="card"><h2>Where generation 1 came from</h2><p class="mute">${l.train.overruled ?? 0} of ${l.train.train_cases ?? 0} training-split decisions were overruled.</p>
-    <ul>${(l.train.masked_notes || []).map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>`;
+function cAgent(c) {
+  const a = c.agent, b = a.badge || {}, card = a.card || {}, L = c.lessons;
+  if (!a.generation) return `<div class="card">No agent has been hired for this client${c.mandate.revoked ? " — the client revoked its mandate" : ""}.</div>`;
+  return `<div class="two"><div class="card"><h2>Agent ${esc(card.name)} ${a.active ? `<span class="pill ok">active</span>` : `<span class="pill bad">revoked</span>`}</h2>
+    <table><tr><th>DID</th><td><code>${esc(a.did)}</code></td></tr>
+      <tr><th>Entity card</th><td>${esc(card.operator)} · responsible: ${esc(card.responsible_human)} · AI: ${card.is_ai ? "yes" : "?"} · firm signature ${a.card_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>Badge</th><td>${esc((b.actions || []).join(", ") || "no actions")} · only for ${esc((b.clients || []).join(", "))} · cap CHF ${chf0(b.max_single_chf)} · valid ${esc(b.valid_from)} – ${esc(b.valid_until)} · firm signature ${a.badge_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>Earlier generations</th><td>${a.revoked.map(short).join("<br>") || "none"}</td></tr></table>
+    <div class="row"><input id="killnote" placeholder="Reason (becomes a lesson)" style="flex:1">
+      <button class="btn primary" onclick="agentAct('${c.client_id}','kill')" ${a.active ? "" : "disabled"}>Kill switch</button>
+      <button class="btn" onclick="agentAct('${c.client_id}','replace')" ${c.mandate.revoked ? "disabled" : ""}>Replace with v${a.generation + 1}</button></div></div>
+  <div class="card"><h2>Firm-side settings</h2>
+    <p class="mute">Set by the firm and signed into the agent's badge. The client's own limits (mandate) apply on top and only the client can change them.</p>
+    <label>Cap per payment without a human grant (CHF)</label><br><input id="cap" type="number" min="1" value="${b.max_single_chf}">
+    <h3>Allowed actions</h3>${a.all_actions.map(x => `<label><input type="checkbox" class="actchk" value="${x}" ${(b.actions || []).includes(x) ? "checked" : ""}> ${x}</label><br>`).join("")}
+    <div class="row"><button class="btn primary" onclick="saveSettings('${c.client_id}')" ${a.active ? "" : "disabled"}>Re-issue badge</button><span id="sstatus" class="mute"></span></div>
+    <h3>Client side (demo)</h3><button class="btn" onclick="revokeMandate('${c.client_id}')" ${c.mandate.revoked ? "disabled" : ""}>Simulate: client revokes its mandate</button></div></div>
+  <div class="two"><div class="card"><h2>Lessons</h2>
+    <h3>Binding for this seat</h3><ol>${L.binding.map(x => `<li>${esc(x.rule)} <span class="mute">(${x.seat === "*" ? "firm-wide" : "this client"}, manual gen ${x.from_manual_generation})</span></li>`).join("") || "<li class='mute'>none</li>"}</ol>
+    ${L.reference.length ? `<h3>Other clients' seats — reference only</h3><ul>${L.reference.map(x => `<li class="mute">[${esc(x.seat)}] ${esc(x.rule)}</li>`).join("")}</ul>` : ""}
+    <h3>Pending reviewer notes (${L.pending.length})</h3><ul>${L.pending.map(n => `<li>${esc(n)}</li>`).join("") || "<li class='mute'>none — reject a held invoice with a note</li>"}</ul>
+    <div class="row"><button class="btn primary" onclick="publishLessons('${c.client_id}')" ${L.pending.length ? "" : "disabled"}>Publish next manual generation</button><span id="lstatus" class="mute"></span></div>
+    <p class="mute">Manual sha256 <code>${esc(L.manual_sha256.slice(0, 16))}…</code></p></div>
+  <div class="card"><h2>Try to break it</h2>
+    <div class="row"><button class="btn" onclick="attackGate('${c.client_id}','replay')">Replay this agent's last request</button>
+      <button class="btn" onclick="attackGate('${c.client_id}','forged')">Forge a payment in its name</button></div>
+    <p id="astatus" class="mute"></p>
+    <table><tr><th>#</th><th>Gate</th><th>Case / attack</th></tr>${c.rejections.map(e =>
+      `<tr><td>${e.seq}</td><td class="bad">${esc(e.gate)}</td><td>${esc(e.case_id || e.attack || "")}</td></tr>`).join("") || "<tr><td colspan=3 class='mute'>no refused requests</td></tr>"}</table></div></div>`;
 }
-async function publish() {
+async function agentAct(cid, what) {
+  try { await post(`/api/clients/${cid}/agent/${what}`, what === "kill" ? {note: $("killnote").value} : {}); route(); } catch (e) { alert(e.message); }
+}
+async function saveSettings(cid) {
+  const actions = [...document.querySelectorAll(".actchk")].filter(x => x.checked).map(x => x.value);
+  try { await post(`/api/clients/${cid}/agent/settings`, {max_single_chf: Number($("cap").value), actions}); route(); }
+  catch (e) { $("sstatus").textContent = e.message; }
+}
+async function revokeMandate(cid) {
+  if (!confirm("Simulate the client revoking its mandate? Its agent can no longer act for it.")) return;
+  await post(`/api/clients/${cid}/revoke`); route();
+}
+async function publishLessons(cid) {
   $("lstatus").textContent = "asking Apertus…";
-  try { await post("/api/lessons/publish"); lessons(); } catch (e) { $("lstatus").textContent = e.message; }
+  try { await post(`/api/clients/${cid}/lessons/publish`); route(); } catch (e) { $("lstatus").textContent = e.message; }
+}
+async function attackGate(cid, kind) {
+  try { const r = await post(`/api/clients/${cid}/attack/${kind}`); $("astatus").textContent = r.ok ? "accepted?!" : `blocked by the gate: ${r.gate}`; setTimeout(route, 1500); }
+  catch (e) { $("astatus").textContent = e.message; }
+}
+function cFiles(c) {
+  return `<div class="card"><h2>Payment files (ISO 20022 pain.001.001.09)</h2>
+    <p class="mute">For upload to ${esc(c.name)}'s bank. No payment provider in between. Each file was requested by this client's agent and passed the gate.</p>
+    <table><tr><th>File</th><th>Checks</th><th></th></tr>${c.files.map(f => `<tr><td>${f.file}</td>
+      <td>${f.validation_errors.length ? `<span class="bad">${esc(f.validation_errors.join("; "))}</span>` : `<span class="ok">counts, control sum, IBANs OK</span>`}</td>
+      <td><a href="/files/payments/${f.file}">download</a></td></tr>`).join("") || "<tr><td colspan=3 class='mute'>none</td></tr>"}</table></div>`;
+}
+function cLedger(c) { return `<div class="card"><h2>Ledger entries for this client (latest ${c.ledger.length})</h2>${ledgerTable(c.ledger)}</div>`; }
+function ledgerTable(rows) {
+  return `<table><tr><th>#</th><th>Actor</th><th>Action</th><th>Gate</th><th>Client</th><th>Case</th><th class="n">CHF</th><th>Detail</th><th>Hash</th></tr>
+    ${rows.map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${dec(e.action)}</td>
+      <td class="${e.gate && e.gate !== "OK" ? "bad" : ""}">${esc(e.gate || "")}</td><td>${esc(e.client_id || "")}</td><td>${esc(e.case_id || "")}</td>
+      <td class="n">${e.amount_chf != null ? chf(e.amount_chf) : ""}</td>
+      <td class="mute">${esc(e.reason || e.note || e.file || e.attack || "")}</td><td><code>${esc(e.hash.slice(0, 10))}</code></td></tr>`).join("")}</table>`;
 }
 
-async function ledger() {
+// ---------------------------------------------------------------- firm-wide pages
+async function ledgerPage() {
   const l = await api("/api/ledger");
-  $("ledger").innerHTML = `<div class="card"><h2>Audit ledger ${l.verifies ? `<span class="pill pay">hash chain verifies</span>` : `<span class="pill reject">broken at #${l.first_bad}</span>`}</h2>
-    <p>${l.audit.ok ? `<span class="pill pay">identity audit OK</span>` : `<span class="pill reject">identity audit: ${l.audit.problems.length} problems</span>`}
-      <span class="mute">${l.audit.agent_actions} agent actions, all by agents issued by the firm (${Object.values(l.audit.agents_issued).join(", ")}) and not revoked at the time. Checked from the ledger alone.</span></p>
-    <p class="mute">Append-only. Each entry stores the previous entry's hash and is signed with the ledger key <code>${short(l.ledger_did)}</code>: who acted (agent DID or human), for which client, under which manual, with which gate result.</p>
-    <table><tr><th>#</th><th>Actor</th><th>Action</th><th>Gate</th><th>Client</th><th>Case</th><th>CHF</th><th>Detail</th><th>Hash</th></tr>
-    ${l.entries.slice().reverse().map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${dec(e.action)}</td>
-      <td class="${e.gate && e.gate !== "OK" ? "reject" : ""}">${esc(e.gate || "")}</td><td>${e.client_id ?? ""}</td>
-      <td>${e.case_id ?? ""}</td><td class="n">${e.amount_chf != null ? chf(e.amount_chf) : ""}</td>
-      <td>${esc(e.reason || e.note || e.file || e.attack || (e.agent_did ? "agent " + e.agent_did.slice(-8) : "") || (e.manual_sha256 ? "manual " + e.manual_sha256.slice(0, 12) : ""))}</td>
-      <td><code>${e.hash.slice(0, 10)}</code></td></tr>`).join("")}</table></div>`;
+  $("main").innerHTML = `<div class="card"><h2>Audit ledger ${l.verifies ? `<span class="pill ok">chain + signatures verify</span>` : `<span class="pill bad">broken at #${l.first_bad}</span>`}
+      ${l.audit.ok ? `<span class="pill ok">identity audit OK</span>` : `<span class="pill bad">identity audit: ${l.audit.problems.length} problems</span>`}</h2>
+    <p class="mute">Opens with the firm (<code>${short(l.firm_did)}</code>) and ledger (<code>${short(l.ledger_did)}</code>) keys, every client mandate in full, then each agent's
+      entity card and badge as issued. ${l.audit.agent_actions} agent actions, all by agents the firm issued and had not revoked at the time: ${Object.values(l.audit.agents_issued).join(", ")}.</p>
+    ${ledgerTable(l.entries)}</div>`;
+}
+async function evaluation() {
+  const s = await api("/api/evaluation"); const m = s.metrics;
+  if (!m.metrics) { $("main").innerHTML = `<div class="card">No evaluation results yet.</div>`; return; }
+  const sys = Object.keys(m.metrics), codes = Object.keys(m.metrics.baseline.by_reason_code);
+  $("main").innerHTML = `<div class="card"><h2>Evaluation: Apertus alone vs. Apertus + harness</h2>
+    <p class="mute">${m.n_test} synthetic test invoices in four languages, ${esc(m.model)}. Wrong payment = an invoice that must not be paid automatically, paid anyway.</p><table>
+    <tr><th>System</th><th class="n">Accuracy</th><th class="n">Wrong payments</th><th class="n">Wrongly paid CHF</th><th class="n">Missed payments</th><th class="n">Paid w/ wrong details</th></tr>
+    ${sys.map(k => { const x = m.metrics[k]; return `<tr><td>${k}</td><td class="n">${x.accuracy.toFixed(3)}</td><td class="n">${x.wrong_payments} (${x.wrong_payment_rate.toFixed(3)})</td>
+      <td class="n">${chf(x.wrong_payment_chf)}</td><td class="n">${x.missed_payment_rate.toFixed(3)}</td><td class="n">${x.paid_with_wrong_details ?? "n/a"}</td></tr>`; }).join("")}</table></div>
+  <div class="card"><h2>Correct decisions by case type</h2><table><tr><th>Case type</th>${sys.map(k => `<th class="n">${k}</th>`).join("")}</tr>
+    ${codes.map(c => `<tr><td>${c}</td>${sys.map(k => `<td class="n">${m.metrics[k].by_reason_code[c].toFixed(2)}</td>`).join("")}</tr>`).join("")}</table></div>
+  ${m.attacks ? `<div class="card"><h2>Agent verification: attacks against the gate</h2><table><tr><th>Scenario</th><th class="n">Attempts</th><th class="n">Blocked</th><th>Caught by</th></tr>
+    ${Object.entries(m.attacks).map(([k, r]) => `<tr><td>${esc(k)}</td><td class="n">${r.attempts}</td>
+      <td class="n ${k.startsWith("legitimate") ? "" : (r.blocked === r.attempts ? "ok" : "bad")}">${k.startsWith("legitimate") ? `accepted ${r.accepted}` : r.blocked}</td><td>${Object.keys(r.codes).join(", ")}</td></tr>`).join("")}</table></div>` : ""}
+  <div class="card"><h2>Extraction accuracy (Apertus)</h2><table><tr>${Object.keys(m.extraction).map(k => `<th class="n">${k}</th>`).join("")}</tr>
+    <tr>${Object.values(m.extraction).map(v => `<td class="n">${v.toFixed(3)}</td>`).join("")}</tr></table></div>
+  <div class="card"><h2>Firm-wide manual (generation 1)</h2><pre>${esc(s.manual)}</pre></div>`;
 }
 
-async function files() {
-  const fs = await api("/api/payments");
-  $("files").innerHTML = `<div class="card"><h2>Payment files (ISO 20022 pain.001.001.09)</h2>
-    <p class="mute">One file per client, for upload to the client's bank. No payment provider in between.</p>
-    <table><tr><th>File</th><th>Checks</th><th></th></tr>${fs.map(f => `<tr><td>${f.file}</td>
-      <td>${f.validation_errors.length ? `<span class="reject">${esc(f.validation_errors.join("; "))}</span>` : `<span class="pay">counts, control sum, IBANs OK</span>`}</td>
-      <td><a href="/files/payments/${f.file}">download</a></td></tr>`).join("")}</table></div>`;
-}
-
-show("overview");
+const SAMPLES = {
+  C01: "Mühle Rüti AG\nMühlestrasse 12\n8630 Rüti ZH\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-5555\nDatum: 08.10.2026\n\nPos. 1  Weizenmehl Typ 550, 25 kg  CHF 1'200.00\n\nTotal exkl. MWST: CHF 1'200.00\nMWST 8.1%: CHF 97.20\nRechnungsbetrag: CHF 1'297.20\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH86 7434 3949 3341 8924 5\nZahlbar bis: 07.11.2026",
+};
+api("/api/overview").then(o => { $("firm").textContent = o.firm; $("meta").textContent = `${o.model} · ${o.llm_mode}`; }).catch(() => {});
+route();
 </script>
 </body>
 </html>

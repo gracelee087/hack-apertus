@@ -6,6 +6,9 @@
     "vendor": "Basel Office Spaces AG",
     "amount_chf": 20680,
     "iban": "CH0625263655878046310",
+    "checks": [
+      "E_LIMIT_SINGLE"
+    ],
     "reason": "CHF 20680.00 above single limit CHF 10000",
     "invoice_text": "Basel Office Spaces AG\nAeschenvorstadt 50\n4051 Basel\nUID: CHE-325.839.892 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. INV-2026-6199\nDate: 1 October 2026\n\nItem 1  Office rent, month  CHF 20,680.00\n\nSubtotal excl. VAT: CHF 20,680.00\nVAT (exempt): CHF 0.00\nTotal due: CHF 20,680.00\n\nPlease transfer the amount to the following account:\nIBAN CH06 2526 3655 8780 4631 0\nReference: 866856612\nDue date: 31 October 2026\n\nKind regards\nBasel Office Spaces AG",
     "status": "open"
@@ -17,6 +20,9 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 13120.0,
     "iban": "CH5680525414787266496",
+    "checks": [
+      "E_LIMIT_SINGLE"
+    ],
     "reason": "CHF 13120.00 above single limit CHF 8000",
     "invoice_text": "FACTURE R-2026-5491 | Télécom Riviera SA, Grand-Rue 40, 1820 Montreux | IDE CHE-745.147.382 MWST\nFacturé à: Cabinet Favre Sàrl, 1003 Lausanne | Date 29.09.2026\n---\nPos. 1  Abonnement fibre bureau  12 136,91 CHF\n---\nTotal HT 12 136,91 CHF / TVA 8,1 %: 983,09 CHF / Montant total 13 120,00 CHF\nMerci de verser le montant sur le compte suivant: CH56 8052 5414 7872 6649 6 (Référence 873761076), Payable jusqu'au 29.10.2026.",
     "status": "open"
@@ -28,6 +34,9 @@
     "vendor": "Logiciels Romands Sàrl",
     "amount_chf": 11430.0,
     "iban": "CH5477316184343354252",
+    "checks": [
+      "E_LIMIT_SINGLE"
+    ],
     "reason": "CHF 11430.00 above single limit CHF 8000",
     "invoice_text": "FACTURE INV-2026-3788 | Logiciels Romands Sàrl, Avenue de la Gare 9, 1950 Sion | IDE CHE-108.283.500 MWST\nFacturé à: Cabinet Favre Sàrl, 1003 Lausanne | Date 30.09.2026\n---\nPos. 1  Licence logiciel annuelle  3 229,26 CHF\nPos. 2  Heures de support  7 344,28 CHF\n---\nTotal HT 10 573,54 CHF / TVA 8,1 %: 856,46 CHF / Montant total 11 430,00 CHF\nMerci de verser le montant sur le compte suivant: CH54 7731 6184 3433 5425 2 (Référence 707463559), Payable jusqu'au 30.10.2026.",
     "status": "open"
@@ -39,6 +48,9 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 15540,
     "iban": "CH5680525414787266496",
+    "checks": [
+      "E_LIMIT_SINGLE"
+    ],
     "reason": "CHF 15540.00 above single limit CHF 8000",
     "invoice_text": "Télécom Riviera SA\nGrand-Rue 40\n1820 Montreux\nIDE: CHE-741.421.749 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° R-2026-2138\nDate: 08.10.2026\n\nPos. 1  Abonnement fibre bureau  14 375,58 CHF\n\nTotal HT: 14 375,58 CHF\nTVA 8,1 %: 1 164,42 CHF\nMontant total: 15 540,00 CHF\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH56 8052 5414 7872 6649 6\nRéférence: 158757640\nPayable jusqu'au: 07.11.2026\n\nMeilleures salutations\nTélécom Riviera SA",
     "status": "open"
@@ -50,6 +62,9 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 6020,
     "iban": "CH3924514998881852176",
+    "checks": [
+      "E_LIMIT_SINGLE"
+    ],
     "reason": "CHF 6020.00 above single limit CHF 5000",
     "invoice_text": "Versicherung Alpenschutz AG\nBahnhofplatz 5\n8001 Zürich\nUID: CHE-139.482.563 MWST\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-8269\nDatum: 07.10.2026\n\nPos. 1  Betriebshaftpflicht Prämie  CHF 6'020.00\n\nTotal exkl. MWST: CHF 6'020.00\nMWST (befreit): CHF 0.00\nRechnungsbetrag: CHF 6'020.00\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH39 2451 4998 8818 5217 6\nReferenz: 924447131\nZahlbar bis: 06.11.2026\n\nFreundliche Grüsse\nVersicherung Alpenschutz AG",
     "status": "open"
@@ -61,6 +76,9 @@
     "vendor": "Rheinhost AG",
     "amount_chf": 3320.0,
     "iban": "CH7665340538476149874",
+    "checks": [
+      "E_LIMIT_MONTH"
+    ],
     "reason": "month total would be CHF 41304.15 (limit CHF 40000)",
     "invoice_text": "INVOICE R-2026-3217 | Rheinhost AG, Hafenstrasse 8, 4057 Basel | UID CHE-250.933.424 MWST\nBill to: Alpine Data Lab AG, 4051 Basel | Date 20 September 2026\n---\nItem 1  Object storage 2 TB  CHF 3,071.23\n---\nSubtotal excl. VAT CHF 3,071.23 / VAT 8.1%: CHF 248.77 / Total due CHF 3,320.00\nPlease transfer the amount to the following account: CH76 6534 0538 4761 4987 4 (Reference 972592620), Due date 20 October 2026.",
     "status": "open"
@@ -72,6 +90,9 @@
     "vendor": "Immobiliare Ceresio SA",
     "amount_chf": 1060.0,
     "iban": "CH4851187534694604928",
+    "checks": [
+      "E_LIMIT_MONTH"
+    ],
     "reason": "month total would be CHF 13351.83 (limit CHF 12000)",
     "invoice_text": "Immobiliare Ceresio SA\nVia Nassa 30\n6900 Lugano\nIDI: CHE-513.267.634 MWST\n\nFatturato a:\nStudio Grafico Bernasconi Sagl\n6900 Lugano\n\nFATTURA\nFattura n. F-2026-5361\nData: 24.09.2026\n\nPos. 1  Affitto locale commerciale, mese  CHF 1'060.00\n\nTotale IVA esclusa: CHF 1'060.00\nIVA (esente): CHF 0.00\nImporto totale: CHF 1'060.00\n\nVi preghiamo di versare l'importo sul seguente conto:\nIBAN CH48 5118 7534 6946 0492 8\nRiferimento: 227409934\nPagabile entro: 24.10.2026\n\nCordiali saluti\nImmobiliare Ceresio SA",
     "status": "open"
@@ -83,6 +104,9 @@
     "vendor": "Rheinhost AG",
     "amount_chf": 4810.0,
     "iban": "CH7665340538476149874",
+    "checks": [
+      "E_LIMIT_MONTH"
+    ],
     "reason": "month total would be CHF 40923.14 (limit CHF 40000)",
     "invoice_text": "Rheinhost AG\nHafenstrasse 8\n4057 Basel\nUID: CHE-705.473.862 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. R-2026-2967\nDate: 22 September 2026\n\nItem 1  Managed Kubernetes cluster, month  CHF 1,413.50\nItem 2  Object storage 2 TB  CHF 3,036.08\n\nSubtotal excl. VAT: CHF 4,449.58\nVAT 8.1%: CHF 360.42\nTotal due: CHF 4,810.00\n\nPlease transfer the amount to the following account:\nIBAN CH76 6534 0538 4761 4987 4\nReference: 682431800\nDue date: 22 October 2026\n\nKind regards\nRheinhost AG",
     "status": "open"
@@ -94,6 +118,9 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 2640,
     "iban": "CH2786876363887493642",
+    "checks": [
+      "E_LIMIT_MONTH"
+    ],
     "reason": "month total would be CHF 21452.58 (limit CHF 20000)",
     "invoice_text": "Stadtwerk Limmattal AG\nWerkstrasse 3\n8952 Schlieren\nUID: CHE-359.322.210 MWST\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-8141\nDatum: 23.09.2026\n\nPos. 1  Stromverbrauch Quartal  CHF 849.08\nPos. 2  Netznutzung  CHF 1'593.10\n\nTotal exkl. MWST: CHF 2'442.18\nMWST 8.1%: CHF 197.82\nRechnungsbetrag: CHF 2'640.00\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH27 8687 6363 8874 9364 2\nReferenz: 307963131\nZahlbar bis: 23.10.2026\n\nFreundliche Grüsse\nStadtwerk Limmattal AG",
     "status": "open"
@@ -105,6 +132,9 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 2780.0,
     "iban": "CH1333193101506720926",
+    "checks": [
+      "E_IBAN_CHANGED"
+    ],
     "reason": "IBAN differs from the account on file for Stadtwerk Limmattal AG",
     "invoice_text": "Stadtwerk Limmattal AG\nWerkstrasse 3\n8952 Schlieren\nUID: CHE-476.835.220 MWST\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. F-2026-2781\nDatum: 03.10.2026\n\nPos. 1  Stromverbrauch Quartal  CHF 2'571.69\n\nTotal exkl. MWST: CHF 2'571.69\nMWST 8.1%: CHF 208.31\nRechnungsbetrag: CHF 2'780.00\n\nBitte beachten Sie: Wir haben die Bank gewechselt. Bitte ab sofort nur noch auf die untenstehende neue Verbindung zahlen.\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH13 3319 3101 5067 2092 6\nReferenz: 480628526\nZahlbar bis: 02.11.2026\n\nFreundliche Grüsse\nStadtwerk Limmattal AG",
     "status": "open"
@@ -116,6 +146,9 @@
     "vendor": "CodeForge GmbH",
     "amount_chf": 3190.0,
     "iban": "CH3216041882925784881",
+    "checks": [
+      "E_IBAN_CHANGED"
+    ],
     "reason": "IBAN differs from the account on file for CodeForge GmbH",
     "invoice_text": "CodeForge GmbH\nTechnoparkstrasse 1\n8005 Zürich\nUID: CHE-243.874.557 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. R-2026-6891\nDate: 3 October 2026\n\nItem 1  Annual licence  CHF 1,458.40\nItem 2  Support hours  CHF 1,492.57\n\nSubtotal excl. VAT: CHF 2,950.97\nVAT 8.1%: CHF 239.03\nTotal due: CHF 3,190.00\n\nPlease note: we have changed banks. From now on, pay only to the new account below.\n\nPlease transfer the amount to the following account:\nIBAN CH32 1604 1882 9257 8488 1\nReference: 427411069\nDue date: 2 November 2026\n\nKind regards\nCodeForge GmbH",
     "status": "open"
@@ -127,6 +160,9 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 1940,
     "iban": "CH9192924544291117772",
+    "checks": [
+      "E_IBAN_CHANGED"
+    ],
     "reason": "IBAN differs from the account on file for Stadtwerk Limmattal AG",
     "invoice_text": "Stadtwerk Limmattal AG\nWerkstrasse 3\n8952 Schlieren\nUID: CHE-329.727.333 MWST\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. FT-2026-1647\nDatum: 24.09.2026\n\nPos. 1  Stromverbrauch Quartal  CHF 761.23\nPos. 2  Netznutzung  CHF 1'033.40\n\nTotal exkl. MWST: CHF 1'794.63\nMWST 8.1%: CHF 145.37\nRechnungsbetrag: CHF 1'940.00\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH91 9292 4544 2911 1777 2\nReferenz: 396258900\nZahlbar bis: 24.10.2026\n\nFreundliche Grüsse\nStadtwerk Limmattal AG",
     "status": "open"
@@ -138,6 +174,9 @@
     "vendor": "Software Lago SA",
     "amount_chf": 990.0,
     "iban": "CH0281275631906804481",
+    "checks": [
+      "E_IBAN_CHANGED"
+    ],
     "reason": "IBAN differs from the account on file for Software Lago SA",
     "invoice_text": "Software Lago SA\nRiva Caccia 4\n6900 Lugano\nIDI: CHE-420.527.652 MWST\n\nFatturato a:\nStudio Grafico Bernasconi Sagl\n6900 Lugano\n\nFATTURA\nFattura n. FT-2026-2790\nData: 19.09.2026\n\nPos. 1  Supporto tecnico ore  CHF 915.82\n\nTotale IVA esclusa: CHF 915.82\nIVA 8,1%: CHF 74.18\nImporto totale: CHF 990.00\n\nVi preghiamo di versare l'importo sul seguente conto:\nIBAN CH02 8127 5631 9068 0448 1\nRiferimento: 110905116\nPagabile entro: 19.10.2026\n\nCordiali saluti\nSoftware Lago SA",
     "status": "open"
@@ -149,6 +188,9 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 1380.0,
     "iban": "CH0542542890256099296",
+    "checks": [
+      "E_IBAN_CHANGED"
+    ],
     "reason": "IBAN differs from the account on file for Versicherung Alpenschutz AG",
     "invoice_text": "RECHNUNG FT-2026-2448 | Versicherung Alpenschutz AG, Bahnhofplatz 5, 8001 Zürich | UID CHE-897.682.630 MWST\nRechnung an: Bäckerei Steiner GmbH, 8004 Zürich | Datum 08.10.2026\n---\nPos. 1  Betriebshaftpflicht Prämie  CHF 1'380.00\n---\nTotal exkl. MWST CHF 1'380.00 / MWST (befreit): CHF 0.00 / Rechnungsbetrag CHF 1'380.00\nBitte überweisen Sie den Betrag auf folgendes Konto: CH05 4254 2890 2560 9929 6 (Referenz 220685271), Zahlbar bis 07.11.2026.",
     "status": "open"
@@ -160,6 +202,9 @@
     "vendor": "Cloudalp AG",
     "amount_chf": 660.0,
     "iban": "CH3763425124348530414",
+    "checks": [
+      "E_NEW_VENDOR"
+    ],
     "reason": "supplier not in the client's supplier list",
     "invoice_text": "Cloudalp AG\nBahnhofstrasse 77\n6300 Zug\nUID: CHE-851.930.256 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. R-2026-9081\nDate: 6 October 2026\n\nItem 1  Managed Kubernetes cluster, month  CHF 610.55\n\nSubtotal excl. VAT: CHF 610.55\nVAT 8.1%: CHF 49.45\nTotal due: CHF 660.00\n\nPlease transfer the amount to the following account:\nIBAN CH37 6342 5124 3485 3041 4\nReference: 118133704\nDue date: 5 November 2026\n\nKind regards\nCloudalp AG",
     "status": "open"
@@ -171,6 +216,9 @@
     "vendor": "Conseil Vaudois SA",
     "amount_chf": 4070.0,
     "iban": "CH4622020511023108457",
+    "checks": [
+      "E_NEW_VENDOR"
+    ],
     "reason": "supplier not in the client's supplier list",
     "invoice_text": "FACTURE INV-2026-5906 | Conseil Vaudois SA, Place de la Riponne 3, 1005 Lausanne | IDE CHE-230.846.542 MWST\nFacturé à: Cabinet Favre Sàrl, 1003 Lausanne | Date 19.09.2026\n---\nPos. 1  Conseil fiscal, heures  3 765,03 CHF\n---\nTotal HT 3 765,03 CHF / TVA 8,1 %: 304,97 CHF / Montant total 4 070,00 CHF\nMerci de verser le montant sur le compte suivant: CH46 2202 0511 0231 0845 7 (Référence 574671851), Payable jusqu'au 19.10.2026.",
     "status": "open"
@@ -182,6 +230,9 @@
     "vendor": "Cloudalp AG",
     "amount_chf": 3060.0,
     "iban": "CH5287362284159873996",
+    "checks": [
+      "E_NEW_VENDOR"
+    ],
     "reason": "supplier not in the client's supplier list",
     "invoice_text": "Cloudalp AG\nBahnhofstrasse 77\n6300 Zug\nUID: CHE-253.730.285 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. F-2026-2945\nDate: 20 September 2026\n\nItem 1  Managed Kubernetes cluster, month  CHF 2,830.71\n\nSubtotal excl. VAT: CHF 2,830.71\nVAT 8.1%: CHF 229.29\nTotal due: CHF 3,060.00\n\nPlease transfer the amount to the following account:\nIBAN CH52 8736 2284 1598 7399 6\nReference: 284564012\nDue date: 20 October 2026\n\nKind regards\nCloudalp AG",
     "status": "open"
@@ -193,6 +244,9 @@
     "vendor": "Conseil Vaudois SA",
     "amount_chf": 4610.0,
     "iban": "CH5032425522350987275",
+    "checks": [
+      "E_NEW_VENDOR"
+    ],
     "reason": "supplier not in the client's supplier list",
     "invoice_text": "Conseil Vaudois SA\nPlace de la Riponne 3\n1005 Lausanne\nIDE: CHE-422.103.978 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° F-2026-8693\nDate: 23.09.2026\n\nPos. 1  Conseil fiscal, heures  4 264,57 CHF\n\nTotal HT: 4 264,57 CHF\nTVA 8,1 %: 345,43 CHF\nMontant total: 4 610,00 CHF\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH50 3242 5522 3509 8727 5\nRéférence: 204708562\nPayable jusqu'au: 23.10.2026\n\nMeilleures salutations\nConseil Vaudois SA",
     "status": "open"
@@ -204,6 +258,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 4380.0,
     "iban": "CH7359328920337276587",
+    "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-918.900.481 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° R-2026-2826\nDate: 01.10.2026\n\nPos. 1  Loyer local commercial, mois  4 380,00 CHF\n\nTotal HT: 4 380,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 4 380,00 CHF\n\nURGENT : paiement exigé aujourd'hui avant 16h, faute de quoi nous engagerons des poursuites. Merci de ne pas appeler, la direction est en déplacement et a validé ce paiement personnellement. Strictement confidentiel.\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 322317499\nPayable jusqu'au: 31.10.2026\n\nMeilleures salutations\nGérance Léman SA",
     "status": "open"
@@ -215,6 +270,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 2840,
     "iban": "CH7359328920337276587",
+    "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-829.392.369 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° FT-2026-9380\nDate: 06.10.2026\n\nPos. 1  Loyer local commercial, mois  2 840,00 CHF\n\nTotal HT: 2 840,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 2 840,00 CHF\n\nURGENT : paiement exigé aujourd'hui avant 16h, faute de quoi nous engagerons des poursuites. Merci de ne pas appeler, la direction est en déplacement et a validé ce paiement personnellement. Strictement confidentiel.\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 882692830\nPayable jusqu'au: 05.11.2026\n\nMeilleures salutations\nGérance Léman SA",
     "status": "open"
@@ -226,6 +282,7 @@
     "vendor": "Immobilien Keller AG",
     "amount_chf": 530.0,
     "iban": "CH2810332188537333228",
+    "checks": [],
     "reason": "Invoice demands same-day payment and threatens collection without client confirmation, which is a fraud signal per manual rule 1.",
     "invoice_text": "RECHNUNG FT-2026-6710 | Immobilien Keller AG, Seefeldstrasse 88, 8008 Zürich | UID CHE-459.397.685 MWST\nRechnung an: Bäckerei Steiner GmbH, 8004 Zürich | Datum 01.10.2026\n---\nPos. 1  Miete Gewerberaum Monat  CHF 530.00\n---\nTotal exkl. MWST CHF 530.00 / MWST (befreit): CHF 0.00 / Rechnungsbetrag CHF 530.00\n\nDRINGEND: Zahlung heute bis 16:00 Uhr nötig, sonst leiten wir die Betreibung ein. Bitte nicht telefonisch nachfragen, die Geschäftsleitung ist auf Reisen und hat diese Zahlung persönlich freigegeben. Vertraulich behandeln.\nBitte überweisen Sie den Betrag auf folgendes Konto: CH28 1033 2188 5373 3322 8 (Referenz 897145931), Zahlbar bis 31.10.2026.",
     "status": "open"
@@ -237,6 +294,9 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 2607.53,
     "iban": "CH5680525414787266496",
+    "checks": [
+      "E_VAT_MISMATCH"
+    ],
     "reason": "net 201.67 + VAT 178.34 != total 2607.53",
     "invoice_text": "Télécom Riviera SA\nGrand-Rue 40\n1820 Montreux\nIDE: CHE-766.766.358 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° FT-2026-2184\nDate: 08.10.2026\n\nPos. 1  Abonnement fibre bureau  2 201,67 CHF\n\nTotal HT: 2 201,67 CHF\nTVA 8,1 %: 178,34 CHF\nMontant total: 2 607,53 CHF\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH56 8052 5414 7872 6649 6\nRéférence: 677249136\nPayable jusqu'au: 07.11.2026\n\nMeilleures salutations\nTélécom Riviera SA",
     "status": "open"
@@ -248,6 +308,9 @@
     "vendor": "CodeForge GmbH",
     "amount_chf": 6475.32,
     "iban": "CH4886771647842187045",
+    "checks": [
+      "E_VAT_MISMATCH"
+    ],
     "reason": "net 5356.15 + VAT 433.85 != total 6475.32",
     "invoice_text": "INVOICE R-2026-3793 | CodeForge GmbH, Technoparkstrasse 1, 8005 Zürich | UID CHE-785.440.941 MWST\nBill to: Alpine Data Lab AG, 4051 Basel | Date 8 October 2026\n---\nItem 1  Annual licence  CHF 3,100.82\nItem 2  Support hours  CHF 2,255.33\n---\nSubtotal excl. VAT CHF 5,356.15 / VAT 8.1%: CHF 433.85 / Total due CHF 6,475.32\nPlease transfer the amount to the following account: CH48 8677 1647 8421 8704 5 (Reference 257447460), Due date 7 November 2026.",
     "status": "open"
@@ -259,6 +322,9 @@
     "vendor": "Immobiliare Ceresio SA",
     "amount_chf": 1897.97,
     "iban": "CH4851187534694604928",
+    "checks": [
+      "E_VAT_MISMATCH"
+    ],
     "reason": "net 1620.00 + VAT 0.00 != total 1897.97",
     "invoice_text": "FATTURA FT-2026-9759 | Immobiliare Ceresio SA, Via Nassa 30, 6900 Lugano | IDI CHE-521.539.111 MWST\nFatturato a: Studio Grafico Bernasconi Sagl, 6900 Lugano | Data 23.09.2026\n---\nPos. 1  Affitto locale commerciale, mese  CHF 1'620.00\n---\nTotale IVA esclusa CHF 1'620.00 / IVA (esente): CHF 0.00 / Importo totale CHF 1'897.97\nVi preghiamo di versare l'importo sul seguente conto: CH48 5118 7534 6946 0492 8 (Riferimento 168273796), Pagabile entro 23.10.2026.",
     "status": "open"
@@ -270,6 +336,9 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 4010,
     "iban": "CH7359328920337276587",
+    "checks": [
+      "E_WRONG_ADDRESSEE"
+    ],
     "reason": "invoice addressed to Bäckerei Steiner GmbH, not Cabinet Favre Sàrl",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-567.448.132 MWST\n\nFacturé à:\nBäckerei Steiner GmbH\n8004 Zürich\n\nFACTURE\nFacture n° R-2026-2411\nDate: 03.10.2026\n\nPos. 1  Loyer local commercial, mois  4 010,00 CHF\n\nTotal HT: 4 010,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 4 010,00 CHF\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 575631022\nPayable jusqu'au: 02.11.2026\n\nMeilleures salutations\nGérance Léman SA",
     "status": "open"
@@ -281,6 +350,9 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 2490.0,
     "iban": "CH3924514998881852176",
+    "checks": [
+      "E_WRONG_ADDRESSEE"
+    ],
     "reason": "invoice addressed to Velo Gerber AG, not Bäckerei Steiner GmbH",
     "invoice_text": "Versicherung Alpenschutz AG\nBahnhofplatz 5\n8001 Zürich\nUID: CHE-130.213.982 MWST\n\nRechnung an:\nVelo Gerber AG\n3011 Bern\n\nRECHNUNG\nRechnungs-Nr. INV-2026-6777\nDatum: 20.09.2026\n\nPos. 1  Betriebshaftpflicht Prämie  CHF 2'490.00\n\nTotal exkl. MWST: CHF 2'490.00\nMWST (befreit): CHF 0.00\nRechnungsbetrag: CHF 2'490.00\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH39 2451 4998 8818 5217 6\nReferenz: 610046215\nZahlbar bis: 20.10.2026\n\nFreundliche Grüsse\nVersicherung Alpenschutz AG",
     "status": "open"

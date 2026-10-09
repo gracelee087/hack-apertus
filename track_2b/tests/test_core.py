@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from agent import badge, credential, datagen, identity, lessons, pain001  # noqa: E402
-from agent.desk import Desk  # noqa: E402
+from agent.desk import Desk, seat_of  # noqa: E402
 from agent.common import iban_valid, make_ch_iban  # noqa: E402
 from agent.ledger import Ledger, audit_identities, verify  # noqa: E402
 
@@ -72,48 +72,61 @@ def test_did_and_signed_documents():
     assert identity.verify_doc(doc) and not identity.verify_doc({**doc, "n": 2})
 
 
-def _desk(tmp_path):
+def _desk(tmp_path, open_books=False):
     d = Desk(Ledger(tmp_path / "l.jsonl"), copy.deepcopy(BY_ID),
              clock=lambda: datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc))
-    d.hire(manual_sha256="x")
+    if open_books:
+        d.open_books()
+    for cid in ("C01", "C02", "C03", "C05"):
+        d.hire(cid, manual_sha256="x")
     return d
 
 
 def test_gate_accepts_legit_and_blocks_replay(tmp_path):
     d = _desk(tmp_path)
     payload = {"case_id": "T1", "amount_chf": 100.0, "executes_payment": True, "client_id": "C01"}
-    st = identity.stamp(d.agent_key, "payment.decide", "C01", payload, d.clock())
+    st = identity.stamp(d.agent_key(seat_of("C01")), "payment.decide", "C01", payload, d.clock())
     assert d.submit(st, payload)["gate"] == "OK"
     assert d.submit(st, payload)["gate"] == "G2_REPLAY"
     assert verify(d.ledger.entries) == (True, None)
 
 
-def test_kill_switch_and_grant(tmp_path):
+def test_agents_are_isolated_per_client(tmp_path):
+    d = _desk(tmp_path)
+    payload = {"case_id": "T1", "amount_chf": 100.0, "client_id": "C02"}
+    st = identity.stamp(d.agent_key(seat_of("C01")), "payment.decide", "C02", payload, d.clock())
+    assert d.submit(st, payload)["gate"] == "G4_CLIENT_NOT_COVERED"
+    assert d.request("C04", "payment.decide", {"case_id": "T9"})["gate"] == "G3_NO_AGENT_FOR_CLIENT"
+
+
+def test_kill_switch_grant_and_settings(tmp_path):
     d = _desk(tmp_path)
     big = {"case_id": "T2", "amount_chf": 25000.0, "executes_payment": True}
-    assert d.request("payment.decide", "C05", big)["gate"] == "G4_ABOVE_BADGE_CAP_NO_GRANT"
-    ref = d.grant("T2", 25000.0, "checked with client")
-    assert d.request("payment.decide", "C05", {**big, "grant_ref": ref})["gate"] == "OK"
-    d.kill("test")
-    assert d.request("payment.decide", "C01", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "G3_AGENT_REVOKED"
-    d.hire(manual_sha256="x")
-    assert d.generation == 2
-    assert d.request("payment.decide", "C01", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"
+    assert d.request("C05", "payment.decide", big)["gate"] == "G4_ABOVE_BADGE_CAP_NO_GRANT"
+    ref = d.grant("C05", "T2", 25000.0, "checked with client")
+    assert d.request("C05", "payment.decide", {**big, "grant_ref": ref})["gate"] == "OK"
+    d.update_badge("C05", 30000, ["payment.decide"])  # firm raises the cap, removes file creation
+    assert d.request("C05", "payment.decide", {**big, "case_id": "T4"})["gate"] == "OK"
+    assert d.request("C05", "payment.file", {"x": 1})["gate"] == "G4_ACTION_NOT_ALLOWED"
+    d.kill("C01", "test")
+    assert d.request("C01", "payment.decide", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "G3_AGENT_REVOKED"
+    assert d.request("C02", "payment.decide", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"  # others unaffected
+    d.hire("C01", manual_sha256="x")
+    assert d.generations[seat_of("C01")] == 2
+    assert d.request("C01", "payment.decide", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"
 
 
 def test_identity_is_recorded_from_issuance(tmp_path):
-    d = Desk(Ledger(tmp_path / "l.jsonl"), copy.deepcopy(BY_ID),
-             clock=lambda: datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc))
-    d.open_books()
-    d.hire(manual_sha256="x")
+    d = _desk(tmp_path, open_books=True)
     actions = [e["action"] for e in d.ledger.entries]
     assert actions[:1] == ["ledger.opened"] and actions.count("mandate.registered") == 5
-    assert actions[-3:] == ["identity.issued", "delegation.issued", "policy.changed"]
-    d.request("payment.decide", "C01", {"case_id": "T1", "amount_chf": 10.0})
+    assert actions.count("identity.issued") == 4 and actions[-3:] == ["identity.issued", "delegation.issued", "policy.changed"]
+    d.request("C01", "payment.decide", {"case_id": "T1", "amount_chf": 10.0})
     audit = audit_identities(d.ledger.entries)
-    assert audit["ok"] and audit["agent_actions"] == 1
-    d.kill("t")
-    d.ledger.entries.append({"seq": 99, "actor": d.agent_did, "gate": "OK", "action": "payment.decide"})
+    assert audit["ok"] and audit["agent_actions"] == 1 and len(audit["agents_issued"]) == 4
+    did = d.agent_did(seat_of("C01"))
+    d.kill("C01", "t")
+    d.ledger.entries.append({"seq": 99, "actor": did, "gate": "OK", "action": "payment.decide"})
     assert not audit_identities(d.ledger.entries)["ok"]  # an action recorded after revocation is flagged
 
 

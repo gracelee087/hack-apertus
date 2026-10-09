@@ -50,7 +50,7 @@ every agent action = request signed with the agent key ──► [Gate: G1 signa
 | Gate (five checks) and desk (hire, kill switch, replace, human grants) | `src/agent/gate.py`, `desk.py` | runtime |
 | Attack scenarios against the gate | `src/agent/security.py` | runtime, no model calls |
 | Ledger (hash chain + ledger-key signature), payment files | `src/agent/ledger.py`, `pain001.py` | runtime, pure Python |
-| Reviewer web app | `src/agent/app.py`, `static/index.html` | runtime, FastAPI on port 8000 |
+| Reviewer web app: client portfolio dashboard (status, risk signals per client), per-client pages (decisions, approvals, agent settings, lessons, files, ledger) | `src/agent/app.py`, `static/index.html` | runtime, FastAPI on port 8000 |
 
 ### Target architecture (mandatory)
 
@@ -78,17 +78,19 @@ stamp, ledger, lessons); the code here is new.
 | Principal | Key | Signs |
 |---|---|---|
 | Client company | its own Ed25519 key (did:key, recorded at onboarding) | the mandate: scope, limits, validity, delegate = the firm |
-| Fiduciary firm | firm key | the agent's entity card (operator, responsible human, *is AI*) and badge (actions, clients, cap, validity) |
-| Agent, per seat generation | its own key → DID | every request: action, client, payload hash, nonce, time |
+| Fiduciary firm | firm key | each agent's entity card (operator, responsible human, *is AI*) and badge (actions, its one client, cap, validity) |
+| Agent: one seat per client, one key per generation | its own key → DID | every request: action, client, payload hash, nonce, time |
 | Ledger | ledger key | every ledger entry (on top of the hash chain) |
 
 The **gate** runs five checks on each request before it takes effect: G1 signature and payload
 hash, G2 nonce never seen and request fresh, G3 firm-issued entity card and agent not revoked,
 G4 badge covers this action, client, date and amount (above the badge cap only with a human grant
 for that exact case), G5 the client's mandate is validly signed, names our firm and is in force.
-The **kill switch** revokes the current agent generation; **replacing** it hires v2 with a new key
-and DID, while the seat's lessons carry over (lessons bind the seat's own lineage; other seats'
-lessons would be reference only). Human approvals become grants with a reference in the ledger.
+Each client has its own agent seat, so one client's agent cannot act for another (G4) and client
+data never mixes. The **kill switch** revokes one seat's current generation without touching the
+others; **replacing** it hires v2 with a new key and DID, while the seat's lessons carry over: lessons
+learned on a client bind that client's seat and are shown to the other seats for reference only;
+the lessons from the training review are firm-wide. Human approvals become grants with a reference in the ledger.
 The ledger starts at issuance: it opens with the firm and ledger DIDs, then every client mandate
 in full with the client's signature, then each agent generation's entity card and badge in full
 (`identity.issued`, `delegation.issued`) and its manual fingerprint (`policy.changed`). An auditor
@@ -193,12 +195,12 @@ no model calls):
 | amount / IBAN changed after signing | 35 / 35 | G1 |
 | replayed request · stale request (1 h) | 35 / 35 · 35 / 35 | G2 |
 | unknown agent key · revoked agent v1 after kill switch | 35 / 35 · 35 / 35 | G3 |
-| client not delegated · above cap without grant · expired badge | 35 / 35 each | G4 |
+| agent of one client acting for another · above cap without grant · expired badge | 35 / 35 each | G4 |
 | mandate limits tampered · mandate naming another delegate · mandate revoked | 35 / 35 each | G5 |
 
 In the reference run the gate accepted all 78 agent decisions for active clients' invoices plus the
 4 payment files, and refused the 4 decisions for the client whose mandate was already revoked
-(not in the agent's badge). The ledger's chain and signatures verify.
+(no agent is hired for a client that has revoked its mandate). The ledger's chain and signatures verify.
 
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
 all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/test_core.py`).

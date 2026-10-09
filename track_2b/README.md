@@ -12,12 +12,15 @@ English — while a **harness** keeps it inside what each client actually delega
    that don't add up, invoices addressed to someone else).
 4. **Lessons**: when a human overrules the agent, the note is masked, Apertus distils it into a
    rule, and the next manual generation is fingerprinted in the ledger. No weights change.
-5. **Agent identity and gate**: the agent has its own Ed25519 key and DID, a firm-signed ID card
-   and badge; clients sign their mandates. Every agent action is a signed, single-use request that
+5. **Agent identity and gate**: each client gets its own agent seat; every agent generation has its
+   own Ed25519 key and DID, a firm-signed ID card and a badge for that one client; clients sign their mandates. Every agent action is a signed, single-use request that
    a gate checks (signature, replay, identity, badge, mandate) before it takes effect. Kill switch,
    replacement by the next generation, and human grants for amounts above the badge cap.
 6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client for its bank, an approval queue
    for everything the agent may not pay alone, and a hash-chained, signed audit ledger.
+
+The reviewer app opens on a client portfolio dashboard (status and risk signals per client) with a
+page per client (decisions, approvals, agent settings, lessons, payment files, ledger).
 
 Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 45 invoices it
 must not pay (CHF 138,781); with the harness 7 (CHF 26,771), and 2 (CHF 9,290) with two lessons
