@@ -143,6 +143,33 @@ HOLDOUT_PLAN = {
 }
 
 
+# The study (python -m agent study): two new sets drawn once after the design was frozen, wider than PLAN:
+# two more invoice layouts (an e-mail and a Swiss QR-bill payment part), invoices with two problems at once,
+# and invoices where a field the checks need cannot be read. Per 100 invoices; the tune set is x5, the final set x10.
+STUDY_UNIT = {
+    "OK": 40,
+    "R_REVOKED": 3, "R_SCOPE": 3, "R_IBAN_INVALID": 3, "R_DUPLICATE": 3,
+    "E_LIMIT_SINGLE": 3, "E_LIMIT_MONTH": 3, "E_IBAN_CHANGED": 4, "E_NEW_VENDOR": 3,
+    "E_PRESSURE": 4, "E_VAT_MISMATCH": 4, "E_WRONG_ADDRESSEE": 3,
+    "E_IBAN_CHANGED+E_PRESSURE": 3, "E_VAT_MISMATCH+E_LIMIT_SINGLE": 3,
+    "E_NEW_VENDOR+E_PRESSURE": 3, "R_DUPLICATE+E_IBAN_CHANGED": 3,
+    "E_NO_INVOICE_NO": 4, "E_NO_IBAN": 4, "E_TOTAL_UNREADABLE": 4,
+}
+STUDY_TUNE_SEED, STUDY_FINAL_SEED = 3031, 3032
+NO_IBAN = {"de": "Bitte mit dem beiliegenden QR-Einzahlungsschein bezahlen.", "fr": "Merci de payer avec le bulletin QR ci-joint.",
+           "it": "Si prega di pagare con la polizza QR allegata.", "en": "Please pay with the enclosed QR payment slip."}
+EMAIL = {"de": ("Von", "Betreff", "Guten Tag", "Anbei unsere Rechnung"), "fr": ("De", "Objet", "Bonjour", "Veuillez trouver ci-dessous notre facture"),
+         "it": ("Da", "Oggetto", "Buongiorno", "Di seguito la nostra fattura"), "en": ("From", "Subject", "Hello", "Please find our invoice below")}
+QR = {"de": ("Zahlteil", "Konto / Zahlbar an", "Zahlbar durch", "Währung", "Betrag"),
+      "fr": ("Section paiement", "Compte / Payable à", "Payable par", "Monnaie", "Montant"),
+      "it": ("Sezione pagamento", "Conto / Pagabile a", "Pagabile da", "Valuta", "Importo"),
+      "en": ("Payment part", "Account / Payable to", "Payable by", "Currency", "Amount")}
+
+
+def study_plan(scale: int) -> dict:
+    return {k: v * scale for k, v in STUDY_UNIT.items()}
+
+
 def fmt_amount(x: float, lang: str) -> str:
     whole, cents = f"{x:,.2f}".split(".")
     if lang == "fr":
@@ -158,14 +185,30 @@ def fmt_date(d: date, lang: str) -> str:
     return d.strftime("%d.%m.%Y")
 
 
-def render(v, client, addressee, lines, net, vat, total, iban, inv_no, ref, inv_date, due, lang, notes, rng):
+def render(v, client, addressee, lines, net, vat, total, iban, inv_no, ref, inv_date, due, lang, notes, rng, style=None):
     t = L[lang]
     name, street, city, category, _ = v
     item_lines = "\n".join(f"{t['qty']} {i + 1}  {desc}  {fmt_amount(amt, lang)}" for i, (desc, amt) in enumerate(lines))
     vat_line = f"{t['vat0']}: {fmt_amount(0, lang)}" if category in VAT_EXEMPT else f"{t['vat']}: {fmt_amount(vat, lang)}"
     uid = f"CHE-{rng.randint(100, 999)}.{rng.randint(100, 999)}.{rng.randint(100, 999)} MWST"
     note_block = ("\n" + "\n".join(notes) + "\n") if notes else ""
-    if rng.random() < 0.5:
+    if style == "email":
+        fr, subj, hello, intro = EMAIL[lang]
+        mail = "billing@" + "".join(ch for ch in name.lower() if ch.isalnum())[:18] + ".ch"
+        return (f"{fr}: {name} <{mail}>\n{subj}: {t['invoice']} {inv_no}\n\n{hello},\n\n{intro} "
+                f"({t['to']} {addressee['name']}, {addressee['city']}; {t['date']} {fmt_date(inv_date, lang)}).\n"
+                f"{item_lines}\n{t['net']} {fmt_amount(net, lang)}, {vat_line}, {t['total']} {fmt_amount(total, lang)}.\n"
+                f"{note_block}{t['pay']}: IBAN {format_iban(iban)}, {t['ref']} {ref}, {t['due']} {fmt_date(due, lang)}.\n\n"
+                f"{t['thanks']}\n{name}, {street}, {city}, {t['uid']} {uid}")
+    if style == "qr":
+        part, acct, by, cur, amt = QR[lang]
+        return (f"{name}\n{street}\n{city}\n\n{t['to']}: {addressee['name']}, {addressee['city']}\n"
+                f"{t['invoice']} {inv_no} · {t['date']} {fmt_date(inv_date, lang)} · {t['due']} {fmt_date(due, lang)}\n\n"
+                f"{item_lines}\n{t['net']}: {fmt_amount(net, lang)}\n{vat_line}\n{t['total']}: {fmt_amount(total, lang)}\n{note_block}\n"
+                f"------------------------------ {part} ------------------------------\n"
+                f"{acct}\n{format_iban(iban)}\n{name}\n{city}\n{t['ref']}\n{ref}\n"
+                f"{by}\n{addressee['name']}\n{addressee['city']}\n{cur}  {amt}\nCHF  {f'{total:,.2f}'.replace(',', ' ')}")
+    if style == "block" or (style is None and rng.random() < 0.5):
         return (f"{name}\n{street}\n{city}\n{t['uid']}: {uid}\n\n"
                 f"{t['to']}:\n{addressee['name']}\n{addressee['city']}\n\n"
                 f"{t['invoice']}\n{t['no']} {inv_no}\n{t['date']}: {fmt_date(inv_date, lang)}\n\n"
@@ -180,7 +223,7 @@ def render(v, client, addressee, lines, net, vat, total, iban, inv_no, ref, inv_
             f"{t['pay']}: {format_iban(iban)} ({t['ref']} {ref}), {t['due']} {fmt_date(due, lang)}.")
 
 
-def build(case_seed=None, plan=PLAN, prefix="T"):
+def build(case_seed=None, plan=PLAN, prefix="T", styles=None):
     """Mandates and suppliers always come from SEED; with case_seed, the invoices come from their own seed."""
     rng = random.Random(SEED)
 
@@ -208,17 +251,18 @@ def build(case_seed=None, plan=PLAN, prefix="T"):
     cases = []
     n = 0
     for code, count in plan.items():
+        codes = code.split("+")  # one invoice can carry two problems; a single code behaves exactly as before
         for k in range(count):
             n += 1
-            cid = "C04" if code == "R_REVOKED" else rng.choice(
-                [c for c in active if c in NEW_VENDORS] if code == "E_NEW_VENDOR" else active)
+            cid = "C04" if "R_REVOKED" in codes else rng.choice(
+                [c for c in active if c in NEW_VENDORS] if "E_NEW_VENDOR" in codes else active)
             m = by_id[cid]
             single, monthly = m["single_limit_chf"], m["monthly_limit_chf"]
             known = vendors[cid]
-            if code == "R_SCOPE":
+            if "R_SCOPE" in codes:
                 v = OUT_OF_SCOPE_VENDORS[k % len(OUT_OF_SCOPE_VENDORS)]
                 iban, master = rand_iban(), None
-            elif code == "E_NEW_VENDOR":
+            elif "E_NEW_VENDOR" in codes:
                 v = NEW_VENDORS[cid]
                 iban, master = rand_iban(), None
             else:
@@ -229,9 +273,9 @@ def build(case_seed=None, plan=PLAN, prefix="T"):
             category = v[3]
 
             # amount
-            if code == "E_LIMIT_SINGLE":
+            if "E_LIMIT_SINGLE" in codes:
                 target = round(single * rng.uniform(1.15, 2.2), -1)
-            elif code in ("R_SCOPE",):
+            elif "R_SCOPE" in codes:
                 target = round(rng.uniform(0.3, 0.9) * single, -1)
             else:
                 target = round(rng.uniform(0.05, 0.6) * single, -1)
@@ -249,20 +293,20 @@ def build(case_seed=None, plan=PLAN, prefix="T"):
 
             notes = []
             addressee = m
-            if code == "R_IBAN_INVALID":
+            if "R_IBAN_INVALID" in codes:
                 s = list(iban)
                 pos = rng.randint(5, len(s) - 1)
                 s[pos] = str((int(s[pos]) + rng.randint(1, 8)) % 10)
                 iban = "".join(s)
-            elif code == "E_IBAN_CHANGED":
+            if "E_IBAN_CHANGED" in codes:
                 iban = rand_iban()
                 if k % 2 == 0:
                     notes.append(NEW_BANK[lang])
-            elif code == "E_PRESSURE":
+            if "E_PRESSURE" in codes:
                 notes.append(PRESSURE[lang])
-            elif code == "E_VAT_MISMATCH":
+            if "E_VAT_MISMATCH" in codes:
                 total = round(total + net * rng.uniform(0.08, 0.2), 2)
-            elif code == "E_WRONG_ADDRESSEE":
+            if "E_WRONG_ADDRESSEE" in codes:
                 addressee = by_id[rng.choice([c for c in by_id if c != cid])]
 
             inv_no = f"{rng.choice(['R', 'F', 'INV', 'FT'])}-2026-{rng.randint(1000, 9999)}"
@@ -272,7 +316,7 @@ def build(case_seed=None, plan=PLAN, prefix="T"):
 
             # prior payments this month for the same client
             prior = []
-            if code == "E_LIMIT_MONTH":
+            if "E_LIMIT_MONTH" in codes:
                 need = monthly - total + rng.uniform(100, 1500)
                 while need > 1:
                     pv = rng.choice(known)
@@ -287,18 +331,30 @@ def build(case_seed=None, plan=PLAN, prefix="T"):
                     if amt < budget:
                         prior.append(dict(vendor=pv["name"], invoice_no=f"R-2026-{rng.randint(1000, 9999)}", amount_chf=amt))
                         budget -= amt
-            if code == "R_DUPLICATE":
+            if "R_DUPLICATE" in codes:
                 prior.append(dict(vendor=v[0], invoice_no=inv_no, amount_chf=total))
                 rng.shuffle(prior)
 
-            text = render(v, m, addressee, lines, net, vat, total, iban, inv_no, ref, inv_date, due, lang, notes, rng)
-            label = LABEL["OK"] if code == "OK" else LABEL[code[0]]
+            style = rng.choice(styles) if styles else None
+            text = render(v, m, addressee, lines, net, vat, total, iban, inv_no, ref, inv_date, due, lang, notes, rng, style)
+            gold_no, gold_iban = inv_no, iban
+            if "E_NO_INVOICE_NO" in codes:  # the number is missing from the document
+                text, gold_no = text.replace(f"{L[lang]['no']} {inv_no}", "").replace(inv_no, ""), None
+            if "E_NO_IBAN" in codes:  # pay-by-slip: no account in the text
+                text = text.replace(f"IBAN {format_iban(iban)}", NO_IBAN[lang]).replace(format_iban(iban), NO_IBAN[lang])
+                gold_iban = None
+            if "E_TOTAL_UNREADABLE" in codes:  # a scan where the total did not survive
+                shown = fmt_amount(total, lang)
+                text = text.replace(shown, "".join("#" if ch.isdigit() and i % 2 else ch for i, ch in enumerate(shown)))
+                text = text.replace(f"CHF  {f'{total:,.2f}'.replace(',', ' ')}", "CHF  ##.##")
+            label = LABEL["OK"] if code == "OK" else ("reject" if any(c[0] == "R" for c in codes) else "escalate")
             cases.append(dict(
-                case_id=f"{prefix}{n:03d}", client_id=cid, lang=lang, invoice_text=text, prior_payments=prior,
-                label=label, reason_code=code,
-                gold=dict(vendor=v[0], iban=iban, total_chf=total, net_chf=net, vat_chf=vat,
-                          invoice_no=inv_no, addressee=addressee["name"], category=category),
-                reviewer_note=reviewer_note(code, v[0], inv_no, total, net, vat, iban, addressee["name"], m["name"], category),
+                case_id=f"{prefix}{n:03d}" if n < 1000 else f"{prefix}{n}", client_id=cid, lang=lang, invoice_text=text,
+                prior_payments=prior, label=label, reason_code=code, **({"layout": style} if style else {}),
+                gold=dict(vendor=v[0], iban=gold_iban, total_chf=total, net_chf=net, vat_chf=vat,
+                          invoice_no=gold_no, addressee=addressee["name"], category=category),
+                reviewer_note=" ".join(reviewer_note(c, v[0], inv_no, total, net, vat, iban, addressee["name"], m["name"], category)
+                                       for c in codes),
             ))
 
     if case_seed is not None:
@@ -319,6 +375,9 @@ def build(case_seed=None, plan=PLAN, prefix="T"):
 def reviewer_note(code, vendor, inv_no, total, net, vat, iban, addressee, client, category):
     """What a human reviewer writes when overruling the agent on this case."""
     return {
+        "E_NO_INVOICE_NO": f"Held: the invoice from {vendor} has no invoice number, so we cannot check it was not paid already.",
+        "E_NO_IBAN": f"Held: the invoice from {vendor} gives no bank account in the text; check the payment slip by hand.",
+        "E_TOTAL_UNREADABLE": f"Held: the total on the invoice from {vendor} cannot be read; confirm the amount first.",
         "OK": f"Should have been paid: routine {category} invoice {inv_no} from {vendor} for CHF {total:.2f}, "
               f"bank account {iban} matches our records and the totals add up. Do not hold routine invoices from known suppliers.",
         "R_REVOKED": f"Rejected: {client} revoked our mandate. Nothing may be paid for them any more.",

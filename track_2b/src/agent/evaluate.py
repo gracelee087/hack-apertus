@@ -127,7 +127,7 @@ def extraction_scores(preds):
             ok["total_chf"] += abs(float(f.get("total_chf")) - g["total_chf"]) < 0.01
         except (TypeError, ValueError):
             pass
-        ok["invoice_no"] += str(f.get("invoice_no", "")).strip().upper() == g["invoice_no"].upper()
+        ok["invoice_no"] += str(f.get("invoice_no") or "").strip().upper() == (g["invoice_no"] or "").upper()
         ok["vendor"] += badge.same_name(f.get("vendor_name"), g["vendor"])
         ok["addressee"] += badge.same_name(f.get("addressee"), g["addressee"])
         ok["parsed"] += "error" not in f
