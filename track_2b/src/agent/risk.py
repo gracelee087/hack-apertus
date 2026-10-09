@@ -266,19 +266,21 @@ def _training_data():
     history = ensure_history()
     mandates = {m["client_id"]: m for m in load_json(DATA / "mandates.json")}
     vendors = load_json(DATA / "vendors.json")
-    baseline = amount_baseline(history)
-    X = [features(r, mandates[r["client_id"]], vendors[r["client_id"]], baseline) for r in history]
-    idx = list(range(len(X)))
+    idx = list(range(len(history)))
     random.Random(SEED).shuffle(idx)
     cut = int(0.8 * len(idx))
-    return history, mandates, vendors, baseline, X, idx[:cut], idx[cut:]
+    tr, va = idx[:cut], idx[cut:]
+    feat = lambda base: [features(r, mandates[r["client_id"]], vendors[r["client_id"]], base) for r in history]
+    Xsel = feat(amount_baseline([history[i] for i in tr]))  # model selection: nothing from the validation rows
+    baseline = amount_baseline(history)  # final model: refitted on all rows, scores invoices outside the history
+    return history, mandates, vendors, baseline, feat(baseline), tr, va, Xsel
 
 
-def train(history, X, tr, va, target):
-    """Pick the L2 weight on the validation split, then refit on all rows."""
+def train(history, X, tr, va, target, Xsel):
+    """Pick the L2 weight on the validation split (Xsel: baseline from the training split), then refit on all rows (X)."""
     y = [h[target] for h in history]
-    Xtr, stats = standardize([X[i] for i in tr])
-    Xva, _ = standardize([X[i] for i in va], stats)
+    Xtr, stats = standardize([Xsel[i] for i in tr])
+    Xva, _ = standardize([Xsel[i] for i in va], stats)
     best, grid = None, []
     for l2 in (0.01, 0.1, 1.0, 10.0):
         auc = roc_auc([y[i] for i in va], predict(fit_logistic(Xtr, [y[i] for i in tr], l2), Xva))
@@ -302,8 +304,8 @@ class Scorer:
     """The fraud model exactly as fitted in run(), scoring one invoice at a time (web app, second look)."""
 
     def __init__(self):
-        history, self.mandates, self.vendors, self.baseline, X, tr, va = _training_data()
-        self.w, self.stats = train(history, X, tr, va, "is_fraud")[:2]
+        history, self.mandates, self.vendors, self.baseline, X, tr, va, Xsel = _training_data()
+        self.w, self.stats = train(history, X, tr, va, "is_fraud", Xsel)[:2]
 
     def score(self, case, fields):
         """case: client_id, invoice_text, prior_payments. Returns (score 0-100, top factors)."""
@@ -325,11 +327,11 @@ def scorer() -> Scorer:
 
 
 def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
-    history, mandates, vendors, baseline, X, tr, va = _training_data()
-    wA, statsA, l2A, valA, gridA, svA, stats_trA = train(history, X, tr, va, "is_fraud")
-    wB, statsB, l2B, valB, gridB, svB, _ = train(history, X, tr, va, "must_not_autopay")
+    history, mandates, vendors, baseline, X, tr, va, Xsel = _training_data()
+    wA, statsA, l2A, valA, gridA, svA, stats_trA = train(history, X, tr, va, "is_fraud", Xsel)
+    wB, statsB, l2B, valB, gridB, svB, _ = train(history, X, tr, va, "must_not_autopay", Xsel)
     yvA, yvB = [history[i]["is_fraud"] for i in va], [history[i]["must_not_autopay"] for i in va]
-    svU = anomaly_scores([X[i] for i in tr], [X[i] for i in va])
+    svU = anomaly_scores([Xsel[i] for i in tr], [Xsel[i] for i in va])
     val_unsup = report(yvA, svU)
 
     rows, yA, yB, passed_rules, missed = [], [], [], [], []
@@ -369,7 +371,7 @@ def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
                                                    "rank_among_passed": sub_rank.index(i) + 1 if i in sub else None}
                                                   for i, mm in enumerate(missed) if mm]},
         "scores": scores,
-        "pipeline": pipeline(history, X, tr, va, rows, preds, yA, yB, sA, sU, sB, yvA, yvB, svA, svU, svB,
+        "pipeline": pipeline(history, Xsel, tr, va, rows, preds, yA, yB, sA, sU, sB, yvA, yvB, svA, svU, svB,
                              stats_trA, gridA, gridB),
     }
     (RESULTS / "risk_model.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

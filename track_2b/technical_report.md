@@ -101,10 +101,15 @@ executed) and only then puts the agent on duty, stopping at the first failing st
 its mandate stops at step one. **Replacing** an agent hires v2 with a new key and DID, while the seat's lessons carry over: lessons
 learned on a client bind that client's seat and are shown to the other seats for reference only;
 the lessons from the training review are firm-wide. Human approvals become grants with a reference in the ledger.
-A payment decision and its payment file are one step: if the gate refuses the file, the decision is
-voided in the ledger and the invoice waits for a human; a file that fails validation is never issued.
+A payment decision and its payment file are one step: the file is written before it is recorded; if
+it fails validation, cannot be written or the gate refuses it, the decision is voided in the ledger and
+the invoice waits for a human (in the reference run as in the web app). Extraction must be complete and
+typed: without supplier, IBAN, a positive numeric total, invoice number, net amount and VAT the invoice
+goes to a human, since the duplicate and sum checks cannot run otherwise.
 For invoices processed in the web app, this month's payments (for the duplicate and monthly-limit
-checks) are read from the ledger, and the hard checks run again under a lock just before paying.
+checks) are read from the ledger, and the hard checks run again under a lock just before paying; a human
+approval is checked for duplicates too. The demo runs on one business date: the synthetic world's date
+(2026-10-09), advancing with real time from start; badge, gate and month totals all use it.
 The ledger starts at issuance: it opens with the firm and ledger DIDs, then every client mandate
 in full with the client's signature, then each agent generation's entity card and badge in full
 (`identity.issued`, `delegation.issued`) and its manual fingerprint (`policy.changed`). An auditor
@@ -234,7 +239,8 @@ amount is taken from the train split's legitimate invoices. Thirteen features (a
 that supplier's history, changed or invalid IBAN, new supplier, round amount, amounts that don't add up,
 wrong addressee, urgency words in four languages, short due date, duplicate, limits, scope, month load).
 L2-regularised logistic regression fitted by Newton/IRLS in pure Python; the L2 weight (0.01–10) is
-chosen on a 20% validation split, then refitted on all 3,000 rows. Compared with an unsupervised baseline
+chosen on a 20% validation split (the amount baseline for that choice is computed from the 80% training split
+only), then refitted on all 3,000 rows. Compared with an unsupervised baseline
 (sum of robust deviations from the median) and with a second model for "must not be paid automatically".
 
 | Model | ROC AUC validation | ROC AUC test (78) | Avg precision test | ROC AUC holdout (42) |

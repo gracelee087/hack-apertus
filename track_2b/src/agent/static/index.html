@@ -1104,7 +1104,7 @@ async function dataSciencePage() {
     ${more(t("읽어 보기", "Read"), `<ul><li>${t("학습 데이터가 합성이라, 모델이 생성기 규칙을 일부 다시 배워요. 실제 성능은 사무소의 실제 기록으로 다시 재야 해요.", "Synthetic training data: the model partly relearns the generator. Real performance must be re-measured on the firm's records.")}</li>
       <li>${t("테스트 78건(사기 23건)은 작아서 AUC의 불확실성이 커요. 신뢰구간은 계산하지 않았어요.", "78 test invoices (23 fraud) is small; AUC is uncertain and no confidence interval was computed.")}</li>
       <li>${t("점수는 확률처럼 보여도 학습 데이터의 사기 비율(15.7%)에 맞춰져 있어요. 실제 사기 비율은 훨씬 낮아요.", "Scores look like probabilities but are calibrated to the training fraud rate (15.7%); real fraud is much rarer.")}</li>
-      <li>${t("점수는 지급 결정을 바꾸지 않아요. 처리 순서와 경고에만 써요.", "The score never changes a payment decision; it ranks and warns.")}</li></ul>`, true)}</div>`;
+      <li>${t("점수 50 이상이면 에이전트가 지급하려던 건도 사람에게 넘겨요(한 번 더 보기). 기준 50은 아직 따로 정한 검증 데이터로 고르지 않았어요.", "A score of 50 or more sends a payment the agent would make to a human (second look). The threshold of 50 has not yet been chosen on separate validation data.")}</li></ul>`, true)}</div>`;
 }
 async function analyticsPage() {
   const a = await api("/api/analytics");

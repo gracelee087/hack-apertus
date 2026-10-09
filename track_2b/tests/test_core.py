@@ -18,7 +18,8 @@ BY_ID = {m["client_id"]: m for m in MANDATES}
 def gold_fields(case):
     g = case["gold"]
     return {"vendor_name": g["vendor"], "vendor_iban": g["iban"], "invoice_no": g["invoice_no"],
-            "addressee": g["addressee"], "total_chf": g["total_chf"], "category": g["category"]}
+            "addressee": g["addressee"], "total_chf": g["total_chf"], "net_chf": g["net_chf"], "vat_chf": g["vat_chf"],
+            "category": g["category"]}
 
 
 def test_iban():
@@ -175,7 +176,7 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
     d.hire("C01", manual_sha256="x")
     (tmp_path / "desk.json").write_text(__import__("json").dumps(d.dump()), encoding="utf-8")
     v = VENDORS["C01"][0]
-    fields = {"vendor_name": v["name"], "vendor_iban": v["iban"], "invoice_no": "R-1", "total_chf": 400.0,
+    fields = {"vendor_name": v["name"], "vendor_iban": v["iban"], "invoice_no": "R-1", "total_chf": 400.0, "net_chf": 400.0, "vat_chf": 0.0,
               "addressee": BY_ID["C01"]["name"], "category": v["category"]}
     monkeypatch.setattr(app.decide, "harness", lambda case, *a, **k: {  # Apertus read the invoice and found no issue
         "fields": dict(fields), "badge": "pass", "findings": [], "decision": "pay", "reason": "ok"})
@@ -291,3 +292,69 @@ def test_reference_run_voids_payments_whose_file_is_not_issued(tmp_path, monkeyp
               if "FILE_INVALID" in i["checks"]}
     assert files == {} and ledger_ok and not list((tmp_path / "payments").iterdir())
     assert paid and paid == voided == queued  # no file, no payment: every decision is voided and back with a human
+
+
+def test_extraction_must_be_complete_and_typed():
+    case = next(c for c in CASES if c["reason_code"] == "OK")
+    m, sup = BY_ID[case["client_id"]], VENDORS[case["client_id"]]
+    assert badge.check(m, sup, [], gold_fields(case))[0] == "pass"
+    for broken in ({"invoice_no": None}, {"vat_chf": None}, {"net_chf": ""}, {"total_chf": True}):
+        verdict, findings = badge.check(m, sup, [], gold_fields(case) | broken)
+        assert verdict == "escalate" and "EXTRACTION_INCOMPLETE" in [f["code"] for f in findings], broken
+
+
+def _live_app(tmp_path, monkeypatch, decision="pay"):
+    from agent import app
+    monkeypatch.setattr(app, "RESULTS", tmp_path)
+    monkeypatch.setattr(app, "STATE", tmp_path / "state.json")
+    monkeypatch.setattr(app, "LEDGER", Ledger(tmp_path / "ledger.jsonl"))
+    d = Desk(app.LEDGER, copy.deepcopy(BY_ID))
+    d.hire("C01", manual_sha256="x")
+    (tmp_path / "desk.json").write_text(__import__("json").dumps(d.dump()), encoding="utf-8")
+    v = VENDORS["C01"][0]
+    fields = {"vendor_name": v["name"], "vendor_iban": v["iban"], "invoice_no": "R-7", "total_chf": 400.0, "net_chf": 400.0,
+              "vat_chf": 0.0, "addressee": BY_ID["C01"]["name"], "category": v["category"]}
+    monkeypatch.setattr(app.decide, "harness", lambda case, *a, **k: {
+        "fields": dict(fields), "badge": "pass", "findings": [], "decision": decision, "reason": "test"})
+    return app
+
+
+def test_human_approval_cannot_pay_the_same_invoice_twice(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch, decision="escalate")
+    a, b = (app.process("C01", app.Text(invoice_text="x"))["case_id"] for _ in range(2))
+    assert app.review(a, app.Review(action="approve", note="ok"))["ok"]
+    try:
+        app.review(b, app.Review(action="approve", note="ok"))
+        raise AssertionError("second approval paid the same invoice")
+    except app.HTTPException as e:
+        assert e.status_code == 409 and "R_DUPLICATE" in e.detail
+    assert len(app.prior_payments("C01")) == 1
+
+
+def test_payment_file_write_failure_voids_the_decision(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch)
+    real = Path.write_text
+    monkeypatch.setattr(Path, "write_text", lambda self, *a, **k: (_ for _ in ()).throw(OSError("disk full"))
+                        if self.name.endswith(".tmp") else real(self, *a, **k))
+    r = app.process("C01", app.Text(invoice_text="x"))
+    assert not r["executed"] and r["queued"] and r["gate"] == "FILE_WRITE_FAILED"
+    assert app.prior_payments("C01") == [] and not list((tmp_path / "payments").glob("*.xml"))
+    assert not any(e["action"] == "payment.file" for e in app.LEDGER.entries)
+
+
+def test_month_totals_use_the_business_month(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch)
+    for day, inv in (("2026-09-30", "R-SEP"), ("2026-10-01", "R-OCT")):
+        app.LEDGER.append(actor="test", action="payment.decide", client_id="C01", case_id=inv, gate="OK", decision="pay",
+                          vendor="X", invoice_no=inv, amount_chf=100.0, business_date=day)
+    assert [p["invoice_no"] for p in app.prior_payments("C01")] == ["R-OCT"]
+
+
+def test_agent_cap_must_be_a_finite_positive_number(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch)
+    for cap in (float("nan"), float("inf"), 0.0, -5.0):
+        try:
+            app.agent_settings("C01", app.Settings(max_single_chf=cap, actions=["payment.decide"]))
+            raise AssertionError(f"cap {cap} accepted")
+        except app.HTTPException as e:
+            assert e.status_code == 400

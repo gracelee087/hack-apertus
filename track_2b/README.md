@@ -21,7 +21,9 @@ English — while a **harness** keeps it inside what each client actually delega
    its period) → fix the manual → self-test against the gate → on duty; each step is in the ledger.
 6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client, an approval queue for everything
    the agent may not pay alone, and a hash-chained, signed audit ledger. A payment decision stands only
-   if its payment file is issued; a file that fails validation is never issued.
+   if its payment file is written and issued; otherwise it is voided and goes to a human. An invoice
+   whose invoice number, net amount, VAT or total could not be read goes to a human, and a human approval
+   is checked for duplicates too.
 
 The reviewer app opens on a client portfolio dashboard (status and risk signals per client) with a
 page per client (decisions, approvals, agent settings, lessons, payment files, ledger).

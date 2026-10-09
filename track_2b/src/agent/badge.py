@@ -46,11 +46,19 @@ def promoted_checks(mandate: dict, fields: dict) -> list:
 
 
 def _num(x):
+    if isinstance(x, bool):  # JSON true is not an amount
+        return None
     try:
         v = float(x)
     except (TypeError, ValueError):
         return None
     return v if math.isfinite(v) else None
+
+
+def already_paid(prior: list, vendor, invoice_no) -> bool:
+    """Same supplier and invoice number among this month's payments."""
+    inv_no = str(invoice_no or "").strip().upper()
+    return bool(inv_no) and any(same_name(p["vendor"], vendor) and p["invoice_no"].upper() == inv_no for p in prior)
 
 
 def check(mandate: dict, suppliers: list, prior: list, fields: dict, today: date = date(2026, 10, 9)):
@@ -70,8 +78,12 @@ def check(mandate: dict, suppliers: list, prior: list, fields: dict, today: date
     iban = normalize_iban(fields.get("vendor_iban"))
     total = _num(fields.get("total_chf"))
     vendor = fields.get("vendor_name")
-    if not iban or total is None or not vendor:
-        add("escalate", "EXTRACTION_INCOMPLETE", "could not read supplier, IBAN or total")
+    inv_no = str(fields.get("invoice_no") or "").strip().upper()
+    missing = [k for k, ok in (("supplier", vendor), ("IBAN", iban), ("total", total is not None), ("invoice number", inv_no),
+                               ("net amount", _num(fields.get("net_chf")) is not None),
+                               ("VAT", _num(fields.get("vat_chf")) is not None)) if not ok]
+    if missing:  # without these the duplicate and sum checks cannot run
+        add("escalate", "EXTRACTION_INCOMPLETE", f"could not read: {', '.join(missing)}")
     elif total <= 0:
         add("escalate", "EXTRACTION_INCOMPLETE", f"total CHF {total:.2f} is not a positive amount")
 
@@ -90,8 +102,7 @@ def check(mandate: dict, suppliers: list, prior: list, fields: dict, today: date
     if not known and category in mandate["allowed_categories"]:
         add("escalate", "E_NEW_VENDOR", "supplier not in the client's supplier list")
 
-    inv_no = str(fields.get("invoice_no") or "").strip().upper()
-    if inv_no and any(same_name(p["vendor"], vendor) and p["invoice_no"].upper() == inv_no for p in prior):
+    if already_paid(prior, vendor, inv_no):
         add("reject", "R_DUPLICATE", f"invoice {inv_no} already paid this month")
 
     if total is not None:

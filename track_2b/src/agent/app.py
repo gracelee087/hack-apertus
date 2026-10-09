@@ -7,7 +7,7 @@ import json
 import secrets
 import threading
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -72,8 +72,17 @@ def state():
     return s
 
 
+_STARTED = datetime.now(timezone.utc)
+
+
+def demo_now() -> datetime:
+    """Business time of the demo: the synthetic world's date (TODAY 09:00 UTC), advancing with real time since start.
+    Badge, gate, month totals and mandate revocation all use it; ledger timestamps stay real."""
+    return datetime(TODAY.year, TODAY.month, TODAY.day, 9, 0, tzinfo=timezone.utc) + (datetime.now(timezone.utc) - _STARTED)
+
+
 def desk_of(s) -> Desk:
-    return Desk(LEDGER, {m["client_id"]: m for m in s["mandates"]}, state=s["desk"])
+    return Desk(LEDGER, {m["client_id"]: m for m in s["mandates"]}, clock=demo_now, state=s["desk"])
 
 
 def save(s, desk=None):
@@ -262,7 +271,7 @@ def client(cid: str):
 
 @app.post("/api/clients/{cid}/agent/settings")
 def agent_settings(cid: str, st: Settings):
-    if st.max_single_chf <= 0 or any(a not in ACTIONS for a in st.actions):
+    if not gate._positive(st.max_single_chf) or any(a not in ACTIONS for a in st.actions):
         raise HTTPException(400, "invalid settings")
     with lock:
         s = state()
@@ -332,7 +341,7 @@ def revoke_mandate(cid: str):
     with lock:
         s = state()
         m = mandate(s, cid)
-        m["revoked"], m["revoked_at"] = True, datetime.now().date().isoformat()
+        m["revoked"], m["revoked_at"] = True, demo_now().date().isoformat()
         m["signature"] = credential.sign(m)
         LEDGER.append(actor=m["client_did"], action="mandate.revoked", client_id=cid,
                       note=f"{m['name']} revoked its mandate")
@@ -341,10 +350,13 @@ def revoke_mandate(cid: str):
 
 
 def prior_payments(cid) -> list:
-    """This month's payments for one client, read from the ledger: the reference run and everything since."""
+    """This month's payments for one client, read from the ledger: the reference run and everything since.
+    The month is the business month (demo_now); reference-run entries carry no business_date and are dated TODAY."""
+    month = demo_now().date().isoformat()[:7]
     return [{"vendor": e.get("vendor") or "", "invoice_no": str(e.get("invoice_no") or ""),
              "amount_chf": e.get("amount_chf") or 0}
-            for e in standing(x for x in LEDGER.entries if x.get("client_id") == cid) if e.get("decision") == "pay"]
+            for e in standing(x for x in LEDGER.entries if x.get("client_id") == cid)
+            if e.get("decision") == "pay" and str(e.get("business_date") or TODAY.isoformat())[:7] == month]
 
 
 @app.post("/api/clients/{cid}/process")
@@ -365,7 +377,7 @@ def process(cid: str, inv: Text):
         m = mandate(s, cid)
         d = desk_of(s)
         if h["decision"] == "pay":  # other payments may have been made while Apertus was reading: check again
-            verdict, findings = badge.check(m, sup, prior_payments(cid), f)
+            verdict, findings = badge.check(m, sup, prior_payments(cid), f, today=demo_now().date())
             if verdict != "pass":
                 h = {**h, "decision": verdict, "findings": findings, "reason": "; ".join(x["msg"] for x in findings)}
         h = decide.second_look(h, score, factors)
@@ -433,6 +445,9 @@ def review(case_id: str, r: Review):
         m = mandate(s, cid)
         d = desk_of(s)
         if r.action == "approve":
+            if badge.already_paid(prior_payments(cid), item.get("vendor"), item.get("invoice_no")):
+                raise HTTPException(409, f"payment not made: invoice {item.get('invoice_no')} from {item.get('vendor')} "
+                                         "is already paid this month (R_DUPLICATE)")
             amount = badge._num(item["amount_chf"])
             ref = d.grant(cid, case_id, amount or 0, item["iban"], r.note)
             res = _pay(s, d, m, {**item, "amount_chf": amount}, "approved", {"grant_ref": ref}, grant_ref=ref,
@@ -474,20 +489,35 @@ def _pay(s, d, m, item, kind, extra, **log):
                     {"case_id": item["case_id"], "decision": "pay", "vendor": item["vendor"], "iban": item["iban"],
                      "amount_chf": amount, "executes_payment": True, **extra},
                     case_id=item["case_id"], decision="pay", vendor=item["vendor"], iban=item["iban"],
-                    amount_chf=amount, invoice_no=item.get("invoice_no"), **log)
+                    amount_chf=amount, invoice_no=item.get("invoice_no"), business_date=d.clock().date().isoformat(), **log)
     if not res["ok"]:
         return res
     name = f"{cid}_pain001_{kind}.xml"
+    path = RESULTS / "payments" / name
+    tmp = path.with_name(name + ".tmp")
+
+    def void(why):
+        tmp.unlink(missing_ok=True)
+        LEDGER.append(actor="system", action="payment.voided", client_id=cid, case_id=item["case_id"],
+                      note=f"{why}; the decision does not stand")
+
+    try:  # write first, record second: the ledger never names a file that is not on disk
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(xml, encoding="utf-8")
+    except OSError as e:
+        void(f"payment file could not be written ({e.__class__.__name__})")
+        return {"ok": False, "gate": "FILE_WRITE_FAILED"}
     filed = d.request(cid, "payment.file", {"file_sha256": sha256(xml), "transactions": len(items)},
                       file=f"payments/{name}", transactions=len(items), case_id=item["case_id"])
     if not filed["ok"]:
-        LEDGER.append(actor="system", action="payment.voided", client_id=cid, case_id=item["case_id"],
-                      note=f"payment file refused by the gate ({filed['gate']}); the decision does not stand")
+        void(f"payment file refused by the gate ({filed['gate']})")
         return filed
+    try:
+        tmp.replace(path)
+    except OSError as e:
+        void(f"payment file could not be issued ({e.__class__.__name__})")
+        return {"ok": False, "gate": "FILE_WRITE_FAILED"}
     s[kind].setdefault(cid, []).append(item)
-    path = RESULTS / "payments" / name
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(xml, encoding="utf-8")
     return {**res, "file": name}
 
 

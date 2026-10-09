@@ -12,6 +12,7 @@ import json
 
 from . import badge, llm, prompts
 from .common import DECISIONS
+from .datagen import TODAY
 
 
 def mandate_view(m: dict) -> dict:
@@ -81,7 +82,7 @@ def second_look(result: dict, risk_score: float, factors=()) -> dict:
 def harness(case: dict, mandate: dict, suppliers: list, manual: str, fields: dict = None,
             promoted: bool = False) -> dict:
     fields = fields if fields is not None else extract(case)
-    verdict, findings = badge.check(mandate, suppliers, case["prior_payments"], fields)
+    verdict, findings = badge.check(mandate, suppliers, case["prior_payments"], fields, today=TODAY)
     if promoted:
         findings = findings + badge.promoted_checks(mandate, fields)
         if verdict == "pass" and findings:
