@@ -1,0 +1,183 @@
+{
+  "C01": [
+    {
+      "vendor_id": "C01-V1",
+      "name": "Mühle Rüti AG",
+      "street": "Mühlestrasse 12",
+      "city": "8630 Rüti ZH",
+      "category": "ingredients",
+      "lang": "de",
+      "iban": "CH8674343949334189245"
+    },
+    {
+      "vendor_id": "C01-V2",
+      "name": "Stadtwerk Limmattal AG",
+      "street": "Werkstrasse 3",
+      "city": "8952 Schlieren",
+      "category": "utilities",
+      "lang": "de",
+      "iban": "CH2786876363887493642"
+    },
+    {
+      "vendor_id": "C01-V3",
+      "name": "Immobilien Keller AG",
+      "street": "Seefeldstrasse 88",
+      "city": "8008 Zürich",
+      "category": "rent",
+      "lang": "de",
+      "iban": "CH2810332188537333228"
+    },
+    {
+      "vendor_id": "C01-V4",
+      "name": "Versicherung Alpenschutz AG",
+      "street": "Bahnhofplatz 5",
+      "city": "8001 Zürich",
+      "category": "insurance",
+      "lang": "de",
+      "iban": "CH3924514998881852176"
+    }
+  ],
+  "C02": [
+    {
+      "vendor_id": "C02-V1",
+      "name": "Cartiera Ticinese SA",
+      "street": "Via Cantonale 21",
+      "city": "6814 Lamone",
+      "category": "materials",
+      "lang": "it",
+      "iban": "CH7122851110521187410"
+    },
+    {
+      "vendor_id": "C02-V2",
+      "name": "Software Lago SA",
+      "street": "Riva Caccia 4",
+      "city": "6900 Lugano",
+      "category": "software",
+      "lang": "it",
+      "iban": "CH0999807845135107703"
+    },
+    {
+      "vendor_id": "C02-V3",
+      "name": "Immobiliare Ceresio SA",
+      "street": "Via Nassa 30",
+      "city": "6900 Lugano",
+      "category": "rent",
+      "lang": "it",
+      "iban": "CH4851187534694604928"
+    },
+    {
+      "vendor_id": "C02-V4",
+      "name": "TeleSud Sagl",
+      "street": "Via Industria 7",
+      "city": "6850 Mendrisio",
+      "category": "telecom",
+      "lang": "it",
+      "iban": "CH5442966986295003154"
+    }
+  ],
+  "C03": [
+    {
+      "vendor_id": "C03-V1",
+      "name": "Gérance Léman SA",
+      "street": "Rue du Lac 14",
+      "city": "1003 Lausanne",
+      "category": "rent",
+      "lang": "fr",
+      "iban": "CH7359328920337276587"
+    },
+    {
+      "vendor_id": "C03-V2",
+      "name": "Logiciels Romands Sàrl",
+      "street": "Avenue de la Gare 9",
+      "city": "1950 Sion",
+      "category": "software",
+      "lang": "fr",
+      "iban": "CH5477316184343354252"
+    },
+    {
+      "vendor_id": "C03-V3",
+      "name": "Assurances Jura Sàrl",
+      "street": "Rue de l'Hôpital 2",
+      "city": "2000 Neuchâtel",
+      "category": "insurance",
+      "lang": "fr",
+      "iban": "CH6654616710270464129"
+    },
+    {
+      "vendor_id": "C03-V4",
+      "name": "Télécom Riviera SA",
+      "street": "Grand-Rue 40",
+      "city": "1820 Montreux",
+      "category": "telecom",
+      "lang": "fr",
+      "iban": "CH5680525414787266496"
+    }
+  ],
+  "C04": [
+    {
+      "vendor_id": "C04-V1",
+      "name": "Rahmenbau Aare AG",
+      "street": "Aarestrasse 61",
+      "city": "3600 Thun",
+      "category": "materials",
+      "lang": "de",
+      "iban": "CH5069958875863486907"
+    },
+    {
+      "vendor_id": "C04-V2",
+      "name": "Liegenschaften Bern AG",
+      "street": "Marktgasse 19",
+      "city": "3011 Bern",
+      "category": "rent",
+      "lang": "de",
+      "iban": "CH1385684127096943133"
+    },
+    {
+      "vendor_id": "C04-V3",
+      "name": "Energie Gürbetal AG",
+      "street": "Dorfstrasse 2",
+      "city": "3123 Belp",
+      "category": "utilities",
+      "lang": "de",
+      "iban": "CH1858345608367542941"
+    }
+  ],
+  "C05": [
+    {
+      "vendor_id": "C05-V1",
+      "name": "Rheinhost AG",
+      "street": "Hafenstrasse 8",
+      "city": "4057 Basel",
+      "category": "cloud",
+      "lang": "en",
+      "iban": "CH7665340538476149874"
+    },
+    {
+      "vendor_id": "C05-V2",
+      "name": "CodeForge GmbH",
+      "street": "Technoparkstrasse 1",
+      "city": "8005 Zürich",
+      "category": "software",
+      "lang": "en",
+      "iban": "CH4886771647842187045"
+    },
+    {
+      "vendor_id": "C05-V3",
+      "name": "Basel Office Spaces AG",
+      "street": "Aeschenvorstadt 50",
+      "city": "4051 Basel",
+      "category": "rent",
+      "lang": "en",
+      "iban": "CH0625263655878046310"
+    },
+    {
+      "vendor_id": "C05-V4",
+      "name": "Northlake Advisory GmbH",
+      "street": "Seestrasse 200",
+      "city": "8800 Thalwil",
+      "category": "consulting",
+      "lang": "en",
+      "iban": "CH5488664640630870078"
+    }
+  ]
+}

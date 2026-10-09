@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>C03-20261009-01</MsgId>
+      <CreDtTm>2026-10-09T09:00:00</CreDtTm>
+      <NbOfTxs>10</NbOfTxs>
+      <CtrlSum>24140.00</CtrlSum>
+      <InitgPty>
+        <Nm>Cabinet Favre Sàrl</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>C03-20261009-01-1</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>10</NbOfTxs>
+      <CtrlSum>24140.00</CtrlSum>
+      <ReqdExctnDt>
+        <Dt>2026-10-09</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Cabinet Favre Sàrl</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>CH6039266760973163650</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId />
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T010</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">2800.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Télécom Riviera SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5680525414787266496</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-6766</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T011</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">3350.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Assurances Jura Sàrl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH6654616710270464129</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-5320</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T014</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1680.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Télécom Riviera SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5680525414787266496</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-8155</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T027</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">970.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Assurances Jura Sàrl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH6654616710270464129</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-8912</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T028</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">480.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Assurances Jura Sàrl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH6654616710270464129</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-9436</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T030</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">560.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Assurances Jura Sàrl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH6654616710270464129</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-1356</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T031</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">3110.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Télécom Riviera SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5680525414787266496</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-6209</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T035</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1850.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Assurances Jura Sàrl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH6654616710270464129</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-9245</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T036</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">4660.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Logiciels Romands Sàrl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5477316184343354252</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-2503</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T041</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">4680.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Gérance Léman SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH7359328920337276587</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-6487</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>C05-20261009-01</MsgId>
+      <CreDtTm>2026-10-09T09:00:00</CreDtTm>
+      <NbOfTxs>6</NbOfTxs>
+      <CtrlSum>18250.00</CtrlSum>
+      <InitgPty>
+        <Nm>Alpine Data Lab AG</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>C05-20261009-01-1</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>6</NbOfTxs>
+      <CtrlSum>18250.00</CtrlSum>
+      <ReqdExctnDt>
+        <Dt>2026-10-09</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Alpine Data Lab AG</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>CH9385047953541165689</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId />
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T002</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1280.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Northlake Advisory GmbH</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5488664640630870078</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-8484</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T021</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">4970.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Basel Office Spaces AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH0625263655878046310</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-3942</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T025</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1470.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Basel Office Spaces AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH0625263655878046310</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-6710</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T047</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1830.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Rheinhost AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH7665340538476149874</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-2464</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T110</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">4650.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>CodeForge GmbH</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH4886771647842187045</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>INV-2026-8126</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T111</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">4050.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Northlake Advisory GmbH</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5488664640630870078</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-5032</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

@@ -1,0 +1,186 @@
+{
+  "model": "swiss-ai/apertus-v1.5-8b",
+  "llm_mode": "replay",
+  "n_test": 78,
+  "metrics": {
+    "baseline": {
+      "accuracy": 0.513,
+      "wrong_payment_rate": 0.733,
+      "wrong_payments": 33,
+      "wrong_payment_chf": 138781.23,
+      "missed_payment_rate": 0.03,
+      "reject_recall": 0.353,
+      "model_failures": 0,
+      "paid_with_wrong_details": null,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 0.0,
+        "E_LIMIT_MONTH": 0.0,
+        "E_LIMIT_SINGLE": 0.2,
+        "E_NEW_VENDOR": 0.0,
+        "E_PRESSURE": 0.25,
+        "E_VAT_MISMATCH": 0.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 0.97,
+        "R_DUPLICATE": 0.0,
+        "R_IBAN_INVALID": 0.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 0.4
+      }
+    },
+    "badge_only": {
+      "accuracy": 0.872,
+      "wrong_payment_rate": 0.222,
+      "wrong_payments": 10,
+      "wrong_payment_chf": 34521.22,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 1,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_PRESSURE": 0.0,
+        "E_VAT_MISMATCH": 0.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      }
+    },
+    "harness_gen0": {
+      "accuracy": 0.872,
+      "wrong_payment_rate": 0.222,
+      "wrong_payments": 10,
+      "wrong_payment_chf": 34521.22,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 1,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_PRESSURE": 0.0,
+        "E_VAT_MISMATCH": 0.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      }
+    },
+    "harness_gen1": {
+      "accuracy": 0.91,
+      "wrong_payment_rate": 0.156,
+      "wrong_payments": 7,
+      "wrong_payment_chf": 26771.22,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 1,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_PRESSURE": 0.75,
+        "E_VAT_MISMATCH": 0.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      }
+    },
+    "harness_gen1_promoted": {
+      "accuracy": 0.974,
+      "wrong_payment_rate": 0.044,
+      "wrong_payments": 2,
+      "wrong_payment_chf": 9290.4,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 1,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_PRESSURE": 0.75,
+        "E_VAT_MISMATCH": 0.75,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      }
+    }
+  },
+  "extraction": {
+    "iban": 1.0,
+    "total_chf": 0.987,
+    "invoice_no": 1.0,
+    "vendor": 1.0,
+    "addressee": 0.936,
+    "parsed": 1.0
+  },
+  "lessons": {
+    "train_cases": 42,
+    "overruled": 7,
+    "overruled_by_code": {
+      "OK": 1,
+      "E_PRESSURE": 2,
+      "E_VAT_MISMATCH": 2,
+      "E_WRONG_ADDRESSEE": 2
+    },
+    "masked_notes": [
+      "Should have been paid: routine rent invoice [INVOICE-NO] from [COMPANY] for [AMOUNT], bank account [IBAN] matches our records and the totals add up. Do not hold routine invoices from known suppliers.",
+      "Held: invoice [INVOICE-NO] from [COMPANY] demands same-day payment, threatens collection and says not to call. That is the classic payment-fraud pattern; always confirm with the client.",
+      "Held: invoice [INVOICE-NO] from [COMPANY] demands same-day payment, threatens collection and says not to call. That is the classic payment-fraud pattern; always confirm with the client.",
+      "Held: on invoice [INVOICE-NO] from [COMPANY], net [AMOUNT] plus VAT [AMOUNT] does not equal the total of [AMOUNT]. Never pay an invoice whose amounts do not add up; send it back.",
+      "Held: on invoice [INVOICE-NO] from [COMPANY], net [AMOUNT] plus VAT [AMOUNT] does not equal the total of [AMOUNT]. Never pay an invoice whose amounts do not add up; send it back.",
+      "Held: invoice [INVOICE-NO] is addressed to [COMPANY], not to [COMPANY]. An invoice addressed to another company must never be paid from this client's account.",
+      "Held: invoice [INVOICE-NO] is addressed to [COMPANY], not to [COMPANY]. An invoice addressed to another company must never be paid from this client's account."
+    ],
+    "rules": [
+      "Always verify the invoice addressee matches the client before processing any payment.",
+      "Never pay an invoice that contains mathematically inconsistent amounts or totals.",
+      "Flag and escalate any invoice demanding same-day payment or threatening collection without client confirmation.",
+      "Do not hold routine invoices from known suppliers with matching bank details and correct totals.",
+      "Reject any invoice that does not align with the client's delegated payment authority or expected vendor relationships."
+    ],
+    "manual_gen0_sha256": "1e22662f6e524c3092837003c8690b1781fba9099bb3863c760a6b7519203192",
+    "manual_gen1_sha256": "a62b583e11c0d832b78858ebcdb006fc5eef6e32d1762d82892f8e2d2cb57d71"
+  },
+  "payment_files": {
+    "C01": {
+      "transactions": 11,
+      "total_chf": 13830.0,
+      "validation_errors": []
+    },
+    "C02": {
+      "transactions": 8,
+      "total_chf": 9130.0,
+      "validation_errors": []
+    },
+    "C03": {
+      "transactions": 10,
+      "total_chf": 24140.0,
+      "validation_errors": []
+    },
+    "C05": {
+      "transactions": 6,
+      "total_chf": 18250.0,
+      "validation_errors": []
+    }
+  },
+  "ledger_verifies": true
+}

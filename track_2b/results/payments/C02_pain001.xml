@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>C02-20261009-01</MsgId>
+      <CreDtTm>2026-10-09T09:00:00</CreDtTm>
+      <NbOfTxs>8</NbOfTxs>
+      <CtrlSum>9130.00</CtrlSum>
+      <InitgPty>
+        <Nm>Studio Grafico Bernasconi Sagl</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>C02-20261009-01-1</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>8</NbOfTxs>
+      <CtrlSum>9130.00</CtrlSum>
+      <ReqdExctnDt>
+        <Dt>2026-10-09</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Studio Grafico Bernasconi Sagl</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>CH9077085215762041417</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId />
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T005</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1170.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Cartiera Ticinese SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH7122851110521187410</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>INV-2026-3535</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T015</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1340.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Cartiera Ticinese SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH7122851110521187410</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-2937</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T016</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1050.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Software Lago SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH0999807845135107703</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-4739</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T020</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1630.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Software Lago SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH0999807845135107703</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>INV-2026-3195</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T026</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1750.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Immobiliare Ceresio SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH4851187534694604928</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>INV-2026-5808</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T037</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">430.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Cartiera Ticinese SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH7122851110521187410</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-1499</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T038</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1460.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Cartiera Ticinese SA</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH7122851110521187410</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-7183</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T048</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">300.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>TeleSud Sagl</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH5442966986295003154</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-3134</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

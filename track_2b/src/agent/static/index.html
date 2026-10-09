@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payment Agent Desk</title>
+<style>
+:root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --mute:#5b6470; --line:#dde1e6; --acc:#c8102e;
+        --ok:#1a7f37; --warn:#9a6700; --bad:#cf222e; --chip:#eef1f4; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0f1216; --card:#171b21; --ink:#e6e9ed; --mute:#98a1ad;
+        --line:#2a3039; --acc:#ff4d61; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --chip:#222831; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+         padding:16px; border-bottom:1px solid var(--line); background:var(--card); }
+header h1 { font-size:18px; margin:0; } header h1 span { color:var(--acc); }
+.meta { color:var(--mute); font-size:13px; }
+nav { display:flex; gap:4px; flex-wrap:wrap; padding:8px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+nav button { border:0; background:none; color:var(--mute); padding:8px 12px; border-radius:6px; cursor:pointer; font:inherit; }
+nav button.on { background:var(--chip); color:var(--ink); font-weight:600; }
+main { max-width:1100px; margin:0 auto; padding:16px; }
+section { display:none; } section.on { display:block; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:14px; }
+th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--mute); font-weight:600; } td.n { font-variant-numeric:tabular-nums; text-align:right; }
+.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; background:var(--chip); }
+.pay { color:var(--ok); } .escalate { color:var(--warn); } .reject { color:var(--bad); }
+pre { white-space:pre-wrap; background:var(--chip); padding:10px; border-radius:6px; font-size:12.5px; margin:8px 0; }
+textarea, select, input { width:100%; font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:8px; }
+textarea { min-height:220px; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
+.btn { border:1px solid var(--line); background:var(--chip); color:var(--ink); border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; }
+.btn.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
+.kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+.kpi b { display:block; font-size:26px; } .kpi small { color:var(--mute); }
+h2 { font-size:16px; margin:0 0 8px; } .mute { color:var(--mute); }
+code { font-size:12.5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>■</span> Payment Agent Desk <span class="meta">— fiduciary back office</span></h1>
+  <div class="meta" id="meta"></div>
+</header>
+<nav id="nav"></nav>
+<main>
+  <section id="overview"></section>
+  <section id="queue"></section>
+  <section id="process">
+    <div class="card"><h2>Process a new invoice</h2>
+      <p class="mute">Apertus reads the invoice, the badge enforces the client's mandate, then Apertus reviews the content against the current manual. Every decision is written to the ledger.</p>
+      <label>Client</label><select id="pclient"></select>
+      <label style="display:block;margin-top:8px">Invoice text</label><textarea id="ptext"></textarea>
+      <div class="row"><button class="btn primary" onclick="processInvoice()">Run agent</button><span id="pstatus" class="mute"></span></div>
+    </div>
+    <div id="presult"></div>
+  </section>
+  <section id="mandates"></section>
+  <section id="lessons"></section>
+  <section id="ledger"></section>
+  <section id="files"></section>
+</main>
+<script>
+const TABS = [["overview","Evaluation"],["queue","Approval queue"],["process","Process invoice"],
+              ["mandates","Mandates"],["lessons","Lessons"],["ledger","Ledger"],["files","Payment files"]];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const dec = d => `<span class="pill ${esc(d)}">${esc(d)}</span>`;
+async function api(path, opts) {
+  const r = await fetch(path, opts); const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText); return j;
+}
+const post = (path, body) => api(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})});
+
+function show(id) {
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === id));
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.id === id));
+  ({overview, queue, mandates, lessons, ledger, files, process: loadClients})[id]();
+}
+$("nav").innerHTML = TABS.map(([id, t]) => `<button data-id="${id}" onclick="show('${id}')">${t}</button>`).join("");
+
+async function overview() {
+  const s = await api("/api/summary"); const m = s.metrics;
+  $("meta").textContent = `${s.model} · LLM mode: ${s.llm_mode}`;
+  if (!m.metrics) { $("overview").innerHTML = `<div class="card">No evaluation results yet.</div>`; return; }
+  const b = m.metrics.baseline, h = m.metrics.harness_gen1_promoted || m.metrics.harness_gen1;
+  const sys = Object.keys(m.metrics);
+  const codes = Object.keys(b.by_reason_code);
+  $("overview").innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><small>Wrong payments, Apertus alone</small><b class="reject">${b.wrong_payments} · CHF ${chf(b.wrong_payment_chf)}</b></div>
+    <div class="kpi"><small>Wrong payments, Apertus + harness</small><b class="pay">${h.wrong_payments} · CHF ${chf(h.wrong_payment_chf)}</b></div>
+    <div class="kpi"><small>Accuracy alone → harness</small><b>${b.accuracy.toFixed(2)} → ${h.accuracy.toFixed(2)}</b></div>
+    <div class="kpi"><small>Test invoices (4 languages)</small><b>${m.n_test}</b></div>
+  </div>
+  <div class="card"><h2>Systems compared</h2><table>
+    <tr><th>System</th><th>Accuracy</th><th>Wrong-payment rate</th><th>Wrongly paid CHF</th><th>Missed-payment rate</th><th>Paid w/ wrong details</th><th>Model failures</th></tr>
+    ${sys.map(k => { const x = m.metrics[k]; return `<tr><td>${k}</td><td class="n">${x.accuracy.toFixed(3)}</td>
+      <td class="n">${x.wrong_payment_rate.toFixed(3)} (${x.wrong_payments})</td><td class="n">${chf(x.wrong_payment_chf)}</td>
+      <td class="n">${x.missed_payment_rate.toFixed(3)}</td><td class="n">${x.paid_with_wrong_details ?? "n/a"}</td><td class="n">${x.model_failures}</td></tr>`; }).join("")}
+  </table></div>
+  <div class="card"><h2>Correct decisions by case type</h2><table>
+    <tr><th>Case type</th>${sys.map(k => `<th>${k}</th>`).join("")}</tr>
+    ${codes.map(c => `<tr><td>${c}</td>${sys.map(k => `<td class="n">${m.metrics[k].by_reason_code[c].toFixed(2)}</td>`).join("")}</tr>`).join("")}
+  </table></div>
+  <div class="card"><h2>Extraction accuracy (Apertus)</h2>
+    <table><tr>${Object.keys(m.extraction).map(k => `<th>${k}</th>`).join("")}</tr>
+    <tr>${Object.values(m.extraction).map(v => `<td class="n">${v.toFixed(3)}</td>`).join("")}</tr></table></div>
+  <div class="card"><h2>Current manual</h2><p class="mute">sha256 <code>${s.manual_sha256}</code></p><pre>${esc(s.manual)}</pre></div>`;
+}
+
+async function queue() {
+  const q = await api("/api/queue");
+  const open = q.filter(i => i.status === "open");
+  $("queue").innerHTML = `<div class="card"><h2>Waiting for a human (${open.length} open of ${q.length})</h2>
+    <p class="mute">The agent may not pay these on its own. Approving adds the payment to the client's approved pain.001 file; a reject note feeds the next manual generation.</p></div>` +
+    q.map(i => `<div class="card"><div class="row" style="justify-content:space-between;margin:0">
+      <div><b>${esc(i.client)}</b> · ${esc(i.vendor)} · CHF ${chf(i.amount_chf)} · <span class="mute">${i.case_id}</span></div>
+      ${i.status === "open" ? dec("escalate") : `<span class="pill ${i.status === "approved" ? "pay" : "reject"}">${i.status}</span>`}</div>
+      <p><b>Why:</b> ${esc(i.reason)}</p>
+      <details><summary>Invoice</summary><pre>${esc(i.invoice_text)}</pre></details>
+      ${i.status === "open" ? `<input id="n-${i.case_id}" placeholder="Reviewer note (why), used for lessons">
+      <div class="row"><button class="btn" onclick="act('${i.case_id}','approve')">Approve payment</button>
+      <button class="btn primary" onclick="act('${i.case_id}','reject')">Reject</button></div>` : i.note ? `<p class="mute">Note: ${esc(i.note)}</p>` : ""}
+    </div>`).join("");
+}
+async function act(id, action) {
+  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); queue(); } catch (e) { alert(e.message); }
+}
+
+let clientsLoaded = false;
+async function loadClients() {
+  if (clientsLoaded) return;
+  const ms = await api("/api/mandates");
+  $("pclient").innerHTML = ms.map(m => `<option value="${m.client_id}">${esc(m.name)}${m.revoked ? " (revoked)" : ""}</option>`).join("");
+  $("ptext").value = "Mühle Rüti AG\nMühlestrasse 12\n8630 Rüti ZH\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-5555\nDatum: 08.10.2026\n\nPos. 1  Weizenmehl Typ 550, 25 kg  CHF 1'200.00\n\nTotal exkl. MWST: CHF 1'200.00\nMWST 8.1%: CHF 97.20\nRechnungsbetrag: CHF 1'397.20\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH86 7434 3949 3341 8924 5\nZahlbar bis: 07.11.2026";
+  clientsLoaded = true;
+}
+async function processInvoice() {
+  $("pstatus").textContent = "running…"; $("presult").innerHTML = "";
+  try {
+    const h = await post("/api/process", {client_id: $("pclient").value, invoice_text: $("ptext").value});
+    $("pstatus").textContent = "";
+    $("presult").innerHTML = `<div class="card"><h2>Decision: ${dec(h.decision)}</h2><p>${esc(h.reason)}</p>
+      <h2>Badge checks</h2>${h.findings.length ? `<table><tr><th>Severity</th><th>Check</th><th>Detail</th></tr>${h.findings.map(f =>
+        `<tr><td>${dec(f.severity)}</td><td>${f.code}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="pay">all hard checks passed</p>`}
+      <h2>Fields read by Apertus</h2><pre>${esc(JSON.stringify(h.fields, null, 2))}</pre></div>`;
+  } catch (e) { $("pstatus").textContent = e.message; }
+}
+
+async function mandates() {
+  const ms = await api("/api/mandates");
+  $("mandates").innerHTML = `<div class="card"><h2>Client mandates (delegation credentials)</h2>
+    <p class="mute">What each client allowed this agent (<code>agent:treuhand-desk-01</code>) to do. Signature-checked on every decision. Revoking is the kill switch.</p>
+    <table><tr><th>Client</th><th>Allowed categories</th><th>Single limit</th><th>Monthly limit</th><th>Valid</th><th>Status</th><th></th></tr>
+    ${ms.map(m => `<tr><td>${esc(m.name)}</td><td>${m.allowed_categories.join(", ")}</td><td class="n">${chf(m.single_limit_chf)}</td>
+      <td class="n">${chf(m.monthly_limit_chf)}</td><td>${m.valid_from} – ${m.valid_until}</td>
+      <td>${m.revoked ? `<span class="pill reject">revoked ${m.revoked_at}</span>` : `<span class="pill pay">active</span>`} ${m.signature_ok ? "✓ sig" : "✗ sig"}</td>
+      <td>${m.revoked ? "" : `<button class="btn" onclick="revoke('${m.client_id}')">Revoke</button>`}</td></tr>`).join("")}</table></div>`;
+}
+async function revoke(cid) {
+  if (!confirm("Revoke this mandate? The agent will reject every further invoice for this client.")) return;
+  await post(`/api/mandates/${cid}/revoke`); clientsLoaded = false; mandates();
+}
+
+async function lessons() {
+  const l = await api("/api/lessons");
+  $("lessons").innerHTML = `<div class="card"><h2>Lesson layer — manual generation ${l.generation}</h2>
+    <p class="mute">Reviewer overrules are masked (no names, amounts, IBANs), distilled by Apertus into rules, and appended to the manual. The manual's sha256 is written to the ledger. No model weights change.</p>
+    <h2>Current lessons</h2><ol>${l.rules.map(r => `<li>${esc(r)}</li>`).join("") || "<li class='mute'>none</li>"}</ol>
+    <h2>Pending reviewer notes (${l.pending_notes.length})</h2><ul>${l.pending_notes.map(n => `<li>${esc(n)}</li>`).join("") || "<li class='mute'>none — reject an item in the queue with a note</li>"}</ul>
+    <div class="row"><button class="btn primary" onclick="publish()">Publish next manual generation</button><span id="lstatus" class="mute"></span></div></div>
+    <div class="card"><h2>Where generation 1 came from</h2><p class="mute">${l.train.overruled ?? 0} of ${l.train.train_cases ?? 0} training-split decisions were overruled.</p>
+    <ul>${(l.train.masked_notes || []).map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>`;
+}
+async function publish() {
+  $("lstatus").textContent = "asking Apertus…";
+  try { await post("/api/lessons/publish"); lessons(); } catch (e) { $("lstatus").textContent = e.message; }
+}
+
+async function ledger() {
+  const l = await api("/api/ledger");
+  $("ledger").innerHTML = `<div class="card"><h2>Audit ledger ${l.verifies ? `<span class="pill pay">hash chain verifies</span>` : `<span class="pill reject">broken at #${l.first_bad}</span>`}</h2>
+    <p class="mute">Append-only. Each entry stores the previous entry's hash: who acted, for which client, under which manual.</p>
+    <table><tr><th>#</th><th>Actor</th><th>Action</th><th>Client</th><th>Case</th><th>CHF</th><th>Detail</th><th>Hash</th></tr>
+    ${l.entries.slice().reverse().map(e => `<tr><td>${e.seq}</td><td>${esc(e.actor)}</td><td>${dec(e.action)}</td><td>${e.client_id ?? ""}</td>
+      <td>${e.case_id ?? ""}</td><td class="n">${e.amount_chf != null ? chf(e.amount_chf) : ""}</td>
+      <td>${esc(e.reason || e.note || e.file || (e.manual_sha256 ? "manual " + e.manual_sha256.slice(0, 12) : ""))}</td>
+      <td><code>${e.hash.slice(0, 10)}</code></td></tr>`).join("")}</table></div>`;
+}
+
+async function files() {
+  const fs = await api("/api/payments");
+  $("files").innerHTML = `<div class="card"><h2>Payment files (ISO 20022 pain.001.001.09)</h2>
+    <p class="mute">One file per client, for upload to the client's bank. No payment provider in between.</p>
+    <table><tr><th>File</th><th>Checks</th><th></th></tr>${fs.map(f => `<tr><td>${f.file}</td>
+      <td>${f.validation_errors.length ? `<span class="reject">${esc(f.validation_errors.join("; "))}</span>` : `<span class="pay">counts, control sum, IBANs OK</span>`}</td>
+      <td><a href="/files/payments/${f.file}">download</a></td></tr>`).join("")}</table></div>`;
+}
+
+show("overview");
+</script>
+</body>
+</html>

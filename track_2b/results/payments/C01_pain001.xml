@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>C01-20261009-01</MsgId>
+      <CreDtTm>2026-10-09T09:00:00</CreDtTm>
+      <NbOfTxs>11</NbOfTxs>
+      <CtrlSum>13830.00</CtrlSum>
+      <InitgPty>
+        <Nm>Bäckerei Steiner GmbH</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>C01-20261009-01-1</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <NbOfTxs>11</NbOfTxs>
+      <CtrlSum>13830.00</CtrlSum>
+      <ReqdExctnDt>
+        <Dt>2026-10-09</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>Bäckerei Steiner GmbH</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>CH4325613651127989360</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId />
+      </DbtrAgt>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T003</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">660.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Mühle Rüti AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH8674343949334189245</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-6897</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T007</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">2860.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Versicherung Alpenschutz AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH3924514998881852176</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-9513</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T008</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">2640.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Versicherung Alpenschutz AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH3924514998881852176</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-1335</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T009</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1090.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Versicherung Alpenschutz AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH3924514998881852176</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-5316</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T012</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1010.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Immobilien Keller AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH2810332188537333228</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>INV-2026-6154</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T013</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1120.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Immobilien Keller AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH2810332188537333228</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-7622</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T022</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">420.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Immobilien Keller AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH2810332188537333228</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>F-2026-9718</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T023</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">970.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Versicherung Alpenschutz AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH3924514998881852176</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-6698</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T034</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">860.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Immobilien Keller AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH2810332188537333228</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>R-2026-8629</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T046</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">1950.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Immobilien Keller AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH2810332188537333228</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-5249</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>T049</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="CHF">250.00</InstdAmt>
+        </Amt>
+        <Cdtr>
+          <Nm>Stadtwerk Limmattal AG</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>CH2786876363887493642</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>FT-2026-7858</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

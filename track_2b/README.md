@@ -1,3 +1,49 @@
+# Mandate-bounded payment agent for Swiss fiduciaries (working title)
+
+Swiss *Treuhand* firms pay supplier invoices on behalf of many small client companies.
+This prototype lets **Apertus** do that work — read invoices in German, French, Italian and
+English — while a **harness** keeps it inside what each client actually delegated:
+
+1. **Apertus extracts** supplier, IBAN, amounts, invoice number and addressee from the invoice text.
+2. **Badge (hard checks, in code)** enforces the client's signed mandate: revoked or expired
+   mandate, out-of-scope expense, invalid or changed IBAN, unknown supplier, duplicate,
+   single-payment and monthly limits. The model cannot talk its way past these.
+3. **Apertus reviews** the invoices that pass, against the firm manual (fraud signals, amounts
+   that don't add up, invoices addressed to someone else).
+4. **Lessons**: when a human overrules the agent, the note is masked, Apertus distils it into a
+   rule, and the next manual generation is fingerprinted in the ledger. No weights change.
+5. **Outputs**: one ISO 20022 `pain.001.001.09` file per client for its bank, an approval queue
+   for everything the agent may not pay alone, and a hash-chained audit ledger.
+
+The evaluation compares **Apertus alone** against **Apertus + harness** on 78 synthetic test
+invoices with planted faults. See `results/summary.md` and `technical_report.md`.
+
+## Run
+
+```bash
+make run          # builds the image, runs the evaluation, serves the reviewer app on http://localhost:8000
+make eval         # evaluation only: prints the results table and exits
+```
+
+No API key is needed: without `LLM_API_KEY` the run **replays the recorded Apertus responses**
+in `data/cache/apertus_responses.jsonl` and reproduces our numbers. To call Apertus live, copy
+`.env.example` to `.env` and set `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_NAME` (any
+OpenAI-compatible endpoint serving Apertus, e.g. CSCS or your own vLLM).
+
+Without Docker: `pip install -r requirements.txt && PYTHONPATH=src python -m agent all`.
+Tests: `pip install pytest && python -m pytest tests`.
+
+| Path | Content |
+|---|---|
+| `src/agent/` | datagen, llm client (record/replay), badge, decide, lessons, ledger, pain001, evaluate, web app |
+| `data/` | synthetic mandates, suppliers, 120 invoices (labels + reviewer notes), recorded Apertus responses |
+| `results/` | metrics, predictions, payment files, ledger from the reference run |
+| `tests/` | offline tests for the deterministic parts |
+
+All data is synthetic and fictional. Code: Apache-2.0. Docs: CC-BY-4.0. Data: CDLA-Permissive-2.0.
+
+---
+
 # Track 2 B: Own Project
 
 Bring your own idea and build a working Apertus prototype that tackles a problem you care about — any domain, any use case. The project must be new, started within the hackathon period.

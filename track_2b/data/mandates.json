@@ -1,0 +1,113 @@
+[
+  {
+    "client_id": "C01",
+    "name": "Bäckerei Steiner GmbH",
+    "city": "8004 Zürich",
+    "lang": "de",
+    "allowed_categories": [
+      "ingredients",
+      "utilities",
+      "rent",
+      "insurance"
+    ],
+    "single_limit_chf": 5000,
+    "monthly_limit_chf": 20000,
+    "revoked": false,
+    "agent_id": "agent:treuhand-desk-01",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31",
+    "debtor_iban": "CH4325613651127989360",
+    "issued_by": "Bäckerei Steiner GmbH (Geschäftsführung)",
+    "revoked_at": null,
+    "signature": "06062bbf57c901d54758b66290484d81a1999b4da96b87631933842248e176ba"
+  },
+  {
+    "client_id": "C02",
+    "name": "Studio Grafico Bernasconi Sagl",
+    "city": "6900 Lugano",
+    "lang": "it",
+    "allowed_categories": [
+      "materials",
+      "software",
+      "rent",
+      "telecom"
+    ],
+    "single_limit_chf": 3000,
+    "monthly_limit_chf": 12000,
+    "revoked": false,
+    "agent_id": "agent:treuhand-desk-01",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31",
+    "debtor_iban": "CH9077085215762041417",
+    "issued_by": "Studio Grafico Bernasconi Sagl (Geschäftsführung)",
+    "revoked_at": null,
+    "signature": "090b31f6b0fd5d0b47fde076b1e37905a29967dcd68dd45c1c40dc19dab1e056"
+  },
+  {
+    "client_id": "C03",
+    "name": "Cabinet Favre Sàrl",
+    "city": "1003 Lausanne",
+    "lang": "fr",
+    "allowed_categories": [
+      "rent",
+      "software",
+      "insurance",
+      "telecom",
+      "consulting"
+    ],
+    "single_limit_chf": 8000,
+    "monthly_limit_chf": 25000,
+    "revoked": false,
+    "agent_id": "agent:treuhand-desk-01",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31",
+    "debtor_iban": "CH6039266760973163650",
+    "issued_by": "Cabinet Favre Sàrl (Geschäftsführung)",
+    "revoked_at": null,
+    "signature": "9bf581d501afa1cae4a2ae945499a1b1bd986c5161837d7d727207fa6006ba36"
+  },
+  {
+    "client_id": "C04",
+    "name": "Velo Gerber AG",
+    "city": "3011 Bern",
+    "lang": "de",
+    "allowed_categories": [
+      "materials",
+      "rent",
+      "utilities"
+    ],
+    "single_limit_chf": 6000,
+    "monthly_limit_chf": 20000,
+    "revoked": true,
+    "agent_id": "agent:treuhand-desk-01",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31",
+    "debtor_iban": "CH9491459561951903465",
+    "issued_by": "Velo Gerber AG (Geschäftsführung)",
+    "revoked_at": "2026-09-30",
+    "signature": "922e38849af7f57dc8c455b26d107e66829a7503faa5230b7c796f7cc79f5ea1"
+  },
+  {
+    "client_id": "C05",
+    "name": "Alpine Data Lab AG",
+    "city": "4051 Basel",
+    "lang": "en",
+    "allowed_categories": [
+      "software",
+      "cloud",
+      "consulting",
+      "telecom",
+      "rent"
+    ],
+    "single_limit_chf": 10000,
+    "monthly_limit_chf": 40000,
+    "revoked": false,
+    "agent_id": "agent:treuhand-desk-01",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31",
+    "debtor_iban": "CH9385047953541165689",
+    "issued_by": "Alpine Data Lab AG (Geschäftsführung)",
+    "revoked_at": null,
+    "signature": "a3da988a145be0e350c375f7aae5ca1874cc22bd5f3fecab0a58e1b81389c8a5"
+  }
+]
