@@ -136,7 +136,7 @@ async function loadClients() {
   if (clientsLoaded) return;
   const ms = await api("/api/mandates");
   $("pclient").innerHTML = ms.map(m => `<option value="${m.client_id}">${esc(m.name)}${m.revoked ? " (revoked)" : ""}</option>`).join("");
-  $("ptext").value = "Mühle Rüti AG\nMühlestrasse 12\n8630 Rüti ZH\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-5555\nDatum: 08.10.2026\n\nPos. 1  Weizenmehl Typ 550, 25 kg  CHF 1'200.00\n\nTotal exkl. MWST: CHF 1'200.00\nMWST 8.1%: CHF 97.20\nRechnungsbetrag: CHF 1'397.20\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH86 7434 3949 3341 8924 5\nZahlbar bis: 07.11.2026";
+  $("ptext").value = "Mühle Rüti AG\nMühlestrasse 12\n8630 Rüti ZH\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-5555\nDatum: 08.10.2026\n\nPos. 1  Weizenmehl Typ 550, 25 kg  CHF 1'200.00\n\nTotal exkl. MWST: CHF 1'200.00\nMWST 8.1%: CHF 97.20\nRechnungsbetrag: CHF 1'297.20\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH86 7434 3949 3341 8924 5\nZahlbar bis: 07.11.2026";
   clientsLoaded = true;
 }
 async function processInvoice() {
