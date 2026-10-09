@@ -4,7 +4,9 @@ Each active client has its own seat (payments-c01, ...). A seat is filled by age
 v1, v2, ...; each generation has its own key, DID, entity card and a badge that covers only that
 client. Every agent action is a stamped request; only requests that pass the gate take effect, and
 rejected ones are recorded too. The kill switch revokes one seat's current generation; replacing it
-hires the next generation, which inherits the seat's lessons.
+hires the next generation, which inherits the seat's lessons. `onboard` does all of it in one step:
+check the client's mandate, issue the card, derive the badge from the mandate, fix the manual,
+self-test against the gate, start work.
 """
 import secrets
 from datetime import datetime, timezone
@@ -13,7 +15,6 @@ from . import credential, gate, identity
 from .common import normalize_iban
 
 ACTIONS = ("payment.decide", "payment.file")
-DEFAULT_CAP = 10000.0
 
 
 def seat_of(client_id: str) -> str:
@@ -71,12 +72,15 @@ class Desk:
                                note=f"{m['name']} delegates payments to the firm"
                                     + (f" (revoked {m['revoked_at']})" if m["revoked"] else ""))
 
-    def hire(self, client_id: str, manual_sha256: str, max_single_chf: float = DEFAULT_CAP, actions=ACTIONS,
-             valid_from="2026-01-01", valid_until="2026-12-31"):
-        """Issue the next generation for this client's seat: key -> DID, entity card, badge, manual."""
+    def hire(self, client_id: str, manual_sha256: str, max_single_chf: float = None, actions=ACTIONS,
+             valid_from=None, valid_until=None):
+        """Issue the next generation for this client's seat: key -> DID, entity card, badge, manual.
+        Unless the firm sets them, the badge's cap and validity come from the client's mandate."""
         seat = seat_of(client_id)
         self.generations[seat] = self.generations.get(seat, 0) + 1
         m, owner = self.mandates[client_id], identity.owner_of(client_id)
+        max_single_chf = m["single_limit_chf"] if max_single_chf is None else max_single_chf
+        valid_from, valid_until = valid_from or m["valid_from"], valid_until or m["valid_until"]
         duty = (f"Pays supplier invoices for {m['name']} within its signed mandate "
                 f"({', '.join(m['allowed_categories'])}; up to CHF {m['single_limit_chf']:,.0f} per invoice and "
                 f"CHF {m['monthly_limit_chf']:,.0f} per month) and writes its pain.001 payment file. "
@@ -93,7 +97,7 @@ class Desk:
                            seat=seat, generation=self.generations[seat], agent_did=card["subject"],
                            manual_sha256=manual_sha256, note="manual (incl. the seat's lessons) given to this generation")
 
-    def _issue_badge(self, seat, client_id, max_single_chf, actions, valid_from="2026-01-01", valid_until="2026-12-31"):
+    def _issue_badge(self, seat, client_id, max_single_chf, actions, valid_from, valid_until):
         b = identity.agent_badge(seat, self.generations[seat], [client_id], valid_from, valid_until,
                                  actions=tuple(actions), max_single_chf=float(max_single_chf))
         self.badges[b["subject"]] = b
@@ -107,6 +111,57 @@ class Desk:
         seat = seat_of(client_id)
         old = self.badge(seat)
         self._issue_badge(seat, client_id, max_single_chf, actions, old["valid_from"], old["valid_until"])
+
+    def onboard(self, client_id: str, manual_sha256: str, actions=ACTIONS) -> list:
+        """One click: mandate check -> entity card -> badge from the mandate -> manual -> self-test -> on duty.
+        Stops at the first step that fails; every step is in the ledger."""
+        m, seat, firm = self.mandates[client_id], seat_of(client_id), identity.did_of(identity.firm_key())
+        today = self.clock().date().isoformat()
+        problem = ("the client's signature does not verify" if not credential.verify(m)
+                   else f"revoked by the client on {m['revoked_at']}" if m["revoked"]
+                   else "not in force today" if not m["valid_from"] <= today <= m["valid_until"]
+                   else "delegated to someone other than this firm" if m.get("delegate") != firm else None)
+        steps = [{"step": "mandate", "ok": problem is None,
+                  "detail": problem or f"signed by {m['name']}, in force {m['valid_from']} to {m['valid_until']}"}]
+        if problem:
+            self.ledger.append(actor=firm, action="agent.onboarding_stopped", client_id=client_id, seat=seat,
+                               step="mandate", note=problem)
+            return steps
+        if self.generations.get(seat) and self.active(seat):
+            self.kill(client_id, "replaced by the next generation")
+        self.hire(client_id, manual_sha256, actions=actions)
+        card, b = self.card(seat), self.badge(seat)
+        steps += [{"step": "entity_card", "ok": True, "detail": f"{card['name']} · {card['subject']}"},
+                  {"step": "badge", "ok": True, "detail": f"{', '.join(b['actions'])} for {client_id}, cap CHF "
+                                                         f"{b['max_single_chf']:,.0f}, {b['valid_from']} to {b['valid_until']}"},
+                  {"step": "manual", "ok": True, "detail": f"sha256 {manual_sha256[:16]}"}]
+        test = self.self_test(client_id)
+        steps.append({"step": "self_test", "ok": test["passed"], "detail": test["result"]})
+        if not test["passed"]:
+            self.kill(client_id, "self-test failed")
+        steps.append({"step": "on_duty", "ok": test["passed"],
+                      "detail": f"v{self.generations[seat]} works for {client_id}" if test["passed"] else "stopped"})
+        return steps
+
+    def self_test(self, client_id: str) -> dict:
+        """A dry run against the gate, nothing is executed or consumed: the agent's signed request must pass,
+        a forged signature in its name and a replay must be refused."""
+        seat = seat_of(client_id)
+        did = self.agent_did(seat)
+        docs = (self.cards.get(did), self.badges.get(did), self.mandates.get(client_id), self.revoked_agents)
+        payload = {"case_id": "SELF-TEST", "client_id": client_id, "executes_payment": False}
+        nonces = set(self.seen_nonces)
+        st = identity.stamp(self.agent_key(seat), "payment.decide", client_id, payload, self.clock())
+        forged = identity.stamp(identity.key("self-test-forger"), "payment.decide", client_id, payload, self.clock())
+        forged["agent"] = did
+        result = {"signed request": gate.check(st, payload, *docs, nonces, {}, self.clock())[1],
+                  "forged signature": gate.check(forged, payload, *docs, set(nonces), {}, self.clock())[1],
+                  "replayed request": gate.check(st, payload, *docs, nonces, {}, self.clock())[1]}
+        passed = result["signed request"] == "OK" and result["forged signature"] != "OK" \
+            and result["replayed request"] != "OK"
+        self.ledger.append(actor=did, action="agent.self_test", client_id=client_id, seat=seat,
+                           generation=self.generations[seat], result=result, passed=passed)
+        return {"passed": passed, "result": result}
 
     def kill(self, client_id: str, reason: str = ""):
         seat = seat_of(client_id)

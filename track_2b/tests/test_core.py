@@ -119,6 +119,25 @@ def test_kill_switch_grant_and_settings(tmp_path):
     assert d.request("C01", "payment.decide", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"
 
 
+def test_one_click_onboarding(tmp_path):
+    d = Desk(Ledger(tmp_path / "l.jsonl"), copy.deepcopy(BY_ID),
+             clock=lambda: datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc))
+    d.open_books()
+    steps = d.onboard("C02", manual_sha256="x" * 64)
+    assert [s["step"] for s in steps] == ["mandate", "entity_card", "badge", "manual", "self_test", "on_duty"]
+    assert all(s["ok"] for s in steps) and d.active(seat_of("C02"))
+    b = d.badge(seat_of("C02"))  # the badge follows the client's mandate
+    assert b["max_single_chf"] == BY_ID["C02"]["single_limit_chf"] and b["valid_until"] == BY_ID["C02"]["valid_until"]
+    assert steps[4]["detail"] == {"signed request": "OK", "forged signature": "G1_SIGNATURE_INVALID",
+                                  "replayed request": "G2_REPLAY"}
+    assert d.request("C02", "payment.decide", {"case_id": "T1", "amount_chf": 10.0})["gate"] == "OK"  # nonce unused
+    d.onboard("C02", manual_sha256="x" * 64)  # replacement: v1 is revoked, v2 takes the seat
+    assert d.generations[seat_of("C02")] == 2 and len(d.revoked_agents) == 1
+    stopped = d.onboard("C04", manual_sha256="x" * 64)  # C04 revoked its mandate
+    assert [s["ok"] for s in stopped] == [False] and not d.generations.get(seat_of("C04"))
+    assert audit_identities(d.ledger.entries)["ok"]
+
+
 def test_grant_is_bound_to_client_case_iban_and_used_once(tmp_path):
     d = _desk(tmp_path)
     pay = {"case_id": "T7", "amount_chf": 25000.0, "iban": "CH9300762011623852957", "executes_payment": True}

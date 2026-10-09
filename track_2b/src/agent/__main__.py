@@ -13,7 +13,7 @@ def main(argv):
     if cmd in ("eval", "all"):
         from . import evaluate
         evaluate.run()
-    if cmd == "holdout":
+    if cmd in ("holdout", "all"):
         from . import evaluate
         evaluate.holdout()
     if cmd in ("serve", "all"):

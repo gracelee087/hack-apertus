@@ -143,9 +143,8 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                manual_sha256=lesson_info["manual_gen0_sha256"])
     led.append(actor=identity.RESPONSIBLE_HUMAN, action="manual.published", generation=1,
                manual_sha256=lesson_info["manual_gen1_sha256"], based_on_overrules=lesson_info["overruled"])
-    for cid, m in mandates.items():  # one seat per client still delegating to the firm
-        if not m["revoked"]:
-            desk.hire(cid, manual_sha256=lesson_info["manual_gen1_sha256"])
+    for cid in mandates:  # one click per client; a client that revoked its mandate stops at the first step
+        desk.onboard(cid, manual_sha256=lesson_info["manual_gen1_sha256"])
     by_case = {c["case_id"]: c for c in test}
     payments, queue, gate_codes = defaultdict(list), [], Counter()
     for p in preds:

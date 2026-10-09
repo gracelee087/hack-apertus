@@ -221,6 +221,7 @@ def client(cid: str):
     view = client_view(s, d, cid)
     seat = seat_of(cid)
     entries = [e for e in LEDGER.entries if e.get("client_id") == cid]
+    tests = [e for e in entries if e.get("action") == "agent.self_test" and e.get("generation") == d.generations.get(seat)]
     decisions = [e for e in entries if e.get("action") in ("payment.decide", "request.rejected") and e.get("case_id")]
     risky = [dict(e, risk=[{"code": c, "label": RISKS[c][0], "kind": RISKS[c][1]} for c in risk_codes(e)])
              for e in decisions if e.get("action") == "payment.decide" and risk_codes(e)]
@@ -229,6 +230,7 @@ def client(cid: str):
                       "card_ok": bool(d.card(seat)) and identity.verify_doc(d.card(seat)),
                       "badge_ok": bool(d.badge(seat)) and identity.verify_doc(d.badge(seat)),
                       "revoked": [x for x in d.revoked_agents if d.cards.get(x, {}).get("seat") == seat],
+                      "self_test": ({k: tests[-1][k] for k in ("ts", "result", "passed")} if tests else None),
                       "all_actions": list(ACTIONS)},
             "decisions": decisions[::-1], "risky": risky[::-1],
             "queue": [i for i in queue_items() if i["client_id"] == cid],
@@ -272,26 +274,17 @@ def kill(cid: str, n: Note):
         return {"ok": True}
 
 
-@app.post("/api/clients/{cid}/agent/replace")
-def replace(cid: str):
+@app.post("/api/clients/{cid}/agent/onboard")
+def onboard(cid: str):
+    """One click: deploy (or replace) this client's agent; the badge is derived from the client's mandate."""
     with lock:
         s = state()
-        m = mandate(s, cid)
-        if m["revoked"]:
-            raise HTTPException(409, "the client revoked its mandate; no agent can be hired for it")
+        mandate(s, cid)
         d = desk_of(s)
         seat = seat_of(cid)
-        cap, actions = _current_settings(d, seat)
-        if d.generations.get(seat) and d.active(seat):
-            d.kill(cid, "replaced")
-        d.hire(cid, manual_sha256=lessons.fingerprint(manual_text(s, seat)), max_single_chf=cap, actions=actions)
+        steps = d.onboard(cid, manual_sha256=lessons.fingerprint(manual_text(s, seat)))
         save(s, d)
-        return {"ok": True, "generation": d.generations[seat]}
-
-
-def _current_settings(d, seat):
-    b = d.badge(seat) if d.generations.get(seat) else None
-    return (b["max_single_chf"], b["actions"]) if b else (10000.0, ACTIONS)
+        return {"ok": all(x["ok"] for x in steps), "steps": steps, "generation": d.generations.get(seat, 0)}
 
 
 @app.post("/api/clients/{cid}/attack/{kind}")
@@ -489,8 +482,8 @@ def _pay(s, d, m, item, kind, extra, **log):
 @app.get("/api/evaluation")
 def evaluation():
     s = state()
-    return {"metrics": _read(RESULTS / "metrics.json", {}), "manual": manual_text(s, FIRM_WIDE),
-            "llm_mode": llm.mode(), "model": llm.model_name()}
+    return {"metrics": _read(RESULTS / "metrics.json", {}), "holdout": _read(RESULTS / "holdout.json", None),
+            "manual": manual_text(s, FIRM_WIDE), "llm_mode": llm.mode(), "model": llm.model_name()}
 
 
 @app.get("/api/analytics")

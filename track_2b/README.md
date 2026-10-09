@@ -1,4 +1,4 @@
-# Mandate-bounded payment agent for Swiss fiduciaries (working title)
+# Mandate Desk — mandate-bounded payment agents for Swiss fiduciaries
 
 Swiss *Treuhand* firms pay supplier invoices on behalf of many small client companies.
 This prototype lets **Apertus** do that work — read invoices in German, French, Italian and
@@ -16,7 +16,9 @@ English — while a **harness** keeps it inside what each client actually delega
    own Ed25519 key and DID, a firm-signed ID card (display name, duty, and the named client manager who assigns its role and manages it) and a badge for that one client; clients sign their mandates. Every agent action is a signed, single-use request that
    a gate checks (signature, replay, identity, badge, mandate incl. its single-payment limit) before it
    takes effect. Kill switch, replacement by the next generation, and human grants, each bound to one
-   client, case, IBAN and amount and used up by the payment it allows.
+   client, case, IBAN and amount and used up by the payment it allows. **One-click deployment**: check
+   the mandate → issue the card → derive the badge from the mandate (cap = its single limit, validity =
+   its period) → fix the manual → self-test against the gate → on duty; each step is in the ledger.
 6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client, an approval queue for everything
    the agent may not pay alone, and a hash-chained, signed audit ledger. A payment decision stands only
    if its payment file is issued; a file that fails validation is never issued.

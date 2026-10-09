@@ -1,6 +1,6 @@
-# Technical report — Mandate-bounded payment agent (working title)
+# Technical report — Mandate Desk: mandate-bounded payment agents for Swiss fiduciaries
 
-- **Track:** `Track 2B — Mandate-bounded payment agent for Swiss fiduciaries`
+- **Track:** Track 2B — Mandate Desk
 - **Event:** Online
 - **Team:** `team name` — Sohee Lee
 - **Demo:** `link to video`
@@ -49,6 +49,7 @@ every agent action = request signed with the agent key ──► [Gate: G1 signa
 | Agent identity (Ed25519, did:key, entity card, badge, request stamps) | `src/agent/identity.py` | runtime |
 | Gate (five checks) and desk (hire, kill switch, replace, human grants) | `src/agent/gate.py`, `desk.py` | runtime |
 | Attack scenarios against the gate | `src/agent/security.py` | runtime, no model calls |
+| Risk score: logistic regression on 3,000 synthetic past payments (shown to the reviewer, changes no decision) | `src/agent/risk.py` | build time and runtime, pure Python, no new dependency |
 | Ledger (hash chain + ledger-key signature), payment files | `src/agent/ledger.py`, `pain001.py` | runtime, pure Python |
 | Reviewer web app: client portfolio dashboard (status, risk signals per client), per-client pages (decisions, approvals, agent settings, lessons, files, ledger) | `src/agent/app.py`, `static/index.html` | runtime, FastAPI on port 8000 |
 
@@ -91,7 +92,11 @@ is in force, and the amount is within its single-payment limit unless a human gr
 (a higher badge cap set by the firm cannot lift the client's own limit).
 Each client has its own agent seat, so one client's agent cannot act for another (G4) and client
 data never mixes. The **kill switch** revokes one seat's current generation without touching the
-others; **replacing** it hires v2 with a new key and DID, while the seat's lessons carry over: lessons
+others; **one-click deployment** (also used for replacement) checks the client's mandate, issues the card,
+derives the badge from the mandate (cap = its single limit, validity = its period), fixes the manual,
+self-tests against the gate (its own request passes, a forged one and a replay are refused; nothing is
+executed) and only then puts the agent on duty, stopping at the first failing step; a client that revoked
+its mandate stops at step one. **Replacing** an agent hires v2 with a new key and DID, while the seat's lessons carry over: lessons
 learned on a client bind that client's seat and are shown to the other seats for reference only;
 the lessons from the training review are firm-wide. Human approvals become grants with a reference in the ledger.
 A payment decision and its payment file are one step: if the gate refuses the file, the decision is
@@ -210,6 +215,32 @@ no model calls):
 In the reference run the gate accepted all 78 agent decisions for active clients' invoices plus the
 4 payment files, and refused the 4 decisions for the client whose mandate was already revoked
 (no agent is hired for a client that has revoked its mandate). The ledger's chain and signatures verify.
+
+**Risk score (data-science layer).** Next to each held invoice the reviewer sees a fraud probability.
+It ranks attention only: it changes no decision, and the queue is ordered by fraud signal, then days to
+spare before the due date, then amount. Training data: 3,000 synthetic past payments (`data/history/`,
+seed 7; 75% legitimate, the rest control cases and eight fraud patterns, 15% of fraud made subtle,
+2% of labels flipped), generated independently of the 120 invoices except that each supplier's usual
+amount is taken from the train split's legitimate invoices. Thirteen features (amount z-score against
+that supplier's history, changed or invalid IBAN, new supplier, round amount, amounts that don't add up,
+wrong addressee, urgency words in four languages, short due date, duplicate, limits, scope, month load).
+L2-regularised logistic regression fitted by Newton/IRLS in pure Python; the L2 weight (0.01–10) is
+chosen on a 20% validation split, then refitted on all 3,000 rows. Compared with an unsupervised baseline
+(sum of robust deviations from the median) and with a second model for "must not be paid automatically".
+
+| Model | ROC AUC validation | ROC AUC test (78) | Avg precision test | ROC AUC holdout (42) |
+|---|---|---|---|---|
+| fraud, logistic regression | 0.908 | 0.970 | 0.973 | 0.984 |
+| fraud, unsupervised baseline | 0.860 | 0.878 | 0.770 | 0.838 |
+| must not autopay, logistic regression | 0.996 | 0.962 | 0.980 | 0.984 |
+
+On the 43 test invoices the rules let through, fraud ROC AUC is 0.952; the pressure-fraud invoice that
+the rules and Apertus missed (T110) is scored 2nd highest of them, the amounts-don't-add-up invoice
+(T111) is not caught because Apertus read totals that add up (an extraction limit shared with the rules).
+The first version raised 4 false alarms on the test set because supplier amounts in the history were
+random; anchoring them on train-split invoices removed them. That fix was made after seeing test
+results, which is one reason for the holdout below. Every step (data, features, split, L2 search, ROC
+and PR curves, confusion matrices, errors) is shown on the app's risk-model page.
 
 **Fresh holdout.** Two parts of the design were changed after seeing test results: the two promoted
 lessons (last row of the table) and one fix in the risk score's amount feature. To check that the numbers
