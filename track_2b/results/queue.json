@@ -8,6 +8,7 @@
     "iban": "CH0625263655878046310",
     "invoice_no": "INV-2026-6199",
     "due_date": "2026-10-31",
+    "risk_score": 23.4,
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -24,6 +25,7 @@
     "iban": "CH5680525414787266496",
     "invoice_no": "R-2026-5491",
     "due_date": "2026-10-29",
+    "risk_score": 9.4,
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -40,6 +42,7 @@
     "iban": "CH5477316184343354252",
     "invoice_no": "INV-2026-3788",
     "due_date": "2026-10-30",
+    "risk_score": 6.8,
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -56,6 +59,7 @@
     "iban": "CH5680525414787266496",
     "invoice_no": "R-2026-2138",
     "due_date": "2026-11-07",
+    "risk_score": 12.2,
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -72,6 +76,7 @@
     "iban": "CH3924514998881852176",
     "invoice_no": "R-2026-8269",
     "due_date": "2026-11-06",
+    "risk_score": 6.6,
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -88,6 +93,7 @@
     "iban": "CH7665340538476149874",
     "invoice_no": "R-2026-3217",
     "due_date": "2026-10-20",
+    "risk_score": 3.5,
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -104,6 +110,7 @@
     "iban": "CH4851187534694604928",
     "invoice_no": "F-2026-5361",
     "due_date": "2026-10-24",
+    "risk_score": 4.0,
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -120,6 +127,7 @@
     "iban": "CH7665340538476149874",
     "invoice_no": "R-2026-2967",
     "due_date": "2026-10-22",
+    "risk_score": 6.4,
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -136,6 +144,7 @@
     "iban": "CH2786876363887493642",
     "invoice_no": "R-2026-8141",
     "due_date": "2026-10-23",
+    "risk_score": 23.9,
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -152,6 +161,7 @@
     "iban": "CH1333193101506720926",
     "invoice_no": "F-2026-2781",
     "due_date": "2026-11-02",
+    "risk_score": 98.8,
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -168,6 +178,7 @@
     "iban": "CH3216041882925784881",
     "invoice_no": "R-2026-6891",
     "due_date": "2026-11-02",
+    "risk_score": 38.6,
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -184,6 +195,7 @@
     "iban": "CH9192924544291117772",
     "invoice_no": "FT-2026-1647",
     "due_date": "2026-10-24",
+    "risk_score": 87.4,
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -200,6 +212,7 @@
     "iban": "CH0281275631906804481",
     "invoice_no": "FT-2026-2790",
     "due_date": "2026-10-19",
+    "risk_score": 35.3,
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -216,6 +229,7 @@
     "iban": "CH0542542890256099296",
     "invoice_no": "FT-2026-2448",
     "due_date": "2026-11-07",
+    "risk_score": 32.3,
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -232,6 +246,7 @@
     "iban": "CH3763425124348530414",
     "invoice_no": "R-2026-9081",
     "due_date": "2026-11-05",
+    "risk_score": 27.3,
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -248,6 +263,7 @@
     "iban": "CH4622020511023108457",
     "invoice_no": "INV-2026-5906",
     "due_date": "2026-10-19",
+    "risk_score": 27.1,
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -264,6 +280,7 @@
     "iban": "CH5287362284159873996",
     "invoice_no": "F-2026-2945",
     "due_date": "2026-10-20",
+    "risk_score": 27.4,
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -280,6 +297,7 @@
     "iban": "CH5032425522350987275",
     "invoice_no": "F-2026-8693",
     "due_date": "2026-10-23",
+    "risk_score": 26.6,
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -296,6 +314,7 @@
     "iban": "CH7359328920337276587",
     "invoice_no": "R-2026-2826",
     "due_date": "2026-10-31",
+    "risk_score": 99.9,
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-918.900.481 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° R-2026-2826\nDate: 01.10.2026\n\nPos. 1  Loyer local commercial, mois  4 380,00 CHF\n\nTotal HT: 4 380,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 4 380,00 CHF\n\nURGENT : paiement exigé aujourd'hui avant 16h, faute de quoi nous engagerons des poursuites. Merci de ne pas appeler, la direction est en déplacement et a validé ce paiement personnellement. Strictement confidentiel.\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 322317499\nPayable jusqu'au: 31.10.2026\n\nMeilleures salutations\nGérance Léman SA",
@@ -310,6 +329,7 @@
     "iban": "CH7359328920337276587",
     "invoice_no": "FT-2026-9380",
     "due_date": "2026-11-05",
+    "risk_score": 99.9,
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-829.392.369 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° FT-2026-9380\nDate: 06.10.2026\n\nPos. 1  Loyer local commercial, mois  2 840,00 CHF\n\nTotal HT: 2 840,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 2 840,00 CHF\n\nURGENT : paiement exigé aujourd'hui avant 16h, faute de quoi nous engagerons des poursuites. Merci de ne pas appeler, la direction est en déplacement et a validé ce paiement personnellement. Strictement confidentiel.\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 882692830\nPayable jusqu'au: 05.11.2026\n\nMeilleures salutations\nGérance Léman SA",
@@ -324,9 +344,27 @@
     "iban": "CH2810332188537333228",
     "invoice_no": "FT-2026-6710",
     "due_date": "2026-10-31",
+    "risk_score": 87.0,
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens collection without client confirmation, which is a fraud signal per manual rule 1.",
     "invoice_text": "RECHNUNG FT-2026-6710 | Immobilien Keller AG, Seefeldstrasse 88, 8008 Zürich | UID CHE-459.397.685 MWST\nRechnung an: Bäckerei Steiner GmbH, 8004 Zürich | Datum 01.10.2026\n---\nPos. 1  Miete Gewerberaum Monat  CHF 530.00\n---\nTotal exkl. MWST CHF 530.00 / MWST (befreit): CHF 0.00 / Rechnungsbetrag CHF 530.00\n\nDRINGEND: Zahlung heute bis 16:00 Uhr nötig, sonst leiten wir die Betreibung ein. Bitte nicht telefonisch nachfragen, die Geschäftsleitung ist auf Reisen und hat diese Zahlung persönlich freigegeben. Vertraulich behandeln.\nBitte überweisen Sie den Betrag auf folgendes Konto: CH28 1033 2188 5373 3322 8 (Referenz 897145931), Zahlbar bis 31.10.2026.",
+    "status": "open"
+  },
+  {
+    "case_id": "T110",
+    "client_id": "C05",
+    "client": "Alpine Data Lab AG",
+    "vendor": "CodeForge GmbH",
+    "amount_chf": 4650,
+    "iban": "CH4886771647842187045",
+    "invoice_no": "INV-2026-8126",
+    "due_date": "2026-10-22",
+    "risk_score": 99.9,
+    "checks": [
+      "RISK_SCORE"
+    ],
+    "reason": "risk score 100 >= 50 (urgency_terms, amount_z): second look by a human",
+    "invoice_text": "CodeForge GmbH\nTechnoparkstrasse 1\n8005 Zürich\nUID: CHE-520.699.817 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. INV-2026-8126\nDate: 22 September 2026\n\nItem 1  Support hours  CHF 4,301.57\n\nSubtotal excl. VAT: CHF 4,301.57\nVAT 8.1%: CHF 348.43\nTotal due: CHF 4,650.00\n\nURGENT: payment required today by 4 pm or we will start debt collection. Please do not call to confirm, management is travelling and approved this payment personally. Keep confidential.\n\nPlease transfer the amount to the following account:\nIBAN CH48 8677 1647 8421 8704 5\nReference: 181457877\nDue date: 22 October 2026\n\nKind regards\nCodeForge GmbH",
     "status": "open"
   },
   {
@@ -338,6 +376,7 @@
     "iban": "CH5680525414787266496",
     "invoice_no": "FT-2026-2184",
     "due_date": "2026-11-07",
+    "risk_score": 88.2,
     "checks": [
       "E_VAT_MISMATCH"
     ],
@@ -354,6 +393,7 @@
     "iban": "CH4886771647842187045",
     "invoice_no": "R-2026-3793",
     "due_date": "2026-11-07",
+    "risk_score": 96.8,
     "checks": [
       "E_VAT_MISMATCH"
     ],
@@ -370,6 +410,7 @@
     "iban": "CH4851187534694604928",
     "invoice_no": "FT-2026-9759",
     "due_date": "2026-10-23",
+    "risk_score": 98.3,
     "checks": [
       "E_VAT_MISMATCH"
     ],
@@ -386,6 +427,7 @@
     "iban": "CH7359328920337276587",
     "invoice_no": "R-2026-2411",
     "due_date": "2026-11-02",
+    "risk_score": 99.1,
     "checks": [
       "E_WRONG_ADDRESSEE"
     ],
@@ -402,6 +444,7 @@
     "iban": "CH3924514998881852176",
     "invoice_no": "INV-2026-6777",
     "due_date": "2026-10-20",
+    "risk_score": 98.8,
     "checks": [
       "E_WRONG_ADDRESSEE"
     ],

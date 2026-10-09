@@ -18,8 +18,10 @@ SYSTEMS = {
     "harness_gen0": "Apertus extraction + badge + review with manual gen 0",
     "harness_gen1": "Apertus extraction + badge + review with manual gen 1 (lessons)",
     "harness_gen1_promoted": "as gen 1, plus two lessons promoted to hard checks (sum, addressee); added after test results",
+    "harness_gen1_promoted_risk": "as above, plus a second look: risk score >= 50 sends a payment to a human; added after test results",
 }
-PRODUCTION = "harness_gen1_promoted"  # the configuration whose ledger, payment files and queue are written
+PRODUCTION = "harness_gen1_promoted_risk"  # the configuration whose ledger, payment files and queue are written
+BEFORE_RISK = "harness_gen1_promoted"  # the risk model is evaluated against what the system does without it
 
 
 def load():
@@ -61,6 +63,7 @@ def evaluate_case(c, mandates, suppliers, manual1):
     h0 = decide.harness(c, m, sup, prompts.MANUAL_GEN0, fields=fields)
     h1 = decide.harness(c, m, sup, manual1, fields=fields)
     h2 = decide.harness(c, m, sup, manual1, fields=fields, promoted=True)
+    h3 = decide.second_look(h2, *risk.scorer().score(c, fields))
 
     def view(h, decision):
         v = {"decision": decision, "reason": h.get("reason", ""), "findings": h["findings"]}
@@ -72,7 +75,8 @@ def evaluate_case(c, mandates, suppliers, manual1):
             "reason_code": c["reason_code"], "gold": c["gold"], "fields": fields, "baseline": base,
             "badge_only": view({"findings": h0["findings"]}, h0["badge_only"]),
             "harness_gen0": view(h0, h0["decision"]), "harness_gen1": view(h1, h1["decision"]),
-            "harness_gen1_promoted": view(h2, h2["decision"])}
+            "harness_gen1_promoted": view(h2, h2["decision"]), "harness_gen1_promoted_risk": view(h3, h3["decision"]),
+            "risk_score": h3["risk_score"]}
 
 
 def score(preds, system):
@@ -155,7 +159,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                    "executes_payment": h["decision"] == "pay"}
         res = desk.request(m["client_id"], "payment.decide", payload, case_id=c["case_id"], decision=h["decision"],
                            vendor=f.get("vendor_name"), iban=payload["iban"], amount_chf=payload["amount_chf"],
-                           invoice_no=f.get("invoice_no"), reason=h.get("reason", ""),
+                           invoice_no=f.get("invoice_no"), risk_score=p.get("risk_score"), reason=h.get("reason", ""),
                            checks=[x["code"] for x in h.get("findings", [])], manual_sha256=lesson_info["manual_gen1_sha256"], model=llm.model_name())
         gate_codes[res["gate"]] += 1
         if not res["ok"]:
@@ -168,6 +172,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
             queue.append({"case_id": c["case_id"], "client_id": m["client_id"], "client": m["name"],
                           "vendor": f.get("vendor_name"), "amount_chf": f.get("total_chf"),
                           "iban": payload["iban"], "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
+                          "risk_score": p.get("risk_score"),
                           "checks": [x["code"] for x in h.get("findings", [])],
                           "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"})
     pay_dir = out / "payments"
@@ -294,7 +299,7 @@ def holdout():
     preds = pmap(lambda c: evaluate_case(c, mandates, suppliers, manual1), held)
     write_jsonl(RESULTS / "holdout_predictions.jsonl", preds)
     metrics = {s: score(preds, s) for s in SYSTEMS}
-    r = risk.score_holdout(preds, {c["case_id"]: c for c in held}, PRODUCTION)
+    r = risk.score_holdout(preds, {c["case_id"]: c for c in held}, BEFORE_RISK)
     report = {"model": llm.model_name(), "llm_mode": llm.mode(), "seed": datagen.HOLDOUT_SEED, "n": len(held),
               "metrics": metrics, "extraction": extraction_scores(preds), "risk": r}
     (RESULTS / "holdout.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -333,8 +338,8 @@ def run():
     metrics = {s: score(preds, s) for s in SYSTEMS}
     extraction = extraction_scores(preds)
     files, ledger_ok, gate_codes, audit = write_outputs(test, preds, mandates, manual1, lesson_info, out)
-    attacks = security.run(preds, mandates, out)
-    risk_model = risk.run(preds, {c["case_id"]: c for c in test}, PRODUCTION)
+    attacks = security.run(preds, mandates, out, PRODUCTION)
+    risk_model = risk.run(preds, {c["case_id"]: c for c in test}, BEFORE_RISK)
     report = {"model": llm.model_name(), "llm_mode": llm.mode(), "n_test": len(test), "metrics": metrics,
               "extraction": extraction, "lessons": lesson_info, "payment_files": files, "ledger_verifies": ledger_ok,
               "gate_reference_run": gate_codes, "identity_audit": audit, "attacks": attacks}

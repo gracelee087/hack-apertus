@@ -122,6 +122,30 @@
         "R_REVOKED": 1.0,
         "R_SCOPE": 1.0
       }
+    },
+    "harness_gen1_promoted_risk": {
+      "accuracy": 0.987,
+      "wrong_payment_rate": 0.022,
+      "wrong_payments": 1,
+      "wrong_payment_chf": 4640.4,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 1,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_PRESSURE": 1.0,
+        "E_VAT_MISMATCH": 0.75,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      }
     }
   },
   "extraction": {
@@ -177,8 +201,8 @@
       "validation_errors": []
     },
     "C05": {
-      "transactions": 6,
-      "total_chf": 18250.0,
+      "transactions": 5,
+      "total_chf": 13600.0,
       "validation_errors": []
     }
   },
@@ -202,139 +226,139 @@
   },
   "attacks": {
     "legitimate request (control)": {
-      "attempts": 35,
-      "accepted": 35,
+      "attempts": 34,
+      "accepted": 34,
       "blocked": 0,
       "codes": {
-        "OK": 35
+        "OK": 34
       }
     },
     "forged signature": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G1_SIGNATURE_INVALID": 35
+        "G1_SIGNATURE_INVALID": 34
       }
     },
     "tampered amount / IBAN after signing": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G1_PAYLOAD_TAMPERED": 35
+        "G1_PAYLOAD_TAMPERED": 34
       }
     },
     "replayed request": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G2_REPLAY": 35
+        "G2_REPLAY": 34
       }
     },
     "stale request (1 h old)": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G2_STALE": 35
+        "G2_STALE": 34
       }
     },
     "unknown agent key": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G3_NO_VALID_ENTITY_CARD": 35
+        "G3_NO_VALID_ENTITY_CARD": 34
       }
     },
     "revoked agent (v1 after kill switch)": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G3_AGENT_REVOKED": 35
+        "G3_AGENT_REVOKED": 34
       }
     },
     "agent of one client acting for another client": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G4_CLIENT_NOT_COVERED": 35
+        "G4_CLIENT_NOT_COVERED": 34
       }
     },
     "amount above badge cap, no human grant": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G4_ABOVE_BADGE_CAP_NO_GRANT": 35
+        "G4_ABOVE_BADGE_CAP_NO_GRANT": 34
       }
     },
     "expired badge": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G4_BADGE_EXPIRED": 35
+        "G4_BADGE_EXPIRED": 34
       }
     },
     "mandate limits tampered": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G5_MANDATE_INVALID": 35
+        "G5_MANDATE_INVALID": 34
       }
     },
     "mandate delegated to someone else": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G5_MANDATE_INVALID": 35
+        "G5_MANDATE_INVALID": 34
       }
     },
     "mandate revoked by client": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G5_MANDATE_REVOKED": 35
+        "G5_MANDATE_REVOKED": 34
       }
     },
     "human grant used a second time": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G4_GRANT_INVALID": 35
+        "G4_GRANT_INVALID": 34
       }
     },
     "human grant of another client": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G4_GRANT_INVALID": 35
+        "G4_GRANT_INVALID": 34
       }
     },
     "amount above the client's mandate limit (badge cap set too high)": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G5_ABOVE_MANDATE_LIMIT": 35
+        "G5_ABOVE_MANDATE_LIMIT": 34
       }
     },
     "negative, zero or NaN amount": {
-      "attempts": 35,
+      "attempts": 34,
       "accepted": 0,
-      "blocked": 35,
+      "blocked": 34,
       "codes": {
-        "G4_PAYMENT_INCOMPLETE": 35
+        "G4_PAYMENT_INCOMPLETE": 34
       }
     }
   }

@@ -27,15 +27,16 @@ The reviewer app opens on a client portfolio dashboard (status and risk signals 
 page per client (decisions, approvals, agent settings, lessons, payment files, ledger).
 
 Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 45 invoices it
-must not pay (CHF 138,781); with the harness 7 (CHF 26,771), and 2 (CHF 9,290) with two lessons
-promoted to hard checks, with no legitimate payment missed (the 2 come from lessons promoted after
-looking at the training split; see the report). Sixteen attack types on the agent's identity and
-authority: 560 / 560 blocked, 35 / 35 legitimate requests accepted.
+must not pay (CHF 138,781); with the harness 7 (CHF 26,771), 2 (CHF 9,290) with two lessons
+promoted to hard checks, and **1 (CHF 4,640)** with a risk-score second look, with no legitimate payment
+missed (the last two steps were added after seeing test results; see the report). Sixteen attack types on
+the agent's identity and authority: 544 / 544 blocked, 34 / 34 legitimate requests accepted.
 A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) gives every
-invoice a fraud probability, shown next to the approval queue; it changes no decision and does not set
-the queue order (fraud signal first, then days to spare before the due date, then amount). ROC AUC 0.970
-for fraud on the 78 test invoices (unsupervised baseline 0.878); among the 43 invoices the rules let
-through, it scores the pressure-fraud invoice the rules and Apertus missed 2nd highest.
+invoice a fraud probability. An invoice the harness would pay goes to a human instead when its score is
+50 or more (second look); the score does not set the queue order (fraud signal first, then days to spare
+before the due date, then amount). ROC AUC 0.970 for fraud on the 78 test invoices (unsupervised baseline
+0.878); it scores the pressure-fraud invoice the rules and Apertus let through at 99.9, so the second look
+holds it, and it held no legitimate invoice on the test set or the holdout.
 See `results/summary.md` and `technical_report.md`.
 
 **Fresh holdout, run once.** Because the promoted lessons and one risk-model fix were made after seeing

@@ -204,6 +204,20 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
     assert [i["status"] for i in app.queue_items()] == ["approved"]
 
 
+def test_second_look_holds_a_high_risk_payment():
+    from agent import decide
+    paid = {"decision": "pay", "findings": [], "reason": "ok"}
+    held = decide.second_look(paid, 80.0, [("urgency_terms", 1.2)])
+    assert held["decision"] == "escalate" and held["findings"][-1]["code"] == "RISK_SCORE" and held["risk_score"] == 80.0
+    assert decide.second_look(paid, 20.0)["decision"] == "pay"  # low score: paid as before
+    rejected = {"decision": "reject", "findings": [{"code": "R_SCOPE"}], "reason": "scope"}
+    assert decide.second_look(rejected, 99.0)["decision"] == "reject"  # never changes a hold or a rejection
+    pressure = next(c for c in CASES if c["reason_code"] == "E_PRESSURE")
+    ok = next(c for c in CASES if c["reason_code"] == "OK")
+    s = risk.scorer()
+    assert s.score(pressure, gold_fields(pressure))[0] > s.score(ok, gold_fields(ok))[0]
+
+
 def test_identity_is_recorded_from_issuance(tmp_path):
     d = _desk(tmp_path, open_books=True)
     actions = [e["action"] for e in d.ledger.entries]

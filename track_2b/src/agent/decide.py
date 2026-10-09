@@ -5,6 +5,8 @@ baseline: Apertus alone gets the policy, manual, mandate, supplier list, this
 harness:  Apertus extracts the fields -> badge enforces the mandate in code ->
           only if every hard check passes, Apertus reviews the content against
           the firm manual (+ lessons). Any model failure fails closed (escalate).
+second look: an invoice the harness would pay goes to a human instead if the
+          risk score (logistic regression on past payments, see risk.py) is high.
 """
 import json
 
@@ -60,6 +62,20 @@ def review(case: dict, mandate: dict, fields: dict, manual: str) -> dict:
         return {"decision": _decision(out.get("decision"), ("pay", "escalate")), "reason": str(out.get("reason", ""))}
     except Exception as e:
         return {"decision": "escalate", "reason": "model failure", "error": f"{type(e).__name__}: {e}"}
+
+
+SECOND_LOOK = 50.0  # risk score (0-100) from which an invoice the agent would pay goes to a human
+
+
+def second_look(result: dict, risk_score: float, factors=()) -> dict:
+    """Hold a payment the harness would make when the risk score is high; other decisions are unchanged."""
+    result = {**result, "risk_score": risk_score}
+    if result["decision"] != "pay" or risk_score < SECOND_LOOK:
+        return result
+    why = ", ".join(f for f, _ in factors) or "unusual pattern"
+    finding = {"severity": "escalate", "code": "RISK_SCORE",
+               "msg": f"risk score {risk_score:.0f} >= {SECOND_LOOK:.0f} ({why}): second look by a human"}
+    return {**result, "decision": "escalate", "findings": result["findings"] + [finding], "reason": finding["msg"]}
 
 
 def harness(case: dict, mandate: dict, suppliers: list, manual: str, fields: dict = None,

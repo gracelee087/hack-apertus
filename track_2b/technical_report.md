@@ -2,7 +2,7 @@
 
 - **Track:** Track 2B — Mandate Desk
 - **Event:** Online
-- **Team:** `team name` — Sohee Lee
+- **Team:** hack-1 — Sohee Lee
 - **Demo:** `link to video`
 
 ## 1. Summary
@@ -18,10 +18,11 @@ did what for whom. *Who* is provable: the agent has its own key and DID, a firm-
 badge, and every request it makes is signed and checked by a gate against the client's signed
 mandate before anything takes effect. On 78 synthetic test invoices in four languages, Apertus 8B alone paid
 **33 of 45** invoices it should not have paid (CHF 138,781); with the harness, **7 of 45**
-(CHF 26,771), and 2 of 45 (CHF 9,290) once two learned lessons were promoted to hard checks,
-while still paying all 33 legitimate invoices. Sixteen kinds of attack on the agent's identity and
+(CHF 26,771), 2 of 45 (CHF 9,290) once two learned lessons were promoted to hard checks, and 1 of 45
+(CHF 4,640) once a risk score trained on past payments sends high-scoring payments to a human, while
+still paying all 33 legitimate invoices. Sixteen kinds of attack on the agent's identity and
 authority (forged or replayed requests, revoked agent, tampered mandate, reused human grant, …) were
-blocked in 560 of 560 attempts, with 35 of 35 legitimate requests accepted.
+blocked in 544 of 544 attempts, with 34 of 34 legitimate requests accepted.
 
 ## 2. Architecture
 
@@ -162,6 +163,7 @@ Test split: 78 invoices, 33 payable, 45 not payable (28 escalate, 17 reject).
 | + review, manual gen 0 | 0.872 | 0.222 (10) | 34,521 | 0.000 |
 | **+ review, manual gen 1 (lessons)** | **0.910** | **0.156 (7)** | **26,771** | **0.000** |
 | + two lessons promoted to hard checks ✱ | 0.974 | 0.044 (2) | 9,290 | 0.000 |
+| **+ risk-score second look (score ≥ 50 → human) ✱** | **0.987** | **0.022 (1)** | **4,640** | **0.000** |
 
 ✱ Added *after* we saw the test results above, so it is not a blind result. The two checks
 (net + VAT = total; invoice addressed to the client) are exactly the gen-1 lessons that the
@@ -169,7 +171,10 @@ Test split: 78 invoices, 33 payable, 45 not payable (28 escalate, 17 reject).
 They caught 3 of 4 sum mismatches and 2 of 2 wrong-addressee invoices, and held back no legitimate
 invoice. The remaining sum mismatch is the invoice whose total the model "corrected" during
 extraction; the other remaining miss is one fraud-pressure invoice the reviewer judged routine.
-This is the configuration the reviewer app runs and whose ledger and payment files are in `results/`.
+The second look (last row) was also added after seeing these results: the risk score (below) gives that
+pressure invoice 99.9, so it goes to a human; no legitimate invoice scored 50 or more, on the test set or
+on the holdout. The last row is the configuration the reviewer app runs and whose ledger and payment files
+are in `results/`.
 
 Correct-decision rate by case type (baseline → harness gen 1): every hard-rule type (revoked,
 out-of-scope, invalid IBAN, duplicate, limits, changed IBAN, new supplier) goes from 0.00–0.40
@@ -196,29 +201,30 @@ amount: on a VAT-mismatch invoice the model reported net + VAT instead of the st
    asserts "correct totals" without doing the arithmetic. Promoting those two lessons to code
    (last row) closes most of the gap: soft control finds the rule, hard control enforces it.
 
-**Agent verification.** Each attack below was replayed once for each of the 35 invoices the
+**Agent verification.** Each attack below was replayed once for each of the 34 invoices the
 production configuration paid, each time against a freshly hired agent (`src/agent/security.py`,
 no model calls):
 
 | Scenario | Blocked | Caught by |
 |---|---|---|
-| legitimate request (control) | 0 / 35 (35 accepted) | — |
-| forged signature in the agent's name | 35 / 35 | G1 |
-| amount / IBAN changed after signing | 35 / 35 | G1 |
-| replayed request · stale request (1 h) | 35 / 35 · 35 / 35 | G2 |
-| unknown agent key · revoked agent v1 after kill switch | 35 / 35 · 35 / 35 | G3 |
-| agent of one client acting for another · above cap without grant · expired badge | 35 / 35 each | G4 |
-| human grant used a second time · human grant of another client · negative, zero or NaN amount | 35 / 35 each | G4 |
-| mandate limits tampered · mandate naming another delegate · mandate revoked | 35 / 35 each | G5 |
-| amount above the client's mandate limit, badge cap set too high | 35 / 35 | G5 |
+| legitimate request (control) | 0 / 34 (34 accepted) | — |
+| forged signature in the agent's name | 34 / 34 | G1 |
+| amount / IBAN changed after signing | 34 / 34 | G1 |
+| replayed request · stale request (1 h) | 34 / 34 · 34 / 34 | G2 |
+| unknown agent key · revoked agent v1 after kill switch | 34 / 34 · 34 / 34 | G3 |
+| agent of one client acting for another · above cap without grant · expired badge | 34 / 34 each | G4 |
+| human grant used a second time · human grant of another client · negative, zero or NaN amount | 34 / 34 each | G4 |
+| mandate limits tampered · mandate naming another delegate · mandate revoked | 34 / 34 each | G5 |
+| amount above the client's mandate limit, badge cap set too high | 34 / 34 | G5 |
 
 In the reference run the gate accepted all 78 agent decisions for active clients' invoices plus the
 4 payment files, and refused the 4 decisions for the client whose mandate was already revoked
 (no agent is hired for a client that has revoked its mandate). The ledger's chain and signatures verify.
 
-**Risk score (data-science layer).** Next to each held invoice the reviewer sees a fraud probability.
-It ranks attention only: it changes no decision, and the queue is ordered by fraud signal, then days to
-spare before the due date, then amount. Training data: 3,000 synthetic past payments (`data/history/`,
+**Risk score (data-science layer).** Every invoice gets a fraud probability. It changes one thing: an
+invoice the harness would pay goes to a human when the score is 50 or more (second look); rejections and
+holds are never undone by it. The reviewer sees the score next to each held invoice; the queue itself is
+ordered by fraud signal, then days to spare before the due date, then amount. Training data: 3,000 synthetic past payments (`data/history/`,
 seed 7; 75% legitimate, the rest control cases and eight fraud patterns, 15% of fraud made subtle,
 2% of labels flipped), generated independently of the 120 invoices except that each supplier's usual
 amount is taken from the train split's legitimate invoices. Thirteen features (amount z-score against
@@ -242,8 +248,9 @@ random; anchoring them on train-split invoices removed them. That fix was made a
 results, which is one reason for the holdout below. Every step (data, features, split, L2 search, ROC
 and PR curves, confusion matrices, errors) is shown on the app's risk-model page.
 
-**Fresh holdout.** Two parts of the design were changed after seeing test results: the two promoted
-lessons (last row of the table) and one fix in the risk score's amount feature. To check that the numbers
+**Fresh holdout.** Three parts of the design were changed after seeing test results: the two promoted
+lessons, the risk-score second look (last two rows of the table) and one fix in the risk score's amount
+feature. To check that the numbers
 are not an artefact of that, we drew a second test set once, after freezing the design: 42 new invoices
 from the same generator with another seed (2027; same case types in the same proportions, no shared
 invoice text), run through all five systems with the lessons of the train split and the risk model exactly
@@ -255,7 +262,8 @@ as fitted (`python -m agent holdout`, 131 Apertus calls recorded live on 2026-10
 | extraction + badge | 0.857 | 6 | 10,885.89 | 0 |
 | harness, manual gen 0 | 0.857 | 6 | 10,885.89 | 0 |
 | harness, manual gen 1 | 0.905 | 4 | 7,215.89 | 0 |
-| harness, gen 1 + promoted lessons (production) | 1.000 | 0 | 0.00 | 0 |
+| harness, gen 1 + promoted lessons | 1.000 | 0 | 0.00 | 0 |
+| + risk-score second look (production) | 1.000 | 0 | 0.00 | 0 |
 
 The frozen risk score: fraud ROC AUC 0.984 (unsupervised baseline 0.838), must-not-autopay 0.984; at 0.5,
 10 of 13 fraud cases flagged with 1 false alarm. Field extraction was correct for all 42 invoices. The

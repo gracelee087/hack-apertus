@@ -25,3 +25,6 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# Local agent skills (hf CLI)
+.agents/

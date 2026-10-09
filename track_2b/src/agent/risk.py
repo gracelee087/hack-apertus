@@ -14,6 +14,7 @@ The score never changes a payment decision. It ranks the approval queue and expl
 import json
 import math
 import random
+import threading
 from collections import Counter
 from datetime import date
 
@@ -261,7 +262,7 @@ def report(y, s, threshold=None):
 
 # --- run --------------------------------------------------------------------------------------
 
-def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
+def _training_data():
     history = ensure_history()
     mandates = {m["client_id"]: m for m in load_json(DATA / "mandates.json")}
     vendors = load_json(DATA / "vendors.json")
@@ -270,25 +271,63 @@ def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
     idx = list(range(len(X)))
     random.Random(SEED).shuffle(idx)
     cut = int(0.8 * len(idx))
-    tr, va = idx[:cut], idx[cut:]
+    return history, mandates, vendors, baseline, X, idx[:cut], idx[cut:]
 
-    def train(target):
-        y = [h[target] for h in history]
-        Xtr, stats = standardize([X[i] for i in tr])
-        Xva, _ = standardize([X[i] for i in va], stats)
-        best, grid = None, []
-        for l2 in (0.01, 0.1, 1.0, 10.0):  # pick the regularisation on the validation split
-            auc = roc_auc([y[i] for i in va], predict(fit_logistic(Xtr, [y[i] for i in tr], l2), Xva))
-            grid.append({"l2": l2, "val_roc_auc": auc})
-            if best is None or auc > best[1] + 1e-9:
-                best = (l2, auc)
-        w_val = fit_logistic(Xtr, [y[i] for i in tr], best[0])
-        s_val = predict(w_val, Xva)
-        Xall, stats_all = standardize(X)
-        return fit_logistic(Xall, y, best[0]), stats_all, best[0], report([y[i] for i in va], s_val, 0.5), grid, s_val, stats
 
-    wA, statsA, l2A, valA, gridA, svA, stats_trA = train("is_fraud")
-    wB, statsB, l2B, valB, gridB, svB, _ = train("must_not_autopay")
+def train(history, X, tr, va, target):
+    """Pick the L2 weight on the validation split, then refit on all rows."""
+    y = [h[target] for h in history]
+    Xtr, stats = standardize([X[i] for i in tr])
+    Xva, _ = standardize([X[i] for i in va], stats)
+    best, grid = None, []
+    for l2 in (0.01, 0.1, 1.0, 10.0):
+        auc = roc_auc([y[i] for i in va], predict(fit_logistic(Xtr, [y[i] for i in tr], l2), Xva))
+        grid.append({"l2": l2, "val_roc_auc": auc})
+        if best is None or auc > best[1] + 1e-9:
+            best = (l2, auc)
+    w_val = fit_logistic(Xtr, [y[i] for i in tr], best[0])
+    s_val = predict(w_val, Xva)
+    Xall, stats_all = standardize(X)
+    return fit_logistic(Xall, y, best[0]), stats_all, best[0], report([y[i] for i in va], s_val, 0.5), grid, s_val, stats
+
+
+def top_factors(w, z, n=3):
+    """Only signals present on this invoice that push towards fraud (not "absence of a limit breach")."""
+    contrib = sorted(((f, round(w[j + 1] * z[j], 3)) for j, f in enumerate(FEATURES) if z[j] > 0 and w[j + 1] > 0),
+                     key=lambda t: -t[1])
+    return [c for c in contrib if c[1] > 0][:n]
+
+
+class Scorer:
+    """The fraud model exactly as fitted in run(), scoring one invoice at a time (web app, second look)."""
+
+    def __init__(self):
+        history, self.mandates, self.vendors, self.baseline, X, tr, va = _training_data()
+        self.w, self.stats = train(history, X, tr, va, "is_fraud")[:2]
+
+    def score(self, case, fields):
+        """case: client_id, invoice_text, prior_payments. Returns (score 0-100, top factors)."""
+        m = self.mandates[case["client_id"]]
+        z = standardize([features(test_row(case, fields, m), m, self.vendors[case["client_id"]], self.baseline)],
+                        self.stats)[0][0]
+        return round(100 * predict(self.w, [z])[0], 1), top_factors(self.w, z)
+
+
+_scorer, _scorer_lock = None, threading.Lock()
+
+
+def scorer() -> Scorer:
+    global _scorer
+    with _scorer_lock:
+        if _scorer is None:
+            _scorer = Scorer()
+    return _scorer
+
+
+def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
+    history, mandates, vendors, baseline, X, tr, va = _training_data()
+    wA, statsA, l2A, valA, gridA, svA, stats_trA = train(history, X, tr, va, "is_fraud")
+    wB, statsB, l2B, valB, gridB, svB, _ = train(history, X, tr, va, "must_not_autopay")
     yvA, yvB = [history[i]["is_fraud"] for i in va], [history[i]["must_not_autopay"] for i in va]
     svU = anomaly_scores([X[i] for i in tr], [X[i] for i in va])
     val_unsup = report(yvA, svU)
@@ -311,12 +350,9 @@ def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
     zA = standardize(rows, statsA)[0]
     scores = {}
     for i, p in enumerate(preds):
-        # only signals that are present on this invoice and push towards fraud (not "absence of a limit breach")
-        contrib = sorted(((f, round(wA[j + 1] * zA[i][j], 3)) for j, f in enumerate(FEATURES)
-                          if zA[i][j] > 0 and wA[j + 1] > 0), key=lambda t: -t[1])
         amount = badge._num(p["fields"].get("total_chf")) or 0
         scores[p["case_id"]] = {"risk_score": round(100 * sA[i], 1), "expected_loss_chf": round(sA[i] * (amount or 0), 2),
-                                "is_fraud": yA[i], "top_factors": [c for c in contrib if c[1] > 0][:3]}
+                                "is_fraud": yA[i], "top_factors": top_factors(wA, zA[i])}
     out = {
         "train_rows": len(history), "train_fraud_rate": round(sum(h["is_fraud"] for h in history) / len(history), 4),
         "train_must_not_autopay_rate": round(sum(h["must_not_autopay"] for h in history) / len(history), 4),

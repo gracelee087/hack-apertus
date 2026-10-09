@@ -123,6 +123,30 @@
         "R_REVOKED": 1.0,
         "R_SCOPE": 1.0
       }
+    },
+    "harness_gen1_promoted_risk": {
+      "accuracy": 1.0,
+      "wrong_payment_rate": 0.0,
+      "wrong_payments": 0,
+      "wrong_payment_chf": 0,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_PRESSURE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      }
     }
   },
   "extraction": {

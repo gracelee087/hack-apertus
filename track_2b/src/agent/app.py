@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from . import badge, credential, decide, gate, identity, lessons, llm, pain001
+from . import badge, credential, decide, gate, identity, lessons, llm, pain001, risk
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256
 from .datagen import TODAY
 from .desk import ACTIONS, Desk, seat_of
@@ -22,6 +22,7 @@ from .evaluate import PRODUCTION
 from .ledger import Ledger, audit_identities, ledger_did, verify
 
 app = FastAPI(title="Treuhand payment agents")
+threading.Thread(target=risk.scorer, daemon=True).start()  # fit the risk model once, in the background
 lock = threading.Lock()
 LEDGER = Ledger(RESULTS / "ledger.jsonl")
 STATE = RESULTS / "state.json"
@@ -34,6 +35,7 @@ RISKS = {  # finding code -> (label, kind)
     "E_VAT_MISMATCH": ("Amounts do not add up", "fraud"),
     "E_WRONG_ADDRESSEE": ("Addressed to another company", "fraud"),
     "MODEL_FLAGGED": ("Flagged by Apertus review (e.g. pressure, secrecy)", "fraud"),
+    "RISK_SCORE": ("High risk score (second look)", "fraud"),
     "E_NEW_VENDOR": ("New supplier", "control"),
     "E_LIMIT_SINGLE": ("Above single-payment limit", "control"),
     "E_LIMIT_MONTH": ("Monthly limit exceeded", "control"),
@@ -44,7 +46,7 @@ RISKS = {  # finding code -> (label, kind)
     "CATEGORY_UNCLEAR": ("Expense type unclear", "control"),
 }
 # days a human needs before the money can go: phone the supplier on a known number, or ask the client
-VERIFY_DAYS = {"E_IBAN_CHANGED": 2, "MODEL_FLAGGED": 2, "E_WRONG_ADDRESSEE": 2, "E_VAT_MISMATCH": 2, "E_NEW_VENDOR": 2,
+VERIFY_DAYS = {"E_IBAN_CHANGED": 2, "MODEL_FLAGGED": 2, "RISK_SCORE": 2, "E_WRONG_ADDRESSEE": 2, "E_VAT_MISMATCH": 2, "E_NEW_VENDOR": 2,
                "E_LIMIT_SINGLE": 3, "E_LIMIT_MONTH": 3, "R_SCOPE": 3}
 BANK_DAYS = 1  # the payment file goes to the bank a day before the due date
 OUTLIER_RATIO = 2.5  # invoice at least this many times the supplier's median amount for this client
@@ -193,14 +195,16 @@ def overview():
         codes = [c for c in i.get("checks") or [] if c in RISKS] or ["MODEL_FLAGGED"]
         fraud = any(RISKS[c][1] == "fraud" for c in codes)
         days_left = _days_until(i.get("due_date"))
+        sc = scores.get(i["case_id"]) or {"risk_score": i.get("risk_score"), "top_factors": i.get("risk_factors", []),
+                                          "expected_loss_chf": None if i.get("risk_score") is None or i.get("amount_chf") is None
+                                          else round(i["risk_score"] / 100 * float(i["amount_chf"]), 2)}
         need = max(VERIFY_DAYS.get(c, 1) for c in codes) + BANK_DAYS
         alerts.append({"case_id": i["case_id"], "client_id": i["client_id"], "client": names_by_id.get(i["client_id"]),
                        "vendor": i["vendor"], "amount_chf": i["amount_chf"], "fraud": fraud,
                        "due_date": i.get("due_date"), "days_left": days_left, "days_needed": need,
                        "slack": None if days_left is None else days_left - need,
-                       "risk_score": (scores.get(i["case_id"]) or {}).get("risk_score"),
-                       "expected_loss_chf": (scores.get(i["case_id"]) or {}).get("expected_loss_chf"),
-                       "risk_factors": (scores.get(i["case_id"]) or {}).get("top_factors", []),
+                       "risk_score": sc.get("risk_score"), "expected_loss_chf": sc.get("expected_loss_chf"),
+                       "risk_factors": sc.get("top_factors") or [],
                        "risks": [{"code": c, "label": RISKS[c][0], "kind": RISKS[c][1]} for c in codes]})
     # priority: fraud first, then least time to spare before the due date, then amount
     alerts.sort(key=lambda a: (not a["fraud"], a["slack"] if a["slack"] is not None else 10**6, -(a["amount_chf"] or 0)))
@@ -341,12 +345,13 @@ def process(cid: str, inv: Text):
         s = state()
         m = mandate(s, cid)
         manual = manual_text(s, seat_of(cid))
-        case = {"case_id": f"LIVE-{secrets.token_hex(3).upper()}", "invoice_text": inv.invoice_text,
+        case = {"case_id": f"LIVE-{secrets.token_hex(3).upper()}", "client_id": cid, "invoice_text": inv.invoice_text,
                 "prior_payments": prior_payments(cid)}
     sup = load_json(DATA / "vendors.json").get(cid, [])
     h = decide.harness(case, m, sup, manual, promoted=True)  # model calls run outside the lock
     f = h["fields"]
     amount = badge._num(f.get("total_chf"))
+    score, factors = risk.scorer().score(case, f)
     with lock:
         s = state()
         m = mandate(s, cid)
@@ -355,13 +360,14 @@ def process(cid: str, inv: Text):
             verdict, findings = badge.check(m, sup, prior_payments(cid), f)
             if verdict != "pass":
                 h = {**h, "decision": verdict, "findings": findings, "reason": "; ".join(x["msg"] for x in findings)}
+        h = decide.second_look(h, score, factors)
         item = {"case_id": case["case_id"], "client_id": cid, "client": m["name"], "vendor": f.get("vendor_name"),
                 "amount_chf": None if amount is None else round(amount, 2), "iban": normalize_iban(f.get("vendor_iban")),
                 "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
                 "checks": [x["code"] for x in h["findings"]], "reason": h.get("reason", ""),
-                "invoice_text": inv.invoice_text, "status": "open"}
+                "risk_score": score, "risk_factors": factors, "invoice_text": inv.invoice_text, "status": "open"}
         log = dict(reason=h.get("reason", ""), checks=item["checks"], manual_sha256=lessons.fingerprint(manual),
-                   model=llm.model_name())
+                   model=llm.model_name(), risk_score=score)
         if h["decision"] == "pay":
             res = _pay(s, d, m, item, "live", {}, **log)
             queued = not res["ok"]  # whatever the agent could not carry out waits for a human
@@ -378,7 +384,7 @@ def process(cid: str, inv: Text):
             _write(RESULTS / "queue.json", queue_items() + [item])
         save(s, d)
     seat = seat_of(cid)
-    return {**h, "case_id": case["case_id"], "gate": res["gate"], "executed": res["ok"] and h["decision"] == "pay",
+    return {**h, "case_id": case["case_id"], "risk_factors": factors, "gate": res["gate"], "executed": res["ok"] and h["decision"] == "pay",
             "recorded": res["ok"], "queued": queued, "file": res.get("file"), "agent_did": d.agent_did(seat),
             "generation": d.generations.get(seat, 0)}
 
@@ -483,7 +489,35 @@ def _pay(s, d, m, item, kind, extra, **log):
 def evaluation():
     s = state()
     return {"metrics": _read(RESULTS / "metrics.json", {}), "holdout": _read(RESULTS / "holdout.json", None),
-            "manual": manual_text(s, FIRM_WIDE), "llm_mode": llm.mode(), "model": llm.model_name()}
+            "agents": agents_by_client(s), "manual": manual_text(s, FIRM_WIDE), "llm_mode": llm.mode(),
+            "model": llm.model_name()}
+
+
+def agents_by_client(s) -> list:
+    """One row per client: its agent, how it scored on that client's test invoices, what it did this month."""
+    preds = read_jsonl(RESULTS / "predictions.jsonl") if (RESULTS / "predictions.jsonl").exists() else []
+    d, rows = desk_of(s), []
+    for m in s["mandates"]:
+        cid, seat = m["client_id"], seat_of(m["client_id"])
+        v = client_view(s, d, cid)
+        ps = [p for p in preds if p["client_id"] == cid]
+        dec = lambda p: (p.get(PRODUCTION) or {}).get("decision")
+        tests = [e for e in LEDGER.entries if e.get("action") == "agent.self_test" and e.get("client_id") == cid
+                 and e.get("generation") == d.generations.get(seat)]
+        b = d.badge(seat) if d.generations.get(seat) else None
+        rows.append({"client_id": cid, "client": m["name"], "owner": identity.owner_of(cid), "seat": seat,
+                     "generation": d.generations.get(seat, 0), "did": d.agent_did(seat), "active": v["agent"]["active"],
+                     "mandate_revoked": m["revoked"], "cap": b and b["max_single_chf"], "actions": b and b["actions"],
+                     "earlier_versions": sum(1 for x in d.revoked_agents if d.cards.get(x, {}).get("seat") == seat),
+                     "manual_generation": s["manual_generation"],
+                     "manual_sha256": lessons.fingerprint(manual_text(s, seat)), "model": llm.model_name(),
+                     "self_test": tests[-1]["passed"] if tests else None,
+                     "test": {"n": len(ps), "correct": sum(dec(p) == p["label"] for p in ps),
+                              "must_not_pay": sum(p["label"] != "pay" for p in ps),
+                              "wrong_payments": sum(p["label"] != "pay" and dec(p) == "pay" for p in ps),
+                              "missed": sum(p["label"] == "pay" and dec(p) != "pay" for p in ps)},
+                     "month": {k: v[k] for k in ("paid", "escalated", "rejected", "queue_open", "gate_rejections")}})
+    return rows
 
 
 @app.get("/api/analytics")
@@ -496,7 +530,8 @@ def analytics():
         if p["label"] == "pay":
             continue
         h = p.get(production) or {}
-        how = "missed" if h.get("decision") == "pay" else "code" if h.get("findings") else "review"
+        codes = [x["code"] for x in h.get("findings") or []]
+        how = "missed" if h.get("decision") == "pay" else "score" if codes == ["RISK_SCORE"] else "code" if codes else "review"
         caught.setdefault(p["reason_code"], Counter())[how] += 1
     decided = [e for e in LEDGER.entries if e.get("action") == "payment.decide" and e.get("gate") == "OK"
                and not e.get("grant_ref")]
@@ -525,7 +560,8 @@ def analytics():
                                  "ratio": round(e["amount_chf"] / med, 1), "decision": e.get("decision")})
     outliers.sort(key=lambda o: -o["ratio"])
     return {"production": production, "n_test": len(preds),
-            "caught": {k: {"code": c["code"], "review": c["review"], "missed": c["missed"]} for k, c in caught.items()},
+            "caught": {k: {"code": c["code"], "review": c["review"], "score": c["score"], "missed": c["missed"]}
+                       for k, c in caught.items()},
             "ibans_seen": len(by_iban), "iban_reuse": reused, "outlier_ratio": OUTLIER_RATIO, "outliers": outliers,
             "risk_model": {k: v for k, v in _read(RESULTS / "risk_model.json", {}).items() if k != "scores"}}
 
