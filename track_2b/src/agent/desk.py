@@ -75,11 +75,18 @@ class Desk:
         """Issue the next generation for this client's seat: key -> DID, entity card, badge, manual."""
         seat = seat_of(client_id)
         self.generations[seat] = self.generations.get(seat, 0) + 1
-        card = identity.entity_card(seat, self.generations[seat])
+        m, owner = self.mandates[client_id], identity.owner_of(client_id)
+        duty = (f"Pays supplier invoices for {m['name']} within its signed mandate "
+                f"({', '.join(m['allowed_categories'])}; up to CHF {m['single_limit_chf']:,.0f} per invoice and "
+                f"CHF {m['monthly_limit_chf']:,.0f} per month) and writes its pain.001 payment file. "
+                f"Holds everything else for {owner}.")
+        card = identity.entity_card(seat, self.generations[seat], display_name=f"Payments agent for {m['name']}",
+                                    duty=duty, owner=owner)
         self.cards[card["subject"]] = card
         self.ledger.append(actor=identity.did_of(identity.firm_key()), action="identity.issued", client_id=client_id,
                            seat=seat, generation=self.generations[seat], agent_did=card["subject"], entity_card=card,
-                           note=f"entity card for {card['name']}, responsible: {identity.RESPONSIBLE_HUMAN}")
+                           issued_by=owner,
+                           note=f"entity card for {card['name']}, role assigned and managed by {owner}")
         self._issue_badge(seat, client_id, max_single_chf, actions, valid_from, valid_until)
         self.ledger.append(actor=identity.did_of(identity.firm_key()), action="policy.changed", client_id=client_id,
                            seat=seat, generation=self.generations[seat], agent_did=card["subject"],
@@ -103,14 +110,14 @@ class Desk:
     def kill(self, client_id: str, reason: str = ""):
         seat = seat_of(client_id)
         self.revoked_agents.add(self.agent_did(seat))
-        self.ledger.append(actor=identity.RESPONSIBLE_HUMAN, action="agent.revoked", client_id=client_id, seat=seat,
+        self.ledger.append(actor=identity.owner_of(client_id), action="agent.revoked", client_id=client_id, seat=seat,
                            generation=self.generations[seat], agent_did=self.agent_did(seat), note=reason)
 
     # --- human approval -------------------------------------------------------------------
     def grant(self, client_id: str, case_id: str, amount_chf: float, note: str = "") -> str:
         ref = f"G-{secrets.token_hex(4)}"
         self.grants[ref] = {"case_id": case_id, "amount_chf": float(amount_chf), "note": note}
-        self.ledger.append(actor=identity.RESPONSIBLE_HUMAN, action="consent.granted", client_id=client_id,
+        self.ledger.append(actor=identity.owner_of(client_id), action="consent.granted", client_id=client_id,
                            case_id=case_id, grant_ref=ref, amount_chf=amount_chf, note=note)
         return ref
 

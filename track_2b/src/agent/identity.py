@@ -23,6 +23,14 @@ from .common import canonical, sha256
 SEED = os.environ.get("DEMO_KEY_SEED", "track2b-demo-only")
 FIRM_NAME = "Muster Treuhand AG"
 RESPONSIBLE_HUMAN = "Head of payments (human reviewer)"
+OWNER_TITLE = "Client manager (Mandatsleiter/in)"
+OWNERS = {  # client -> the person at the firm who assigns the agent its role and manages it (fictional)
+    "C01": "Anna Keller", "C02": "Giulia Rossi", "C03": "Claire Dubois", "C04": "Martin Huber", "C05": "Daniel Meier",
+}
+
+
+def owner_of(client_id: str) -> str:
+    return OWNERS.get(client_id, RESPONSIBLE_HUMAN)
 B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
@@ -102,10 +110,13 @@ def agent_key(seat: str, generation: int):
     return key(f"agent:{seat}:v{generation}")
 
 
-def entity_card(seat: str, generation: int) -> dict:
-    """The agent's ID card: who it is and who is answerable for it. Signed by the firm."""
+def entity_card(seat: str, generation: int, display_name: str = "", duty: str = "", owner: str = "") -> dict:
+    """The agent's ID card: who it is, what job it has, and which humans answer for it. Signed by the firm."""
     return sign_doc({"type": "EntityCard", "subject": did_of(agent_key(seat, generation)), "seat": seat,
-                     "generation": generation, "name": f"{seat}.v{generation}", "operator": FIRM_NAME,
+                     "generation": generation, "name": f"{seat}.v{generation}", "display_name": display_name,
+                     "duty": duty, "operator": FIRM_NAME,
+                     "owner": {"name": owner or RESPONSIBLE_HUMAN, "title": OWNER_TITLE,
+                               "role": "assigns the agent its role, approves what it holds back, can switch it off"},
                      "responsible_human": RESPONSIBLE_HUMAN, "is_ai": True}, firm_key())
 
 

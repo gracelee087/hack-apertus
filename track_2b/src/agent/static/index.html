@@ -6,64 +6,122 @@
 <title>Treuhand Payment Agents</title>
 <style>
 :root { color-scheme: light;
-  --bg:#f9f9f7; --card:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --mute:#898781; --line:#e1e0d9; --axis:#c3c2b7;
-  --acc:#c8102e; --chip:#efeee9; --side:#f2f1ed;
+  --bg:#f3f4f6; --card:#ffffff; --ink:#111827; --ink2:#4b5563; --mute:#6b7280; --line:#e5e7eb; --axis:#c4c8cf;
+  --thead:#f8f9fb; --hover:#f6f8fa; --chip:#f1f3f5;
+  --brand:#0f3d6e; --brand-ink:#ffffff; --focus:#2a78d6; --logo:#c8102e;
+  --nav:#0b1f36; --nav2:#163556; --nav-ink:#c9d4e2; --nav-mute:#8195ad;
+  --shadow:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.07);
   --s-control:#2a78d6; --s-fraud:#eb6834;
   --st-good:#0ca30c; --st-warn:#fab219; --st-crit:#d03b3b;
   --t-good:#006300; --t-warn:#8a5a00; --t-crit:#b42323; --heat:42,120,214; }
 @media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) { color-scheme: dark;
-  --bg:#0d0d0d; --card:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --mute:#898781; --line:#2c2c2a; --axis:#383835;
-  --acc:#ff4d61; --chip:#262624; --side:#141413; --s-control:#3987e5; --s-fraud:#d95926;
+  --bg:#0e1116; --card:#161a21; --ink:#f3f4f6; --ink2:#c2c8d0; --mute:#8b93a0; --line:#262b34; --axis:#3a404b;
+  --thead:#1b2029; --hover:#1c2129; --chip:#20252e; --brand:#4a8fe0; --brand-ink:#0b1220;
+  --nav:#090c11; --nav2:#18202b; --shadow:0 1px 2px rgba(0,0,0,.4);
+  --s-control:#3987e5; --s-fraud:#d95926;
   --t-good:#0ca30c; --t-warn:#fab219; --t-crit:#e66767; --heat:57,135,229; } }
 :root[data-theme="dark"] { color-scheme: dark;
-  --bg:#0d0d0d; --card:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --mute:#898781; --line:#2c2c2a; --axis:#383835;
-  --acc:#ff4d61; --chip:#262624; --side:#141413; --s-control:#3987e5; --s-fraud:#d95926;
+  --bg:#0e1116; --card:#161a21; --ink:#f3f4f6; --ink2:#c2c8d0; --mute:#8b93a0; --line:#262b34; --axis:#3a404b;
+  --thead:#1b2029; --hover:#1c2129; --chip:#20252e; --brand:#4a8fe0; --brand-ink:#0b1220;
+  --nav:#090c11; --nav2:#18202b; --shadow:0 1px 2px rgba(0,0,0,.4);
+  --s-control:#3987e5; --s-fraud:#d95926;
   --t-good:#0ca30c; --t-warn:#fab219; --t-crit:#e66767; --heat:57,135,229; }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:14.5px/1.5 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif; }
+body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 "Segoe UI",system-ui,-apple-system,"Malgun Gothic",sans-serif; -webkit-font-smoothing:antialiased; }
 a { color:inherit; }
-.app { display:grid; grid-template-columns:236px 1fr; min-height:100vh; }
-aside { background:var(--side); border-right:1px solid var(--line); padding:14px 10px; position:sticky; top:0; height:100vh; overflow-y:auto; }
-aside .brand { font-weight:700; font-size:15px; padding:2px 8px 12px; } aside .brand i { color:var(--acc); font-style:normal; }
-aside .sec { color:var(--mute); font-size:11.5px; letter-spacing:.04em; padding:12px 8px 4px; }
-aside a { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:6px; text-decoration:none; color:var(--ink2); font-size:14px; }
-aside a:hover { background:var(--chip); } aside a.on { background:var(--card); color:var(--ink); font-weight:600; box-shadow:0 0 0 1px var(--line); }
+.ic { flex:none; vertical-align:-3px; }
+/* shell */
+.app { display:grid; grid-template-columns:252px 1fr; min-height:100vh; }
+aside { background:var(--nav); color:var(--nav-ink); position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
+aside .brand { display:flex; gap:10px; align-items:center; padding:0 16px; height:56px; border-bottom:1px solid rgba(255,255,255,.08); }
+aside .logo { width:30px; height:30px; border-radius:7px; background:var(--logo); color:#fff; display:grid; place-items:center; font-weight:700; font-size:12px; letter-spacing:.02em; flex:none; }
+aside .brand b { color:#fff; font-size:13.5px; display:block; line-height:1.25; white-space:nowrap; }
+aside .brand small { color:var(--nav-mute); font-size:11px; }
+aside .sec { color:var(--nav-mute); font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; padding:18px 20px 6px; }
+aside a { display:flex; align-items:center; gap:10px; margin:1px 10px; padding:7px 10px; border-radius:6px; text-decoration:none; color:var(--nav-ink); font-size:13.5px; }
+aside a .ic { color:var(--nav-mute); }
+aside a:hover { background:var(--nav2); color:#fff; } aside a:hover .ic { color:#fff; }
+aside a.on { background:var(--nav2); color:#fff; font-weight:600; box-shadow:inset 3px 0 0 #5b9be6; } aside a.on .ic { color:#fff; }
 aside a .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dot { width:8px; height:8px; border-radius:50%; flex:none; display:inline-block; }
-.badge { font-size:11px; background:var(--chip); color:var(--ink2); border-radius:99px; padding:0 7px; }
-aside .foot { padding:12px 8px; color:var(--mute); font-size:12px; }
-main { padding:20px 24px; max-width:1220px; width:100%; }
-.meta { color:var(--mute); font-size:12.5px; }
-.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; overflow-x:auto; }
-h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:0 0 4px; } h3 { font-size:13.5px; margin:12px 0 6px; }
-.sub { color:var(--ink2); font-size:13px; margin:0 0 12px; }
-table { border-collapse:collapse; width:100%; font-size:13px; }
-th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-th { color:var(--ink2); font-weight:600; } .n { font-variant-numeric:tabular-nums; text-align:right; }
-.pill { display:inline-flex; align-items:center; gap:5px; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; background:var(--chip); white-space:nowrap; }
-.pill::before { content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
+aside .badge { background:rgba(255,255,255,.14); color:#fff; }
+aside .foot { margin-top:auto; padding:14px 20px; color:var(--nav-mute); font-size:11.5px; border-top:1px solid rgba(255,255,255,.08); line-height:1.8; }
+.shell { min-width:0; display:flex; flex-direction:column; }
+header.top { position:sticky; top:0; z-index:5; height:56px; background:var(--card); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; padding:0 28px; }
+.crumbs { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--mute); flex:1; min-width:0; white-space:nowrap; overflow:hidden; }
+.crumbs a { text-decoration:none; } .crumbs a:hover { color:var(--ink); } .crumbs b { color:var(--ink); font-weight:600; }
+.tool { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 10px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink2); font:inherit; font-size:12.5px; text-decoration:none; cursor:pointer; white-space:nowrap; }
+.tool:hover { background:var(--hover); color:var(--ink); }
+.bell { position:relative; } .bell .cnt { position:absolute; top:-7px; right:-7px; background:var(--st-crit); color:#fff; font-size:10.5px; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:grid; place-items:center; padding:0 4px; }
+.env { font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; padding:3px 8px; border-radius:4px; white-space:nowrap; }
+.env.live { color:var(--t-good); background:color-mix(in srgb, var(--st-good) 13%, transparent); }
+.env.replay { color:var(--brand); background:color-mix(in srgb, var(--brand) 12%, transparent); }
+.user { display:flex; align-items:center; gap:9px; padding-left:14px; margin-left:4px; border-left:1px solid var(--line); }
+.avatar { width:32px; height:32px; border-radius:50%; background:var(--brand); color:var(--brand-ink); display:grid; place-items:center; font-size:12px; font-weight:700; flex:none; }
+.user b { display:block; font-size:12.5px; line-height:1.25; white-space:nowrap; } .user small { font-size:11.5px; color:var(--mute); white-space:nowrap; }
+main { padding:24px 28px 48px; max-width:1300px; width:100%; }
+.phead { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.phead h1 { font-size:22px; font-weight:650; margin:0; letter-spacing:-.01em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.phead p { margin:4px 0 0; color:var(--ink2); font-size:13.5px; }
+.phead .acts { display:flex; gap:10px; align-items:center; color:var(--mute); font-size:12px; }
+/* surfaces */
+.meta { color:var(--mute); font-size:12px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px 20px; margin-bottom:20px; overflow-x:auto; box-shadow:var(--shadow); }
+.card > h2 { display:flex; align-items:center; gap:8px; }
+.card > h2 + .sub { margin:2px -20px 16px; padding:0 20px 14px; border-bottom:1px solid var(--line); }
+h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:15px; font-weight:650; margin:0 0 4px; } h3 { font-size:12px; font-weight:700; color:var(--ink2); text-transform:uppercase; letter-spacing:.05em; margin:16px 0 8px; }
+.sub { color:var(--mute); font-size:12.5px; margin:0 0 14px; }
+table { border-collapse:separate; border-spacing:0; width:100%; font-size:13px; }
+th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:var(--thead); color:var(--mute); font-weight:650; font-size:11px; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; position:sticky; top:0; z-index:1; }
+tr:hover > td { background:var(--hover); } .n { font-variant-numeric:tabular-nums; text-align:right; }
+td a { color:var(--brand); text-decoration:none; font-weight:600; } td a:hover { text-decoration:underline; }
+.pill { display:inline-flex; align-items:center; gap:6px; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; white-space:nowrap;
+        background:color-mix(in srgb, currentColor 11%, transparent); border:1px solid color-mix(in srgb, currentColor 24%, transparent); }
+.pill::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.pill.ic-pill::before { display:none; }
 .ok, .pay { color:var(--t-good); } .warn, .escalate { color:var(--t-warn); } .bad, .reject { color:var(--t-crit); }
-.mute { color:var(--mute); } code { font-size:12px; }
-pre { white-space:pre-wrap; background:var(--chip); padding:10px; border-radius:6px; font-size:12.5px; margin:8px 0; }
-textarea, input { font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px; }
+.mute { color:var(--mute); } code { font:12px ui-monospace,Consolas,monospace; background:var(--chip); padding:1px 5px; border-radius:4px; }
+pre { white-space:pre-wrap; background:var(--thead); border:1px solid var(--line); padding:12px; border-radius:6px; font:12.5px/1.5 ui-monospace,Consolas,monospace; margin:8px 0; }
+textarea, input { font:inherit; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
+input[type=checkbox] { padding:0; accent-color:var(--brand); }
+textarea:focus, input:focus { outline:3px solid color-mix(in srgb, var(--focus) 25%, transparent); border-color:var(--focus); }
 textarea { width:100%; min-height:190px; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
-.btn { border:1px solid var(--line); background:var(--chip); color:var(--ink); border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; }
-.btn.primary { background:var(--acc); border-color:var(--acc); color:#fff; } .btn:disabled { opacity:.45; cursor:default; }
-.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
-.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
-.kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
-.kpi small { color:var(--ink2); font-size:12.5px; } .kpi b { display:block; font-size:22px; font-weight:650; white-space:nowrap; }
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.tabs { display:flex; gap:4px; flex-wrap:wrap; margin:12px 0 16px; border-bottom:1px solid var(--line); padding-bottom:8px; }
-.tabs a { text-decoration:none; color:var(--ink2); padding:6px 12px; border-radius:6px; } .tabs a.on { background:var(--chip); color:var(--ink); font-weight:600; }
-details.more { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
-details.more > summary { cursor:pointer; color:var(--ink2); font-weight:600; font-size:13.5px; list-style:none; }
-details.more > summary::before { content:"▸ "; } details.more[open] > summary::before { content:"▾ "; }
+label { font-size:13px; color:var(--ink2); }
+.btn { display:inline-flex; align-items:center; gap:6px; height:34px; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:6px; padding:0 14px; cursor:pointer; font:inherit; font-size:13px; font-weight:550; box-shadow:0 1px 2px rgba(16,24,40,.05); white-space:nowrap; }
+.btn:hover { background:var(--hover); }
+.btn.primary { background:var(--brand); border-color:var(--brand); color:var(--brand-ink); } .btn.primary:hover { filter:brightness(1.1); }
+.btn.danger { background:var(--st-crit); border-color:var(--st-crit); color:#fff; } .btn.danger:hover { filter:brightness(1.08); }
+.btn:disabled { opacity:.45; cursor:default; filter:none; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+.kpis.six { grid-template-columns:repeat(3,1fr); }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:20px; }
+.kpi { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; box-shadow:var(--shadow); display:flex; gap:12px; align-items:flex-start; min-width:0; }
+.kpi .kic { width:38px; height:38px; border-radius:8px; display:grid; place-items:center; flex:none; color:var(--brand); background:color-mix(in srgb, var(--brand) 10%, transparent); }
+.kpi .kic.good { color:var(--t-good); background:color-mix(in srgb, var(--st-good) 13%, transparent); }
+.kpi .kic.warn { color:var(--t-warn); background:color-mix(in srgb, var(--st-warn) 18%, transparent); }
+.kpi .kic.crit { color:var(--t-crit); background:color-mix(in srgb, var(--st-crit) 12%, transparent); }
+.kpi small { display:block; color:var(--ink2); font-size:12px; font-weight:550; }
+.kpi b { display:block; font-size:22px; font-weight:650; line-height:1.3; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.tabs { display:flex; gap:26px; flex-wrap:wrap; margin:0 0 20px; border-bottom:1px solid var(--line); }
+.tabs a { text-decoration:none; color:var(--ink2); padding:10px 1px; border-bottom:2px solid transparent; margin-bottom:-1px; font-weight:550; display:inline-flex; gap:7px; align-items:center; font-size:13.5px; }
+.tabs a:hover { color:var(--ink); } .tabs a.on { color:var(--brand); border-bottom-color:var(--brand); font-weight:650; }
+.badge { font-size:11px; font-weight:700; background:var(--chip); color:var(--ink2); border-radius:99px; padding:0 7px; line-height:18px; }
+.tabs a.on .badge { background:var(--brand); color:var(--brand-ink); }
+details.more { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+details.more > summary { cursor:pointer; color:var(--ink2); font-weight:600; font-size:13px; list-style:none; display:flex; align-items:center; gap:6px; }
+details.more > summary:hover { color:var(--ink); }
+details.more > summary::before { content:""; width:6px; height:6px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(-45deg); margin:0 4px 0 2px; transition:transform .15s; }
+details.more[open] > summary::before { transform:rotate(45deg); }
 details.more > summary::-webkit-details-marker { display:none; }
-details.more > div { margin-top:10px; overflow-x:auto; }
-.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:0 0 10px; }
+details.more > div { margin-top:12px; overflow:auto; }
+details.more > div:has(> table) { max-height:520px; border:1px solid var(--line); border-radius:6px; }
+details.more > div:has(> table) td:last-child, details.more > div:has(> table) th:last-child { padding-right:14px; }
+details.more > div > table tr:last-child > td { border-bottom:0; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink2); margin:0 0 12px; }
 .legend span { display:inline-flex; align-items:center; gap:6px; } .legend i { width:10px; height:10px; border-radius:2px; display:inline-block; }
-.bars { display:grid; grid-template-columns:minmax(110px,max-content) 1fr minmax(64px,max-content); gap:7px 10px; align-items:center; }
+/* charts */
+.bars { display:grid; grid-template-columns:minmax(110px,max-content) 1fr minmax(64px,max-content); gap:8px 12px; align-items:center; }
 .bars .lb { font-size:13px; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
 .bars .lb a { text-decoration:none; } .bars .lb a:hover { text-decoration:underline; }
 .bars .vl { font-size:12.5px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
@@ -71,26 +129,38 @@ details.more > div { margin-top:10px; overflow-x:auto; }
 .seg { height:100%; min-width:0; } .seg:last-child { border-radius:0 4px 4px 0; } .seg:hover { filter:brightness(1.12); }
 .bullet { position:relative; height:14px; background:var(--chip); border-radius:0 4px 4px 0; border-left:1px solid var(--axis); min-width:80px; }
 .bullet .fill { position:absolute; left:0; top:3px; bottom:3px; border-radius:0 3px 3px 0; background:var(--s-control); }
+.dot { width:8px; height:8px; border-radius:50%; flex:none; display:inline-block; }
 /* status board */
-.board { display:grid; grid-template-columns:minmax(170px,1.5fr) 112px 84px 1.2fr 1.1fr 140px; gap:0; font-size:13px; }
-.board > div { padding:9px 8px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; min-width:0; }
-.board .hd { color:var(--ink2); font-weight:600; font-size:12.5px; }
-.board a.cl { text-decoration:none; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.board { display:grid; grid-template-columns:minmax(170px,1.5fr) 120px 84px 1.2fr 1.1fr 150px; gap:0; font-size:13px; margin:-16px -20px 0; }
+.board > div { padding:10px 12px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; min-width:0; }
+.board > div:nth-child(6n+1) { padding-left:20px; } .board > div:nth-child(6n) { padding-right:20px; }
+.board .hd { background:var(--thead); color:var(--mute); font-weight:650; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+.board a.cl { text-decoration:none; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--brand); }
 .board a.cl:hover { text-decoration:underline; }
+.board + .legend { margin-top:14px; }
 .mini { display:flex; gap:2px; height:12px; flex:1; min-width:60px; }
 .mini i { display:block; height:100%; } .mini i:last-child { border-radius:0 3px 3px 0; }
 .heat td.n { min-width:54px; }
 .pair { display:flex; flex-direction:column; gap:2px; border-left:1px solid var(--axis); }
 .pair i { display:block; height:7px; border-radius:0 3px 3px 0; }
+.alerts { margin:0 -20px; border-top:1px solid var(--line); }
+.card-h + .alerts { margin-top:-2px; } .alerts table { font-size:13px; } .alerts td, .alerts th { vertical-align:middle; }
+.alerts td:first-child, .alerts th:first-child { padding-left:20px; } .alerts td:last-child, .alerts th:last-child { padding-right:20px; }
+.alerts tr:last-child > td { border-bottom:0; }
+.sig { display:inline-block; font-size:12px; margin:1px 6px 1px 0; }
+.card-h { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.card-h .sub { border:0 !important; margin:2px 0 14px !important; padding:0 !important; }
 #tip { position:fixed; pointer-events:none; z-index:10; background:var(--card); color:var(--ink); border:1px solid var(--line);
-       border-radius:6px; padding:6px 9px; font-size:12.5px; box-shadow:0 4px 14px rgba(0,0,0,.12); display:none; max-width:300px; }
-@media (max-width:900px) { .app { grid-template-columns:1fr; } aside { position:static; height:auto; display:flex; flex-wrap:wrap; gap:4px; }
-  aside .sec, aside .foot { display:none; } aside a { flex:none; } .grid2 { grid-template-columns:1fr; } main { padding:16px; }
-  .board { grid-template-columns:1.5fr 1fr 1fr; } .board .opt { display:none; } }
+       border-radius:6px; padding:6px 9px; font-size:12.5px; box-shadow:0 6px 18px rgba(0,0,0,.14); display:none; max-width:300px; }
+@media (max-width:1100px) { .user div { display:none; } }
+@media (max-width:900px) { .app { grid-template-columns:1fr; } aside { position:static; height:auto; flex-direction:row; flex-wrap:wrap; gap:4px; padding:8px; }
+  aside .brand { width:100%; height:auto; padding:6px 8px 10px; } aside .sec, aside .foot { display:none; } aside a { flex:none; margin:0; }
+  .grid2, .kpis.six { grid-template-columns:1fr; } main { padding:16px; } header.top { padding:0 16px; } .user, .env { display:none; }
+  .board { grid-template-columns:1.5fr 1fr 1fr; } .board .opt { display:none; } .board > div { padding-left:12px !important; padding-right:12px !important; } }
 </style>
 </head>
 <body>
-<div class="app"><aside id="side"></aside><main id="main"></main></div>
+<div class="app"><aside id="side"></aside><div class="shell"><header class="top" id="top"></header><main id="main"></main></div></div>
 <div id="tip"></div>
 <script>
 // ---------------------------------------------------------------- language
@@ -116,6 +186,7 @@ const ATTACK_KO = {"legitimate request (control)": "정상 요청 (대조군)", 
   "mandate delegated to someone else": "다른 곳에 위임된 위임장", "mandate revoked by client": "고객이 취소한 위임장"};
 const EXTRACT_KO = {iban: "IBAN", total_chf: "합계 금액", invoice_no: "청구서 번호", vendor: "거래처", addressee: "수신인", parsed: "올바른 JSON"};
 const EXTRACT_EN = {iban: "IBAN", total_chf: "total amount", invoice_no: "invoice number", vendor: "supplier", addressee: "addressee", parsed: "valid JSON"};
+const CAT_KO = {ingredients: "원재료", materials: "자재", utilities: "공과금", rent: "임대료", software: "소프트웨어", cloud: "클라우드", telecom: "통신", insurance: "보험", consulting: "자문"};
 const DEC_KO = {pay: "지급", escalate: "보류", reject: "거절"};
 const riskName = (code, en) => t(RISK_KO[code] || en || code, en || code);
 const gateName = g => LANG === "ko" && GATE_KO[g] ? `${GATE_KO[g]}` : g;
@@ -130,6 +201,36 @@ const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH
 const chf0 = x => x == null ? "–" : Number(x).toLocaleString("de-CH",{maximumFractionDigits:0});
 const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
 const dec = d => `<span class="pill ${esc(d)}">${esc(decName(d))}</span>`;
+const ICONS = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  building: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  book: '<path d="M4 5a2 2 0 012-2h12v16H6a2 2 0 00-2 2z"/><path d="M4 21V5M8 7h6M8 11h6"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  bell: '<path d="M6 16v-5a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21a2 2 0 004 0"/>',
+  refresh: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  coins: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+  pause: '<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+  inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  file: '<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>',
+  cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/>',
+};
+const ic = (n, s = 16) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
+const kpi = (icon, label, value, o = {}) => `<div class="kpi"><div class="kic ${o.tone || ""}">${ic(icon, 19)}</div><div style="min-width:0">
+  <small>${label}</small><b class="${o.cls || ""}">${value}</b>${o.meta ? `<div class="meta">${o.meta}</div>` : ""}</div></div>`;
+const clock = () => new Date().toLocaleTimeString(LANG === "ko" ? "ko-KR" : "de-CH", {hour: "2-digit", minute: "2-digit", second: "2-digit"});
+const pageHead = (title, sub, extra = "") => `<div class="phead"><div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ""}</div>
+  <div class="acts">${extra}<span>${ic("clock", 14)} ${t("갱신", "Updated")} ${clock()}</span><button class="btn" onclick="route()">${ic("refresh", 15)} ${t("새로고침", "Refresh")}</button></div></div>`;
+const ownerTitle = () => t("담당 관리자 (Mandatsleiter/in)", "Client manager (Mandatsleiter/in)");
 async function api(path, opts) {
   const r = await fetch(path, opts); const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.detail || r.statusText); return j;
@@ -171,22 +272,37 @@ const statusOf = c => c.mandate.revoked ? {k: "revoked", color: "var(--mute)", l
   : {k: "ok", color: "var(--st-good)", label: t("정상", "all clear")};
 async function sidebar(active) {
   OV = await api("/api/overview");
-  $("side").innerHTML = `<div class="brand"><i>■</i> ${esc(OV.firm)}</div>
-    <a href="#/" class="${active === "overview" ? "on" : ""}"><span class="nm">${t("전체 현황", "Overview")}</span></a>
-    <div class="sec">${t("고객사", "CLIENTS")}</div>
+  $("side").innerHTML = `<div class="brand"><span class="logo">MT</span><div><b>${esc(OV.firm)}</b><small>${t("지급 에이전트 콘솔", "Payment agent console")}</small></div></div>
+    <div class="sec">${t("업무", "Workspace")}</div>
+    <a href="#/" class="${active === "overview" ? "on" : ""}">${ic("grid")}<span class="nm">${t("전체 현황", "Overview")}</span>${OV.totals.queue_open ? `<span class="badge">${OV.totals.queue_open}</span>` : ""}</a>
+    <div class="sec">${t("고객사", "Clients")}</div>
     ${OV.clients.map(c => { const s = statusOf(c); return `<a href="#/c/${c.client_id}" class="${active === c.client_id ? "on" : ""}" title="${esc(c.name)} · ${esc(s.label)}">
       <span class="dot" style="background:${s.color}"></span><span class="nm">${esc(c.name)}</span>${c.queue_open ? `<span class="badge">${c.queue_open}</span>` : ""}</a>`; }).join("")}
-    <div class="sec">${t("사무소", "FIRM")}</div>
-    <a href="#/evaluation" class="${active === "evaluation" ? "on" : ""}"><span class="nm">${t("평가 결과", "Evaluation")}</span></a>
-    <a href="#/ledger" class="${active === "ledger" ? "on" : ""}"><span class="nm">${t("장부", "Ledger")}</span></a>
-    <div class="foot">${esc(OV.model)} · ${esc(OV.llm_mode)}<br>
+    <div class="sec">${t("사무소", "Firm")}</div>
+    <a href="#/evaluation" class="${active === "evaluation" ? "on" : ""}">${ic("chart")}<span class="nm">${t("평가 결과", "Evaluation")}</span></a>
+    <a href="#/ledger" class="${active === "ledger" ? "on" : ""}">${ic("book")}<span class="nm">${t("장부", "Ledger")}</span></a>
+    <div class="foot">${ic("cpu", 13)} ${esc(OV.model)}<br>
       <span class="dot" style="background:var(--st-good)"></span> ${t("정상", "clear")} &nbsp;<span class="dot" style="background:var(--st-warn)"></span> ${t("확인 필요", "attention")}<br>
-      <span class="dot" style="background:var(--st-crit)"></span> ${t("에이전트 정지", "agent off")} &nbsp;<span class="dot" style="background:var(--mute)"></span> ${t("위임 취소", "no mandate")}
-      <div class="row"><button class="btn" onclick="setLang('${LANG === "ko" ? "en" : "ko"}')">${LANG === "ko" ? "English" : "한국어"}</button></div></div>`;
+      <span class="dot" style="background:var(--st-crit)"></span> ${t("에이전트 정지", "agent off")} &nbsp;<span class="dot" style="background:var(--mute)"></span> ${t("위임 취소", "no mandate")}</div>`;
 }
+function topbar(crumbs) {
+  const live = OV.llm_mode === "live", ok = OV.ledger_ok && OV.audit_ok;
+  $("top").innerHTML = `<nav class="crumbs">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<b>${esc(c[0])}</b>` : c[1] ? `<a href="${c[1]}">${esc(c[0])}</a>${ic("chev", 14)}` : `<span>${esc(c[0])}</span>${ic("chev", 14)}`).join("")}</nav>
+    <span class="env ${live ? "live" : "replay"}" title="${esc(OV.model)}">${live ? t("실시간 · Apertus", "Live · Apertus") : t("재현 모드", "Replay")}</span>
+    <a class="tool" href="#/ledger" title="${t("해시 체인·서명·신원 감사", "hash chain, signatures, identity audit")}"><span class="${ok ? "ok" : "bad"}">${ic(ok ? "shield" : "alert", 15)}</span>${ok ? t("장부 검증됨", "Ledger verified") : t("장부 손상", "Ledger broken")}</a>
+    <a class="tool bell" href="#/" title="${t("사람 확인 대기", "waiting for a human")}">${ic("bell", 16)}${OV.totals.queue_open ? `<span class="cnt">${OV.totals.queue_open}</span>` : ""}</a>
+    <button class="tool" onclick="setLang('${LANG === "ko" ? "en" : "ko"}')">${ic("globe", 15)} ${LANG === "ko" ? "EN" : "KO"}</button>
+    <div class="user"><span class="avatar">HP</span><div><b>${t("지급 책임자", "Head of payments")}</b><small>${esc(OV.firm)}</small></div></div>`;
+}
+let FOCUS = null;
 async function route() {
   const h = location.hash.replace(/^#\/?/, "").split("/");
   await sidebar(h[0] === "c" ? h[1] : h[0] || "overview");
+  FOCUS = h[0] === "c" ? decodeURIComponent(h[3] || "") || null : null;
+  const cl = h[0] === "c" && OV.clients.find(c => c.client_id === h[1]);
+  topbar(h[0] === "c" ? [[t("고객사", "Clients"), "#/"], [cl ? cl.name : h[1], `#/c/${h[1]}`], [(ctabs().find(x => x[0] === (h[2] || "overview")) || ["", ""])[1]]]
+    : h[0] === "evaluation" ? [[t("사무소", "Firm")], [t("평가 결과", "Evaluation")]]
+    : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("장부", "Ledger")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
   if (h[0] === "c") return clientPage(h[1], h[2] || "overview");
   if (h[0] === "evaluation") return evaluation();
   if (h[0] === "ledger") return ledgerPage();
@@ -208,7 +324,7 @@ function statusBoard(o) {
     <div class="hd">${t("고객사", "Client")}</div><div class="hd">${t("상태", "Status")}</div><div class="hd">${t("승인 대기", "Waiting")}</div>
     <div class="hd opt">${t("이달 지급 / 월 한도", "Paid / monthly limit")}</div><div class="hd">${t("위험 신호 (사기 · 통제)", "Risk signals (fraud · control)")}</div><div class="hd opt">${t("가장 큰 위험", "Top risk")}</div>
     ${o.clients.map(c => { const s = statusOf(c), f = riskSum(c, "fraud"), k = riskSum(c, "control");
-      return `<div><span class="dot" style="background:${s.color}"></span><a class="cl" href="#/c/${c.client_id}">${esc(c.name)}</a></div>
+      return `<div><span class="dot" style="background:${s.color}"></span><span style="min-width:0;display:flex;flex-direction:column"><a class="cl" href="#/c/${c.client_id}">${esc(c.name)}</a><span class="meta">${ic("user", 12)} ${esc(c.owner.name)}</span></span></div>
       <div><span class="pill" style="color:${s.color === "var(--mute)" ? "var(--mute)" : s.k === "ok" ? "var(--t-good)" : s.k === "attention" ? "var(--t-warn)" : "var(--t-crit)"}">${esc(s.label)}</span></div>
       <div>${c.queue_open ? `<b>${c.queue_open}</b> ${t("건", "")}` : `<span class="mute">0</span>`}</div>
       <div class="opt">${c.mandate.revoked ? `<span class="mute">${t("위임 취소됨", "revoked")}</span>` :
@@ -221,16 +337,20 @@ function statusBoard(o) {
 async function dashboard() {
   const o = OV, tt = o.totals, active = o.clients.filter(c => !c.mandate.revoked);
   const attention = o.clients.filter(c => ["attention", "off"].includes(statusOf(c).k)).length;
-  $("main").innerHTML = `<h1>${t("전체 현황", "Overview")}</h1>
-  <p class="sub">${t(`고객사 ${o.clients.length}곳 · 위임 활성 ${active.length}곳 · 모든 수치는 서명된 장부에서 계산`, `${o.clients.length} clients · ${active.length} with an active mandate · computed from the signed ledger`)}</p>
-  <div class="kpis">
-    <div class="kpi"><small>${t("확인이 필요한 고객사", "Clients needing attention")}</small><b class="${attention ? "warn" : "ok"}">${attention} / ${o.clients.length}</b></div>
-    <div class="kpi"><small>${t("승인 대기", "Waiting for a human")}</small><b>${tt.queue_open}</b></div>
-    <div class="kpi"><small>${t("사기 신호", "Fraud signals")}</small><b class="bad">${tt.fraud_signals}</b></div>
-    <div class="kpi"><small>${t("보류한 금액", "Held back")}</small><b>CHF ${chf0(tt.held_chf)}</b></div>
-    <div class="kpi"><small>${t("자동 지급", "Paid automatically")}</small><b>CHF ${chf0(tt.paid_chf)}</b></div>
-    <div class="kpi"><small>${t("장부", "Ledger")}</small><b class="${o.ledger_ok && o.audit_ok ? "ok" : "bad"}">${o.ledger_ok && o.audit_ok ? t("검증됨", "verified") : t("손상", "broken")}</b></div>
+  const fraudAlerts = o.alerts.filter(a => a.fraud).length;
+  $("main").innerHTML = `${pageHead(t("전체 현황", "Overview"), t(`고객사 ${o.clients.length}곳 · 위임 활성 ${active.length}곳 · 모든 수치는 서명된 장부에서 계산`, `${o.clients.length} clients · ${active.length} with an active mandate · computed from the signed ledger`))}
+  <div class="kpis six">
+    ${kpi("building", t("확인이 필요한 고객사", "Clients needing attention"), `${attention} / ${o.clients.length}`, {tone: attention ? "warn" : "good"})}
+    ${kpi("inbox", t("사람 확인 대기", "Waiting for a human"), tt.queue_open, {tone: tt.queue_open ? "warn" : "good", meta: t(`사기 신호 포함 ${fraudAlerts}건`, `${fraudAlerts} with fraud signals`)})}
+    ${kpi("alert", t("사기 신호", "Fraud signals"), tt.fraud_signals, {tone: "crit", cls: "bad"})}
+    ${kpi("pause", t("보류한 금액", "Held back"), `CHF ${chf0(tt.held_chf)}`, {meta: t(`보류 ${tt.escalated} · 거절 ${tt.rejected}`, `${tt.escalated} held · ${tt.rejected} rejected`)})}
+    ${kpi("coins", t("자동 지급", "Paid automatically"), `CHF ${chf0(tt.paid_chf)}`, {tone: "good", meta: t(`${tt.paid}건`, `${tt.paid} invoices`)})}
+    ${kpi("shield", t("장부·신원 감사", "Ledger & identity audit"), o.ledger_ok && o.audit_ok ? t("검증됨", "Verified") : t("손상", "Broken"), {tone: o.ledger_ok && o.audit_ok ? "good" : "crit", cls: o.ledger_ok && o.audit_ok ? "ok" : "bad"})}
   </div>
+  <div class="card"><div class="card-h"><div><h2>${ic("alert", 17)} ${t("조치 필요", "Action needed")}</h2><p class="sub">${t("모든 고객사의 사람 확인 대기 건. 사기 신호가 먼저, 그다음 금액이 큰 순서.", "Everything waiting for a human, across clients. Fraud signals first, then by amount.")}</p></div>
+    <span class="pill warn">${t(`${o.alerts.length}건 대기`, `${o.alerts.length} open`)}</span></div>
+    ${alertTable(o.alerts.slice(0, 8))}
+    ${o.alerts.length > 8 ? more(t(`나머지 ${o.alerts.length - 8}건`, `${o.alerts.length - 8} more`), alertTable(o.alerts.slice(8))) : ""}</div>
   <div class="card"><h2>${t("고객사 현황판", "Client status board")}</h2><p class="sub">${t("고객사마다 지금 상태와 위험을 한 줄로. 이름을 누르면 상세 화면으로 가요.", "Each client's state and risk at a glance. Click a name for details.")}</p>
     ${statusBoard(o)}${legend(riskLegend())}</div>
   <div class="grid2">
@@ -244,6 +364,15 @@ async function dashboard() {
       ${o.clients.map(c => `<tr><td><a href="#/c/${c.client_id}">${esc(c.name)}</a></td><td>${esc(statusOf(c).label)}</td>
         <td class="n">${c.invoices}</td><td class="n">${c.paid}</td><td class="n">${c.escalated}</td><td class="n">${c.rejected}</td><td class="n">${chf0(c.paid_chf)}</td><td class="n">${chf0(c.held_chf)}</td><td class="n">${c.queue_open}</td><td class="n">${c.gate_rejections}</td></tr>`).join("")}</table>`)}
     ${more(t("고객사 × 위험 신호 (히트맵 표)", "Risk signals by client and type (heat table)"), heatTable(o))}</div>`;
+}
+function alertTable(rows) {
+  if (!rows.length) return `<p class="mute">${t("대기 건 없음", "nothing waiting")}</p>`;
+  return `<div class="alerts"><table><tr><th>${t("심각도", "Severity")}</th><th>${t("건", "Case")}</th><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("신호", "Signals")}</th><th class="n">CHF</th><th></th></tr>
+    ${rows.map(a => `<tr><td>${a.fraud ? `<span class="pill bad">${t("사기 의심", "Fraud risk")}</span>` : `<span class="pill warn">${t("통제·한도", "Control")}</span>`}</td>
+      <td><code>${esc(a.case_id)}</code></td><td><a href="#/c/${a.client_id}">${esc(a.client)}</a></td><td>${esc(a.vendor)}</td>
+      <td>${a.risks.map(r => `<span class="sig ${r.kind === "fraud" ? "bad" : "warn"}">${esc(riskName(r.code, r.label))}</span>`).join("")}</td>
+      <td class="n"><b>${chf(a.amount_chf)}</b></td>
+      <td class="n"><a href="#/c/${a.client_id}/queue/${encodeURIComponent(a.case_id)}" style="white-space:nowrap">${t("검토", "Review")} ${ic("arrow", 14)}</a></td></tr>`).join("")}</table></div>`;
 }
 function heatTable(o) {
   const codes = Object.keys(o.risk_totals);
@@ -261,22 +390,22 @@ async function clientPage(cid, tab) {
   const status = c.mandate.revoked ? `<span class="pill bad">${t("위임 취소", "mandate revoked")} ${esc(c.mandate.revoked_at)}</span>`
     : c.agent.active ? `<span class="pill ok">${t("에이전트", "agent")} ${esc(c.agent.seat)} v${c.agent.generation}</span>` : `<span class="pill bad">${t("에이전트 정지", "agent switched off")}</span>`;
   const body = ({overview: cOverview, invoices: cInvoices, queue: cQueue, agent: cAgent, files: cFiles, ledger: cLedger}[tab] || cOverview)(c);
-  $("main").innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><h1>${esc(c.name)}</h1>${status}</div>
-    <div class="meta">${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()} · ${t("고객 DID", "client DID")} <code>${short(c.mandate.client_did)}</code></div>
-    <nav class="tabs">${ctabs().map(([k, n]) => `<a href="#/c/${cid}/${k}" class="${k === tab ? "on" : ""}">${n}${k === "queue" && c.queue_open ? ` (${c.queue_open})` : ""}</a>`).join("")}</nav>
+  $("main").innerHTML = `${pageHead(`${esc(c.name)} ${status}`, `${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()} · ${ic("user", 13)} ${t("담당 관리자", "Client manager")} <b>${esc(c.owner.name)}</b> · ${t("고객 DID", "client DID")} <code>${short(c.mandate.client_did)}</code>`)}
+    <nav class="tabs">${ctabs().map(([k, n]) => `<a href="#/c/${cid}/${k}" class="${k === tab ? "on" : ""}">${n}${k === "queue" && c.queue_open ? ` <span class="badge">${c.queue_open}</span>` : ""}</a>`).join("")}</nav>
     ${body}`;
   if (tab === "invoices" && $("ptext")) $("ptext").value = SAMPLES[cid] || "";
+  if (FOCUS && $(`q-${FOCUS}`)) $(`q-${FOCUS}`).scrollIntoView({block: "center"});
 }
 function cOverview(c) {
   const risks = Object.entries(c.risks);
   const dsum = d => c.decisions.filter(e => e.decision === d && e.gate === "OK" && !e.grant_ref).reduce((s, e) => s + (e.amount_chf || 0), 0);
-  return `<div class="kpis">
-    <div class="kpi"><small>${t("처리한 청구서", "Invoices processed")}</small><b>${c.invoices}</b></div>
-    <div class="kpi"><small>${t("자동 지급", "Paid automatically")}</small><b>CHF ${chf0(c.paid_chf)}</b><div class="meta">${c.paid} ${t("건", "invoices")}</div></div>
-    <div class="kpi"><small>${t("보류한 금액", "Held back")}</small><b>CHF ${chf0(c.held_chf)}</b><div class="meta">${t(`보류 ${c.escalated} · 거절 ${c.rejected}`, `${c.escalated} held · ${c.rejected} rejected`)}</div></div>
-    <div class="kpi"><small>${t("사기 신호", "Fraud signals")}</small><b class="bad">${c.fraud_signals}</b></div>
-    <div class="kpi"><small>${t("사람이 승인", "Approved by a human")}</small><b>${c.approved_by_human}</b></div>
-    <div class="kpi"><small>${t("문지기 거부", "Refused by the gate")}</small><b>${c.gate_rejections}</b></div></div>
+  return `<div class="kpis six">
+    ${kpi("file", t("처리한 청구서", "Invoices processed"), c.invoices)}
+    ${kpi("coins", t("자동 지급", "Paid automatically"), `CHF ${chf0(c.paid_chf)}`, {tone: "good", meta: `${c.paid} ${t("건", "invoices")}`})}
+    ${kpi("pause", t("보류한 금액", "Held back"), `CHF ${chf0(c.held_chf)}`, {tone: "warn", meta: t(`보류 ${c.escalated} · 거절 ${c.rejected}`, `${c.escalated} held · ${c.rejected} rejected`)})}
+    ${kpi("alert", t("사기 신호", "Fraud signals"), c.fraud_signals, {tone: "crit", cls: "bad"})}
+    ${kpi("user", t("사람이 승인", "Approved by a human"), c.approved_by_human, {meta: esc(c.owner.name)})}
+    ${kpi("ban", t("문지기 거부", "Refused by the gate"), c.gate_rejections)}</div>
   <div class="grid2">
     <div class="card"><h2>${t("결정별 금액", "Where the money went")}</h2><p class="sub">${t("결정별 CHF 합계.", "CHF by decision.")}</p>
       ${bars([{label: t("지급", "paid"), v: dsum("pay"), color: C.paid}, {label: t("보류 (사람 확인)", "held for a human"), v: dsum("escalate"), color: C.escalated},
@@ -290,7 +419,7 @@ function cOverview(c) {
   <div class="card"><h2>${t("상세", "Details")}</h2>
     ${more(t(`에이전트가 막은 청구서와 이유 (${c.risky.length})`, `What the agent held back and why (${c.risky.length})`), riskTable(c.risky))}
     ${more(t("고객이 서명한 위임장", "Mandate signed by the client"), `<table>
-      <tr><th>${t("맡긴 지출", "Delegated expenses")}</th><td>${esc(c.mandate.allowed_categories.join(", "))}</td></tr>
+      <tr><th>${t("맡긴 지출", "Delegated expenses")}</th><td>${esc(c.mandate.allowed_categories.map(x => LANG === "ko" ? (CAT_KO[x] || x) : x).join(", "))}</td></tr>
       <tr><th>${t("건당 / 월 한도", "Single / monthly limit")}</th><td>CHF ${chf0(c.mandate.single_limit_chf)} / ${chf0(c.mandate.monthly_limit_chf)}</td></tr>
       <tr><th>${t("유효 기간", "Valid")}</th><td>${esc(c.mandate.valid_from)} – ${esc(c.mandate.valid_until)}</td></tr>
       <tr><th>${t("고객 서명", "Client signature")}</th><td class="${c.mandate_ok ? "ok" : "bad"}">${c.mandate_ok ? t("검증됨", "verified") : t("무효", "INVALID")}</td></tr></table>`)}</div>`;
@@ -335,11 +464,12 @@ function cQueue(c) {
   const st = s => s === "open" ? `<span class="warn">${t("대기", "open")}</span>` : s === "approved" ? `<span class="ok">${t("승인됨", "approved")}</span>` : `<span class="bad">${t("거절됨", "rejected")}</span>`;
   return `<div class="card"><h2>${t(`사람 확인 대기 (${open.length}건)`, `Held for a human (${open.length} open)`)}</h2><p class="sub">${t("대기 건별 금액.", "Amount per held invoice.")}</p>
     ${open.length ? bars(open.map(i => ({label: `${i.case_id} · ${i.vendor}`, v: Number(i.amount_chf) || 0, color: C.escalated})), {fmt: x => "CHF " + chf0(x)}) : `<p class="mute">${t("없음", "none")}</p>`}</div>
-  <div class="card"><h2>${t("검토", "Review")}</h2>${c.queue.map(i => `<details class="more"><summary>${esc(i.case_id)} · ${esc(i.vendor)} · CHF ${chf(i.amount_chf)} — ${st(i.status)}</summary><div>
+  <div class="card"><h2>${t("검토", "Review")}</h2>${c.queue.map(i => `<details class="more" id="q-${esc(i.case_id)}" ${i.case_id === FOCUS ? "open" : ""}><summary>${esc(i.case_id)} · ${esc(i.vendor)} · CHF ${chf(i.amount_chf)} — ${st(i.status)}</summary><div>
       <p><b>${t("보류 이유", "Why held")}:</b> ${esc(i.reason)}</p><pre>${esc(i.invoice_text)}</pre>
       ${i.status === "open" ? `<input id="n-${i.case_id}" placeholder="${t("검토 메모 (이유) — 이 고객사 에이전트의 교훈이 돼요", "Reviewer note (why) — becomes a lesson for this client's agent")}" style="width:100%">
-      <div class="row"><button class="btn" onclick="act('${i.case_id}','approve')">${t("지급 승인", "Approve payment")}</button>
-      <button class="btn primary" onclick="act('${i.case_id}','reject')">${t("거절", "Reject")}</button></div>` : i.note ? `<p class="mute">${t("메모", "Note")}: ${esc(i.note)}</p>` : ""}</div></details>`).join("")}</div>`;
+      <div class="row"><button class="btn primary" onclick="act('${i.case_id}','approve')">${ic("check", 15)} ${t("지급 승인", "Approve payment")}</button>
+      <button class="btn danger" onclick="act('${i.case_id}','reject')">${ic("ban", 15)} ${t("거절", "Reject")}</button>
+      <span class="meta">${t(`${c.owner.name} 이름으로 장부에 기록돼요`, `recorded in the ledger as ${c.owner.name}`)}</span></div>` : i.note ? `<p class="mute">${t("메모", "Note")}: ${esc(i.note)}</p>` : ""}</div></details>`).join("")}</div>`;
 }
 async function act(id, action) {
   try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); route(); } catch (e) { alert(e.message); }
@@ -348,13 +478,21 @@ function cAgent(c) {
   const a = c.agent, b = a.badge || {}, card = a.card || {}, L = c.lessons;
   if (!a.generation) return `<div class="card">${t("이 고객사에는 채용된 에이전트가 없어요", "No agent has been hired for this client")}${c.mandate.revoked ? t(" — 고객이 위임을 취소했어요.", " — the client revoked its mandate.") : "."}</div>`;
   const gates = {}; c.rejections.forEach(e => gates[e.gate] = (gates[e.gate] || 0) + 1);
-  return `<div class="grid2"><div class="card"><h2>${t("에이전트", "Agent")} ${esc(card.name)} ${a.active ? `<span class="pill ok">${t("활성", "active")}</span>` : `<span class="pill bad">${t("정지", "revoked")}</span>`}</h2>
-    <p class="sub">DID <code>${short(a.did)}</code> · ${t("상한", "cap")} CHF ${chf0(b.max_single_chf)} · ${esc((b.actions || []).map(actName).join(", ") || t("허용 행동 없음", "no actions"))}</p>
+  const m = c.mandate, cats = m.allowed_categories.map(x => LANG === "ko" ? (CAT_KO[x] || x) : x).join(", ");
+  const duty = t(`${c.name}의 공급업체 청구서를 고객이 서명한 위임장 범위(${cats}, 건당 CHF ${chf0(m.single_limit_chf)} · 월 CHF ${chf0(m.monthly_limit_chf)}) 안에서 지급하고, 은행용 pain.001 파일을 만들어요. 그 밖의 건은 모두 ${c.owner.name}에게 넘겨요.`, card.duty || "");
+  return `<div class="card"><div class="card-h"><div><h2>${ic("cpu", 18)} ${esc(card.display_name ? t(`${c.name} 지급 에이전트`, card.display_name) : card.name)} ${a.active ? `<span class="pill ok">${t("활성", "active")}</span>` : `<span class="pill bad">${t("정지", "revoked")}</span>`}</h2>
+      <p class="sub"><code>${esc(card.name)}</code> · DID <code>${short(a.did)}</code> · ${t("사무소가 서명한 사원증", "entity card signed by the firm")} ${a.card_ok ? "✓" : "✗"}</p></div></div>
+    <table><tr><th style="width:190px">${t("업무", "Duty")}</th><td>${esc(duty)}</td></tr>
+      <tr><th>${t("담당 관리자", "Managed by")}</th><td>${ic("user", 14)} <b>${esc((card.owner || {}).name || c.owner.name)}</b> · ${ownerTitle()}<div class="meta">${t("이 에이전트에 역할을 부여하고 관리해요: 보류 건 승인·거절, 설정 변경, 긴급 정지.", "Assigns this agent its role and manages it: approves or rejects what it holds back, changes its settings, can switch it off.")}</div></td></tr>
+      <tr><th>${t("최종 책임", "Accountable")}</th><td>${esc(card.operator)} · ${t("지급 책임자", "Head of payments")}</td></tr>
+      <tr><th>${t("허용 행동 · 상한", "Actions · cap")}</th><td>${esc((b.actions || []).map(actName).join(", ") || t("허용 행동 없음", "no actions"))} · CHF ${chf0(b.max_single_chf)}</td></tr></table></div>
+  <div class="grid2"><div class="card"><h2>${t("긴급 정지 · 교체", "Kill switch · replacement")}</h2><p class="sub">${t(`${c.owner.name}이(가) 에이전트를 멈추거나 다음 세대로 바꿔요. 장부에 기록돼요.`, `${c.owner.name} can stop the agent or replace it with the next generation. Both are recorded in the ledger.`)}</p>
     <div class="row"><input id="killnote" placeholder="${t("사유 (교훈이 돼요)", "Reason (becomes a lesson)")}" style="flex:1">
-      <button class="btn primary" onclick="agentAct('${c.client_id}','kill')" ${a.active ? "" : "disabled"}>${t("긴급 정지", "Kill switch")}</button>
+      <button class="btn danger" onclick="agentAct('${c.client_id}','kill')" ${a.active ? "" : "disabled"}>${t("긴급 정지", "Kill switch")}</button>
       <button class="btn" onclick="agentAct('${c.client_id}','replace')" ${c.mandate.revoked ? "disabled" : ""}>${t(`v${a.generation + 1}로 교체`, `Replace with v${a.generation + 1}`)}</button></div>
     ${more(t("신원 문서", "Identity documents"), `<table><tr><th>DID</th><td><code>${esc(a.did)}</code></td></tr>
-      <tr><th>${t("사원증", "Entity card")}</th><td>${esc(card.operator)} · ${t("책임자", "responsible")}: ${esc(card.responsible_human)} · AI: ${card.is_ai ? t("예", "yes") : "?"} · ${t("사무소 서명", "firm signature")} ${a.card_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>${t("사원증", "Entity card")}</th><td>${esc(card.display_name)} · ${esc(card.operator)} · ${t("담당 관리자", "owner")}: ${esc((card.owner || {}).name)} · ${t("최종 책임", "accountable")}: ${esc(card.responsible_human)} · AI: ${card.is_ai ? t("예", "yes") : "?"} · ${t("사무소 서명", "firm signature")} ${a.card_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>${t("서명된 업무 원문", "Signed duty text")}</th><td class="mute">${esc(card.duty)}</td></tr>
       <tr><th>${t("배지", "Badge")}</th><td>${esc((b.actions || []).map(actName).join(", ") || "–")} · ${t("담당", "only for")} ${esc((b.clients || []).join(", "))} · ${t("상한", "cap")} CHF ${chf0(b.max_single_chf)} · ${t("유효", "valid")} ${esc(b.valid_from)} – ${esc(b.valid_until)} · ${t("사무소 서명", "firm signature")} ${a.badge_ok ? "✓" : "✗"}</td></tr>
       <tr><th>${t("이전 세대", "Earlier generations")}</th><td>${a.revoked.map(short).join("<br>") || t("없음", "none")}</td></tr></table>`)}</div>
   <div class="card"><h2>${t("사무소 쪽 설정", "Firm-side settings")}</h2>
@@ -427,10 +565,10 @@ function ledgerTable(rows) {
 // ---------------------------------------------------------------- firm pages
 async function ledgerPage() {
   const l = await api("/api/ledger");
-  $("main").innerHTML = `<h1>${t("장부", "Ledger")}</h1><p class="sub">${t("덧붙이기만 하는 기록. 해시 체인으로 묶고 장부 키로 서명해요", "Append-only, hash-chained and signed with the ledger key")} <code>${short(l.ledger_did)}</code>.</p>
-  <div class="kpis"><div class="kpi"><small>${t("체인 + 서명", "Chain + signatures")}</small><b class="${l.verifies ? "ok" : "bad"}">${l.verifies ? t("검증됨", "verified") : t(`#${l.first_bad}에서 손상`, `broken at #${l.first_bad}`)}</b></div>
-    <div class="kpi"><small>${t("신원 감사", "Identity audit")}</small><b class="${l.audit.ok ? "ok" : "bad"}">${l.audit.ok ? t("정상", "OK") : l.audit.problems.length + t("건 문제", " problems")}</b><div class="meta">${t(`에이전트 행동 ${l.audit.agent_actions}건 확인`, `${l.audit.agent_actions} agent actions checked`)}</div></div>
-    <div class="kpi"><small>${t("발급된 에이전트", "Agents issued")}</small><b>${Object.keys(l.audit.agents_issued).length}</b><div class="meta">${t(`정지 ${l.audit.agents_revoked.length}`, `${l.audit.agents_revoked.length} revoked`)}</div></div></div>
+  $("main").innerHTML = `${pageHead(t("장부", "Ledger"), `${t("덧붙이기만 하는 기록. 해시 체인으로 묶고 장부 키로 서명해요", "Append-only, hash-chained and signed with the ledger key")} <code>${short(l.ledger_did)}</code>`)}
+  <div class="kpis">${kpi("key", t("체인 + 서명", "Chain + signatures"), l.verifies ? t("검증됨", "Verified") : t(`#${l.first_bad}에서 손상`, `Broken at #${l.first_bad}`), {tone: l.verifies ? "good" : "crit", cls: l.verifies ? "ok" : "bad"})}
+    ${kpi("shield", t("신원 감사", "Identity audit"), l.audit.ok ? t("정상", "OK") : l.audit.problems.length + t("건 문제", " problems"), {tone: l.audit.ok ? "good" : "crit", cls: l.audit.ok ? "ok" : "bad", meta: t(`에이전트 행동 ${l.audit.agent_actions}건 확인`, `${l.audit.agent_actions} agent actions checked`)})}
+    ${kpi("cpu", t("발급된 에이전트", "Agents issued"), Object.keys(l.audit.agents_issued).length, {meta: t(`정지 ${l.audit.agents_revoked.length}`, `${l.audit.agents_revoked.length} revoked`)})}</div>
   <div class="card"><h2>${t("행동별 기록 수", "Entries by action")}</h2><p class="sub">${t(`최근 ${l.entries.length}건.`, `Latest ${l.entries.length} entries.`)}</p>${actionChart(l.entries)}
     ${more(t("읽는 법", "How to read it"), `<p>${t("장부는 사무소 키", "The ledger opens with the firm key")} (<code>${short(l.firm_did)}</code>)${t("와 장부 키로 시작하고, 이어서 고객사 위임장 원본, 에이전트마다 발급된 사원증과 배지가 기록돼요. 신원 감사는 장부만 보고 '실행된 모든 에이전트 행동이 사무소가 발급했고 그 시점에 정지되지 않은 에이전트의 것인가'를 확인해요:",
       " and the ledger key, then every client mandate in full and each agent's entity card and badge as issued. The identity audit checks from the ledger alone that every executed agent action came from an agent the firm issued and had not revoked:")} ${esc(Object.values(l.audit.agents_issued).join(", "))}.</p>`)}
@@ -446,7 +584,13 @@ async function evaluation() {
   const maxChf = Math.max(...sys.map(k => m.metrics[k].wrong_payment_chf));
   const last = sys[sys.length - 1];
   const legit = Object.entries(m.attacks || {}).find(([k]) => k.startsWith("legitimate"));
-  $("main").innerHTML = `<h1>${t("평가 결과", "Evaluation")}</h1><p class="sub">${t(`합성 테스트 청구서 ${m.n_test}건 (4개 언어) · ${m.model} · 그중 ${nonpay}건은 자동 지급하면 안 되는 건`, `${m.n_test} synthetic test invoices in four languages · ${m.model} · ${nonpay} must not be paid automatically`)}</p>
+  const best = m.metrics[last], base = m.metrics.baseline;
+  $("main").innerHTML = `${pageHead(t("평가 결과", "Evaluation"), t(`합성 테스트 청구서 ${m.n_test}건 (4개 언어) · ${m.model} · 그중 ${nonpay}건은 자동 지급하면 안 되는 건`, `${m.n_test} synthetic test invoices in four languages · ${m.model} · ${nonpay} must not be paid automatically`))}
+  <div class="kpis">${kpi("ban", t("잘못 지급 (단독 → 하네스✱)", "Wrong payments (alone → harness✱)"), `${base.wrong_payments} → ${best.wrong_payments}`, {tone: "crit", meta: t(`${nonpay}건 중`, `of ${nonpay}`)})}
+    ${kpi("coins", t("잘못 나간 금액", "Money paid wrongly"), `CHF ${chf0(best.wrong_payment_chf)}`, {tone: "warn", meta: t(`단독 CHF ${chf0(base.wrong_payment_chf)}`, `alone CHF ${chf0(base.wrong_payment_chf)}`)})}
+    ${kpi("check", t("정확도", "Accuracy"), `${base.accuracy.toFixed(2)} → ${best.accuracy.toFixed(2)}`, {tone: "good"})}
+    ${m.attacks ? (() => { const at = Object.entries(m.attacks).filter(([k]) => !k.startsWith("legitimate")); const bl = at.reduce((s, [, r]) => s + r.blocked, 0), n = at.reduce((s, [, r]) => s + r.attempts, 0);
+      return kpi("shield", t("공격 차단", "Attacks blocked"), `${bl} / ${n}`, {tone: "good", meta: t(`시나리오 ${at.length}종`, `${at.length} scenarios`)}); })() : ""}</div>
   <div class="grid2">
     <div class="card"><h2>${t("잘못 지급", "Wrong payments")}</h2><p class="sub">${t(`보류·거절해야 했는데 지급한 건 (${nonpay}건 중). 낮을수록 좋아요.`, `Paid although they should have been held or rejected (of ${nonpay}). Lower is better.`)}</p>
       ${scaled(sys.map(k => ({label: nm(k), v: m.metrics[k].wrong_payments, value: `${m.metrics[k].wrong_payments} / ${nonpay}`})), nonpay, {color: C.rejected})}</div>

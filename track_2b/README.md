@@ -13,7 +13,7 @@ English — while a **harness** keeps it inside what each client actually delega
 4. **Lessons**: when a human overrules the agent, the note is masked, Apertus distils it into a
    rule, and the next manual generation is fingerprinted in the ledger. No weights change.
 5. **Agent identity and gate**: each client gets its own agent seat; every agent generation has its
-   own Ed25519 key and DID, a firm-signed ID card and a badge for that one client; clients sign their mandates. Every agent action is a signed, single-use request that
+   own Ed25519 key and DID, a firm-signed ID card (display name, duty, and the named client manager who assigns its role and manages it) and a badge for that one client; clients sign their mandates. Every agent action is a signed, single-use request that
    a gate checks (signature, replay, identity, badge, mandate) before it takes effect. Kill switch,
    replacement by the next generation, and human grants for amounts above the badge cap.
 6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client for its bank, an approval queue

@@ -78,7 +78,7 @@ stamp, ledger, lessons); the code here is new.
 | Principal | Key | Signs |
 |---|---|---|
 | Client company | its own Ed25519 key (did:key, recorded at onboarding) | the mandate: scope, limits, validity, delegate = the firm |
-| Fiduciary firm | firm key | each agent's entity card (operator, responsible human, *is AI*) and badge (actions, its one client, cap, validity) |
+| Fiduciary firm | firm key | each agent's entity card (display name, duty, operator, the named client manager who assigns its role and manages it, accountable head of payments, *is AI*) and badge (actions, its one client, cap, validity) |
 | Agent: one seat per client, one key per generation | its own key → DID | every request: action, client, payload hash, nonce, time |
 | Ledger | ledger key | every ledger entry (on top of the hash chain) |
 
@@ -99,7 +99,7 @@ the firm had issued and not yet revoked (`audit_identities`; reference run: 78 o
 
 This maps onto obligations a Swiss fiduciary and its clients care about: FINMA Guidance 08/2024
 asks for an inventory, documentation, monitoring and that responsibility stays with people
-(entity card names the responsible human; ledger); EU AI Act Art. 12 (logging) and Art. 14
+(entity card names the client manager who manages the agent and the accountable head of payments; their approvals, rejections and kill-switch use are ledger entries under their name); EU AI Act Art. 12 (logging) and Art. 14
 (human oversight, ability to stop: queue, grants, kill switch) if the firm serves EU clients.
 
 ## 3. Use of Apertus

@@ -124,6 +124,8 @@ def test_identity_is_recorded_from_issuance(tmp_path):
     d.request("C01", "payment.decide", {"case_id": "T1", "amount_chf": 10.0})
     audit = audit_identities(d.ledger.entries)
     assert audit["ok"] and audit["agent_actions"] == 1 and len(audit["agents_issued"]) == 4
+    card = d.card(seat_of("C01"))  # the card names the job and the human who manages the agent
+    assert card["owner"]["name"] == identity.owner_of("C01") and "Bäckerei Steiner" in card["duty"]
     did = d.agent_did(seat_of("C01"))
     d.kill("C01", "t")
     d.ledger.entries.append({"seq": 99, "actor": did, "gate": "OK", "action": "payment.decide"})

@@ -23,7 +23,6 @@ app = FastAPI(title="Treuhand payment agents")
 lock = threading.Lock()
 LEDGER = Ledger(RESULTS / "ledger.jsonl")
 STATE = RESULTS / "state.json"
-REVIEWER = identity.RESPONSIBLE_HUMAN
 FIRM_WIDE = "*"
 
 RISKS = {  # finding code -> (label, kind)
@@ -115,6 +114,7 @@ def client_view(s, d, cid, entries=None):
     seat = seat_of(cid)
     return {
         "client_id": cid, "name": m["name"], "city": m["city"], "lang": m["lang"],
+        "owner": {"name": identity.owner_of(cid), "title": identity.OWNER_TITLE},
         "mandate": {k: m[k] for k in ("allowed_categories", "single_limit_chf", "monthly_limit_chf", "valid_from",
                                       "valid_until", "revoked", "revoked_at", "client_did")},
         "mandate_ok": credential.verify(m),
@@ -350,7 +350,7 @@ def publish(cid: str):
         s["pending_notes"] = [n for n in s["pending_notes"] if n["client_id"] != cid]
         save(s)
         sha = lessons.fingerprint(manual_text(s, seat))
-        LEDGER.append(actor=REVIEWER, action="manual.published", client_id=cid, seat=seat,
+        LEDGER.append(actor=identity.owner_of(cid), action="manual.published", client_id=cid, seat=seat,
                       generation=s["manual_generation"], manual_sha256=sha,
                       note="new lessons bind this seat; other seats see them for reference only")
         return {"ok": True, "manual_sha256": sha}
@@ -383,7 +383,7 @@ def review(case_id: str, r: Review):
             s["approved"].setdefault(cid, []).append(item)
             _write_approved_file(s, m, d)
         else:
-            LEDGER.append(actor=REVIEWER, action="consent.denied", client_id=cid, case_id=case_id,
+            LEDGER.append(actor=identity.owner_of(cid), action="consent.denied", client_id=cid, case_id=case_id,
                           amount_chf=item.get("amount_chf"), note=r.note)
             if r.note.strip():
                 s["pending_notes"].append({"client_id": cid, "note": lessons.mask(r.note, names(s))})
