@@ -1,0 +1,642 @@
+{
+  "set": "final",
+  "n": 1000,
+  "seed": 3032,
+  "model": "swiss-ai/apertus-v1.5-8b",
+  "llm_mode": "live",
+  "rule": "(fixed before either set was run): among 0, 5, ..., 100 (100 = second look off), take the\nthreshold with the fewest wrong payments whose extra holds of legitimate invoices stay at or below 2% of the\nlegitimate invoices; on a tie, the higher threshold (fewer holds).",
+  "threshold_used": 25,
+  "threshold_sweep": [
+    {
+      "threshold": 0,
+      "wrong_payments": 0,
+      "wrong_chf": 0,
+      "legit_held": 400,
+      "legit": 400
+    },
+    {
+      "threshold": 5,
+      "wrong_payments": 23,
+      "wrong_chf": 57160.0,
+      "legit_held": 118,
+      "legit": 400
+    },
+    {
+      "threshold": 10,
+      "wrong_payments": 27,
+      "wrong_chf": 67080.0,
+      "legit_held": 54,
+      "legit": 400
+    },
+    {
+      "threshold": 15,
+      "wrong_payments": 27,
+      "wrong_chf": 67080.0,
+      "legit_held": 40,
+      "legit": 400
+    },
+    {
+      "threshold": 20,
+      "wrong_payments": 28,
+      "wrong_chf": 69150.0,
+      "legit_held": 30,
+      "legit": 400
+    },
+    {
+      "threshold": 25,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 21,
+      "legit": 400
+    },
+    {
+      "threshold": 30,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 17,
+      "legit": 400
+    },
+    {
+      "threshold": 35,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 40,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 45,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 50,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 55,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 60,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 65,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 70,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 75,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 80,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 85,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 90,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 95,
+      "wrong_payments": 29,
+      "wrong_chf": 70500.0,
+      "legit_held": 14,
+      "legit": 400
+    },
+    {
+      "threshold": 100,
+      "wrong_payments": 30,
+      "wrong_chf": 71080.0,
+      "legit_held": 14,
+      "legit": 400
+    }
+  ],
+  "metrics": {
+    "baseline": {
+      "accuracy": 0.579,
+      "wrong_payment_rate": 0.562,
+      "wrong_payments": 337,
+      "wrong_payment_chf": 1150173.96,
+      "missed_payment_rate": 0.007,
+      "reject_recall": 0.647,
+      "model_failures": 1,
+      "paid_with_wrong_details": null,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 0.2,
+        "E_IBAN_CHANGED+E_PRESSURE": 0.77,
+        "E_LIMIT_MONTH": 0.0,
+        "E_LIMIT_SINGLE": 0.13,
+        "E_NEW_VENDOR": 0.0,
+        "E_NEW_VENDOR+E_PRESSURE": 0.73,
+        "E_NO_IBAN": 0.03,
+        "E_NO_INVOICE_NO": 0.03,
+        "E_PRESSURE": 0.53,
+        "E_TOTAL_UNREADABLE": 0.0,
+        "E_VAT_MISMATCH": 0.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 0.17,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 0.99,
+        "R_DUPLICATE": 0.47,
+        "R_DUPLICATE+E_IBAN_CHANGED": 0.73,
+        "R_IBAN_INVALID": 0.03,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.5217,
+        0.6009
+      ],
+      "missed_payment_rate_ci95": [
+        0.0026,
+        0.0218
+      ],
+      "accuracy_ci95": [
+        0.5482,
+        0.6092
+      ]
+    },
+    "badge_only": {
+      "accuracy": 0.764,
+      "wrong_payment_rate": 0.29,
+      "wrong_payments": 174,
+      "wrong_payment_chf": 382166.43,
+      "missed_payment_rate": 0.035,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 18,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 0.97,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 0.97,
+        "E_LIMIT_SINGLE": 0.97,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 0.1,
+        "E_NO_INVOICE_NO": 0.17,
+        "E_PRESSURE": 0.0,
+        "E_TOTAL_UNREADABLE": 0.0,
+        "E_VAT_MISMATCH": 0.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 0.96,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.2551,
+        0.3276
+      ],
+      "missed_payment_rate_ci95": [
+        0.021,
+        0.0579
+      ],
+      "accuracy_ci95": [
+        0.7367,
+        0.7893
+      ]
+    },
+    "harness_gen0": {
+      "accuracy": 0.766,
+      "wrong_payment_rate": 0.287,
+      "wrong_payments": 172,
+      "wrong_payment_chf": 377436.43,
+      "missed_payment_rate": 0.035,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 18,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 0.97,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 0.97,
+        "E_LIMIT_SINGLE": 0.97,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 0.1,
+        "E_NO_INVOICE_NO": 0.17,
+        "E_PRESSURE": 0.05,
+        "E_TOTAL_UNREADABLE": 0.0,
+        "E_VAT_MISMATCH": 0.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 0.96,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.2519,
+        0.3241
+      ],
+      "missed_payment_rate_ci95": [
+        0.021,
+        0.0579
+      ],
+      "accuracy_ci95": [
+        0.7388,
+        0.7912
+      ]
+    },
+    "harness_gen1": {
+      "accuracy": 0.802,
+      "wrong_payment_rate": 0.227,
+      "wrong_payments": 136,
+      "wrong_payment_chf": 292816.43,
+      "missed_payment_rate": 0.035,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 18,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 0.97,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 0.97,
+        "E_LIMIT_SINGLE": 0.97,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 0.1,
+        "E_NO_INVOICE_NO": 0.17,
+        "E_PRESSURE": 0.95,
+        "E_TOTAL_UNREADABLE": 0.0,
+        "E_VAT_MISMATCH": 0.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 0.0,
+        "OK": 0.96,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.195,
+        0.2618
+      ],
+      "missed_payment_rate_ci95": [
+        0.021,
+        0.0579
+      ],
+      "accuracy_ci95": [
+        0.7762,
+        0.8255
+      ]
+    },
+    "harness_gen1_promoted": {
+      "accuracy": 0.873,
+      "wrong_payment_rate": 0.108,
+      "wrong_payments": 65,
+      "wrong_payment_chf": 140210.0,
+      "missed_payment_rate": 0.035,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 14,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 0.97,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 0.97,
+        "E_LIMIT_SINGLE": 0.97,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 0.1,
+        "E_NO_INVOICE_NO": 0.17,
+        "E_PRESSURE": 0.95,
+        "E_TOTAL_UNREADABLE": 0.1,
+        "E_VAT_MISMATCH": 0.95,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 0.97,
+        "OK": 0.96,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.0859,
+        0.1357
+      ],
+      "missed_payment_rate_ci95": [
+        0.021,
+        0.0579
+      ],
+      "accuracy_ci95": [
+        0.8509,
+        0.8922
+      ]
+    },
+    "harness_gen1_promoted_grounded": {
+      "accuracy": 0.953,
+      "wrong_payment_rate": 0.05,
+      "wrong_payments": 30,
+      "wrong_payment_chf": 71080.0,
+      "missed_payment_rate": 0.035,
+      "reject_recall": 0.98,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.28,
+        "E_PRESSURE": 0.97,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.96,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 0.9,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.0352,
+        0.0705
+      ],
+      "missed_payment_rate_ci95": [
+        0.021,
+        0.0579
+      ],
+      "accuracy_ci95": [
+        0.9381,
+        0.9645
+      ]
+    },
+    "harness_gen1_promoted_risk": {
+      "accuracy": 0.947,
+      "wrong_payment_rate": 0.048,
+      "wrong_payments": 29,
+      "wrong_payment_chf": 70500.0,
+      "missed_payment_rate": 0.052,
+      "reject_recall": 0.98,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.28,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.95,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 0.9,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.0339,
+        0.0686
+      ],
+      "missed_payment_rate_ci95": [
+        0.0346,
+        0.0789
+      ],
+      "accuracy_ci95": [
+        0.9313,
+        0.9593
+      ]
+    },
+    "production": {
+      "accuracy": 0.947,
+      "wrong_payment_rate": 0.048,
+      "wrong_payments": 29,
+      "wrong_payment_chf": 70500.0,
+      "missed_payment_rate": 0.052,
+      "reject_recall": 0.98,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.28,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.95,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 0.9,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0.0339,
+        0.0686
+      ],
+      "missed_payment_rate_ci95": [
+        0.0346,
+        0.0789
+      ],
+      "accuracy_ci95": [
+        0.9313,
+        0.9593
+      ]
+    }
+  },
+  "production_by_layout": {
+    "qr": {
+      "accuracy": 0.925,
+      "wrong_payment_rate": 0.036,
+      "wrong_payments": 5,
+      "wrong_payment_chf": 14749.99,
+      "missed_payment_rate": 0.114,
+      "reject_recall": 0.957,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.17,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.89,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 0.83,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "n": 226
+    },
+    "block": {
+      "accuracy": 0.951,
+      "wrong_payment_rate": 0.065,
+      "wrong_payments": 10,
+      "wrong_payment_chf": 24620.0,
+      "missed_payment_rate": 0.027,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.17,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.97,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "n": 265
+    },
+    "email": {
+      "accuracy": 0.965,
+      "wrong_payment_rate": 0.056,
+      "wrong_payments": 9,
+      "wrong_payment_chf": 20620.01,
+      "missed_payment_rate": 0.0,
+      "reject_recall": 1.0,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.0,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 1.0,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 1.0,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "n": 255
+    },
+    "line": {
+      "accuracy": 0.945,
+      "wrong_payment_rate": 0.034,
+      "wrong_payments": 5,
+      "wrong_payment_chf": 10510.0,
+      "missed_payment_rate": 0.075,
+      "reject_recall": 0.968,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 0.62,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.92,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 0.8,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "n": 254
+    }
+  },
+  "extraction": {
+    "iban": 0.934,
+    "total_chf": 0.982,
+    "invoice_no": 0.969,
+    "vendor": 1.0,
+    "addressee": 1.0,
+    "parsed": 1.0
+  }
+}

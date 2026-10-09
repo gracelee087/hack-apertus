@@ -28,15 +28,16 @@ English — while a **harness** keeps it inside what each client actually delega
 The reviewer app opens on a client portfolio dashboard (status and risk signals per client) with a
 page per client (decisions, approvals, agent settings, lessons, payment files, ledger).
 
-Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 45 invoices it
+Results (78 synthetic test invoices, Apertus v1.5 8B; "paid" means the system decided to pay without a human, no money moves in any evaluation): Apertus alone paid 33 of 45 invoices it
 must not pay (CHF 138,781); with the harness 7 (CHF 26,771), 2 (CHF 9,290) with two lessons
-promoted to hard checks, and **1 (CHF 4,640)** with a risk-score second look, with no legitimate payment
-missed (the last two steps were added after seeing test results; see the report). Sixteen attack types on
-the agent's identity and authority, each replayed for the 34 paid invoices: 544 / 544 blocked,
-34 / 34 legitimate requests accepted (attacks we wrote, not a security audit).
+promoted to hard checks, 1 with a check that the IBAN and total are written in the invoice, and **0** with
+a risk-score second look, with no legitimate payment missed (the last three steps were added after seeing
+results; see the report). Sixteen attack types on the agent's identity and authority, each replayed for the
+33 paid invoices: 528 / 528 blocked, 33 / 33 legitimate requests accepted (attacks we wrote, not a security
+audit).
 A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) gives every
 invoice a fraud probability. An invoice the harness would pay goes to a human instead when its score is
-50 or more (second look); the score does not set the queue order (fraud signal first, then days to spare
+25 or more (second look; threshold chosen on the study's tune set); the score does not set the queue order (fraud signal first, then days to spare
 before the due date, then amount). ROC AUC 0.970 for fraud on the 78 test invoices (unsupervised baseline
 0.878); it scores the pressure-fraud invoice the rules and Apertus let through at 99.9, so the second look
 holds it, and it held no legitimate invoice on the test set or the holdout.
@@ -48,7 +49,15 @@ and ran everything once (Apertus responses recorded live on 2026-10-09): Apertus
 invoices it must not pay (CHF 42,076); the production harness 0 of 25, with all 17 legitimate invoices
 paid; the frozen risk score reached fraud ROC AUC 0.984. Same generator, so this guards against tuning on
 the test set, not against new kinds of invoices; 42 cases is small. The second look was added after
-this run (on the holdout it changes no decision), so it has no blind evidence yet. `results/holdout.md`.
+this run (on the holdout it changes no decision). `results/holdout.md`.
+
+**1,000 new invoices, run once (the blind test).** Wider than the test set: four layouts (incl. e-mail and
+Swiss QR-bill), two problems on one invoice, unreadable fields. A separate 500-invoice tune set chose the
+second-look threshold (25) by a rule fixed in advance; after it we added the grounding check (disclosed).
+Then the final 1,000 ran once, live: Apertus alone paid 337 of 600 invoices it must not pay
+(CHF 1,150,174); the production harness **29 (4.8%, 95% CI 3.4–6.9%; CHF 70,500)**, all of them invoices
+without an invoice number (Apertus filled in the payment reference or the word "INVOICE"), and held 5.2% of
+legitimate invoices for a human. `results/study/final.json`.
 
 Payment files: our own check is structural (counts, control sum, IBAN checksums, positive amounts); an
 external review validated the reference files against the official SIX pain.001.001.09 schema. Bank-specific
