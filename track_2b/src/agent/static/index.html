@@ -1,240 +1,385 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Treuhand Payment Agents</title>
 <style>
-:root { --bg:#f5f6f8; --card:#fff; --ink:#1b1f24; --mute:#5b6470; --line:#dde1e6; --acc:#c8102e;
-        --ok:#1a7f37; --warn:#9a6700; --bad:#cf222e; --chip:#eef1f4; --heat:200,16,46; }
-@media (prefers-color-scheme: dark) { :root { --bg:#0f1216; --card:#171b21; --ink:#e6e9ed; --mute:#98a1ad;
-        --line:#2a3039; --acc:#ff4d61; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --chip:#222831; --heat:255,77,97; } }
+:root { color-scheme: light;
+  --bg:#f9f9f7; --card:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --mute:#898781; --line:#e1e0d9; --axis:#c3c2b7;
+  --acc:#c8102e; --chip:#efeee9; --side:#f2f1ed;
+  --s-control:#2a78d6; --s-fraud:#eb6834;
+  --st-good:#0ca30c; --st-warn:#fab219; --st-crit:#d03b3b;
+  --t-good:#006300; --t-warn:#8a5a00; --t-crit:#b42323; --heat:42,120,214; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) { color-scheme: dark;
+  --bg:#0d0d0d; --card:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --mute:#898781; --line:#2c2c2a; --axis:#383835;
+  --acc:#ff4d61; --chip:#262624; --side:#141413; --s-control:#3987e5; --s-fraud:#d95926;
+  --t-good:#0ca30c; --t-warn:#fab219; --t-crit:#e66767; --heat:57,135,229; } }
+:root[data-theme="dark"] { color-scheme: dark;
+  --bg:#0d0d0d; --card:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --mute:#898781; --line:#2c2c2a; --axis:#383835;
+  --acc:#ff4d61; --chip:#262624; --side:#141413; --s-control:#3987e5; --s-fraud:#d95926;
+  --t-good:#0ca30c; --t-warn:#fab219; --t-crit:#e66767; --heat:57,135,229; }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+body { margin:0; background:var(--bg); color:var(--ink); font:14.5px/1.5 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif; }
 a { color:inherit; }
-header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
-         padding:12px 16px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; z-index:2; }
-header h1 { font-size:17px; margin:0; } header h1 .mark { color:var(--acc); }
-.top { display:flex; gap:4px; flex-wrap:wrap; }
-.top a, .tabs a { text-decoration:none; color:var(--mute); padding:6px 12px; border-radius:6px; }
-.top a.on, .tabs a.on { background:var(--chip); color:var(--ink); font-weight:600; }
+.app { display:grid; grid-template-columns:236px 1fr; min-height:100vh; }
+aside { background:var(--side); border-right:1px solid var(--line); padding:14px 10px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+aside .brand { font-weight:700; font-size:15px; padding:2px 8px 12px; } aside .brand i { color:var(--acc); font-style:normal; }
+aside .sec { color:var(--mute); font-size:11.5px; letter-spacing:.04em; padding:12px 8px 4px; }
+aside a { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:6px; text-decoration:none; color:var(--ink2); font-size:14px; }
+aside a:hover { background:var(--chip); } aside a.on { background:var(--card); color:var(--ink); font-weight:600; box-shadow:0 0 0 1px var(--line); }
+aside a .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dot { width:8px; height:8px; border-radius:50%; flex:none; display:inline-block; }
+.badge { font-size:11px; background:var(--chip); color:var(--ink2); border-radius:99px; padding:0 7px; }
+aside .foot { padding:12px 8px; color:var(--mute); font-size:12px; }
+main { padding:20px 24px; max-width:1220px; width:100%; }
 .meta { color:var(--mute); font-size:12.5px; }
-main { max-width:1180px; margin:0 auto; padding:16px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; overflow-x:auto; }
-h2 { font-size:16px; margin:0 0 8px; } h3 { font-size:14px; margin:14px 0 6px; }
-table { border-collapse:collapse; width:100%; font-size:13.5px; }
+h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:0 0 4px; } h3 { font-size:13.5px; margin:12px 0 6px; }
+.sub { color:var(--ink2); font-size:13px; margin:0 0 12px; }
+table { border-collapse:collapse; width:100%; font-size:13px; }
 th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-th { color:var(--mute); font-weight:600; } td.n, th.n { font-variant-numeric:tabular-nums; text-align:right; }
-.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; background:var(--chip); white-space:nowrap; }
-.pay, .ok { color:var(--ok); } .escalate, .warn { color:var(--warn); } .reject, .bad { color:var(--bad); }
+th { color:var(--ink2); font-weight:600; } .n { font-variant-numeric:tabular-nums; text-align:right; }
+.pill { display:inline-flex; align-items:center; gap:5px; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; background:var(--chip); white-space:nowrap; }
+.pill::before { content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
+.ok, .pay { color:var(--t-good); } .warn, .escalate { color:var(--t-warn); } .bad, .reject { color:var(--t-crit); }
 .mute { color:var(--mute); } code { font-size:12px; }
 pre { white-space:pre-wrap; background:var(--chip); padding:10px; border-radius:6px; font-size:12.5px; margin:8px 0; }
-textarea, input, select { font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px; }
-textarea { width:100%; min-height:200px; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
+textarea, input { font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px; }
+textarea { width:100%; min-height:190px; font-family:ui-monospace,Consolas,monospace; font-size:13px; }
 .btn { border:1px solid var(--line); background:var(--chip); color:var(--ink); border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; }
-.btn.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
-.btn:disabled { opacity:.5; cursor:default; }
+.btn.primary { background:var(--acc); border-color:var(--acc); color:#fff; } .btn:disabled { opacity:.45; cursor:default; }
 .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; }
 .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
-.kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
-.kpi b { display:block; font-size:20px; white-space:nowrap; } .kpi small { color:var(--mute); }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-bottom:16px; }
-.client { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; text-decoration:none; display:block; }
-.client:hover { border-color:var(--acc); }
-.client.off { opacity:.6; }
-.client h3 { margin:0; font-size:15px; }
-.bar { height:8px; background:var(--chip); border-radius:99px; overflow:hidden; margin:6px 0 2px; }
-.bar i { display:block; height:100%; background:var(--ok); }
-.chips { display:flex; gap:4px; flex-wrap:wrap; margin-top:8px; }
-.chip { font-size:11.5px; padding:1px 7px; border-radius:99px; background:var(--chip); }
-.chip.fraud { color:var(--bad); } .chip.control { color:var(--warn); }
-.tabs { display:flex; gap:4px; flex-wrap:wrap; margin:8px 0 16px; border-bottom:1px solid var(--line); padding-bottom:8px; }
-.heat td.n { min-width:52px; }
-.two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media (max-width:760px) { .two { grid-template-columns:1fr; } }
+.kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.kpi small { color:var(--ink2); font-size:12.5px; } .kpi b { display:block; font-size:22px; font-weight:650; white-space:nowrap; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.tabs { display:flex; gap:4px; flex-wrap:wrap; margin:12px 0 16px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+.tabs a { text-decoration:none; color:var(--ink2); padding:6px 12px; border-radius:6px; } .tabs a.on { background:var(--chip); color:var(--ink); font-weight:600; }
+details.more { margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
+details.more > summary { cursor:pointer; color:var(--ink2); font-weight:600; font-size:13.5px; list-style:none; }
+details.more > summary::before { content:"▸ "; } details.more[open] > summary::before { content:"▾ "; }
+details.more > summary::-webkit-details-marker { display:none; }
+details.more > div { margin-top:10px; overflow-x:auto; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:0 0 10px; }
+.legend span { display:inline-flex; align-items:center; gap:6px; } .legend i { width:10px; height:10px; border-radius:2px; display:inline-block; }
+.bars { display:grid; grid-template-columns:minmax(110px,max-content) 1fr minmax(64px,max-content); gap:7px 10px; align-items:center; }
+.bars .lb { font-size:13px; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+.bars .lb a { text-decoration:none; } .bars .lb a:hover { text-decoration:underline; }
+.bars .vl { font-size:12.5px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+.track { position:relative; height:16px; display:flex; gap:2px; border-left:1px solid var(--axis); }
+.seg { height:100%; min-width:0; } .seg:last-child { border-radius:0 4px 4px 0; } .seg:hover { filter:brightness(1.12); }
+.bullet { position:relative; height:14px; background:var(--chip); border-radius:0 4px 4px 0; border-left:1px solid var(--axis); min-width:80px; }
+.bullet .fill { position:absolute; left:0; top:3px; bottom:3px; border-radius:0 3px 3px 0; background:var(--s-control); }
+/* status board */
+.board { display:grid; grid-template-columns:minmax(170px,1.5fr) 112px 84px 1.2fr 1.1fr 140px; gap:0; font-size:13px; }
+.board > div { padding:9px 8px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; min-width:0; }
+.board .hd { color:var(--ink2); font-weight:600; font-size:12.5px; }
+.board a.cl { text-decoration:none; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.board a.cl:hover { text-decoration:underline; }
+.mini { display:flex; gap:2px; height:12px; flex:1; min-width:60px; }
+.mini i { display:block; height:100%; } .mini i:last-child { border-radius:0 3px 3px 0; }
+.heat td.n { min-width:54px; }
+.pair { display:flex; flex-direction:column; gap:2px; border-left:1px solid var(--axis); }
+.pair i { display:block; height:7px; border-radius:0 3px 3px 0; }
+#tip { position:fixed; pointer-events:none; z-index:10; background:var(--card); color:var(--ink); border:1px solid var(--line);
+       border-radius:6px; padding:6px 9px; font-size:12.5px; box-shadow:0 4px 14px rgba(0,0,0,.12); display:none; max-width:300px; }
+@media (max-width:900px) { .app { grid-template-columns:1fr; } aside { position:static; height:auto; display:flex; flex-wrap:wrap; gap:4px; }
+  aside .sec, aside .foot { display:none; } aside a { flex:none; } .grid2 { grid-template-columns:1fr; } main { padding:16px; }
+  .board { grid-template-columns:1.5fr 1fr 1fr; } .board .opt { display:none; } }
 </style>
 </head>
 <body>
-<header>
-  <h1><span class="mark">■</span> <span id="firm">Treuhand</span> <span class="meta">— payment agents</span></h1>
-  <nav class="top" id="top"></nav>
-  <div class="meta" id="meta"></div>
-</header>
-<main id="main"></main>
+<div class="app"><aside id="side"></aside><main id="main"></main></div>
+<div id="tip"></div>
 <script>
+// ---------------------------------------------------------------- language
+let LANG = (() => { try { return localStorage.getItem("lang") || "ko"; } catch (e) { return "ko"; } })();
+const t = (ko, en) => LANG === "ko" ? ko : en;
+function setLang(l) { LANG = l; try { localStorage.setItem("lang", l); } catch (e) {} document.documentElement.lang = l; route(); }
+const RISK_KO = {E_IBAN_CHANGED: "계좌 변경", R_IBAN_INVALID: "잘못된 IBAN", R_DUPLICATE: "중복 청구", E_VAT_MISMATCH: "금액 합계 불일치",
+  E_WRONG_ADDRESSEE: "다른 회사 앞 청구서", MODEL_FLAGGED: "Apertus 검토 경고 (재촉·비밀 요구 등)", E_NEW_VENDOR: "새 거래처",
+  E_LIMIT_SINGLE: "건당 한도 초과", E_LIMIT_MONTH: "월 한도 초과", R_SCOPE: "위임 범위 밖", R_REVOKED: "위임 취소",
+  CREDENTIAL_INVALID: "위임장 서명 무효", E_PRESSURE: "사기성 재촉 문구", EXTRACTION_INCOMPLETE: "청구서 판독 실패", CATEGORY_UNCLEAR: "지출 유형 불명"};
+const GATE_KO = {OK: "통과", G1_SIGNATURE_INVALID: "서명 위조", G1_PAYLOAD_TAMPERED: "서명 후 내용 변조", G2_REPLAY: "재탕 요청",
+  G2_STALE: "오래된 요청", G3_NO_VALID_ENTITY_CARD: "등록되지 않은 에이전트", G3_AGENT_REVOKED: "정지된 에이전트",
+  G3_NO_AGENT_FOR_CLIENT: "담당 에이전트 없음", G4_NO_VALID_BADGE: "배지 없음", G4_BADGE_EXPIRED: "배지 만료",
+  G4_ACTION_NOT_ALLOWED: "허용되지 않은 행동", G4_CLIENT_NOT_COVERED: "담당 고객사 아님", G4_ABOVE_BADGE_CAP_NO_GRANT: "상한 초과 (사람 승인 없음)",
+  G5_MANDATE_INVALID: "위임장 무효", G5_MANDATE_REVOKED: "위임 취소됨", G5_MANDATE_EXPIRED: "위임 만료"};
+const ACTION_KO = {"ledger.opened": "장부 개설", "mandate.registered": "위임장 등록", "identity.issued": "사원증 발급", "delegation.issued": "배지 발급",
+  "policy.changed": "매뉴얼 지정", "manual.published": "매뉴얼 발행", "payment.decide": "지급 판단", "payment.file": "지급 파일 생성",
+  "request.rejected": "요청 거부", "agent.revoked": "에이전트 정지", "consent.granted": "사람 승인", "consent.denied": "사람 거절", "mandate.revoked": "위임 취소"};
+const ATTACK_KO = {"legitimate request (control)": "정상 요청 (대조군)", "forged signature": "서명 위조", "tampered amount / IBAN after signing": "서명 후 금액·IBAN 변조",
+  "replayed request": "재탕 요청", "stale request (1 h old)": "오래된 요청 (1시간 전)", "unknown agent key": "모르는 에이전트 키",
+  "revoked agent (v1 after kill switch)": "정지된 에이전트 (긴급 정지 후 v1)", "agent of one client acting for another client": "다른 고객사 일을 하려는 에이전트",
+  "amount above badge cap, no human grant": "상한 초과 금액 (사람 승인 없음)", "expired badge": "만료된 배지", "mandate limits tampered": "위임장 한도 변조",
+  "mandate delegated to someone else": "다른 곳에 위임된 위임장", "mandate revoked by client": "고객이 취소한 위임장"};
+const EXTRACT_KO = {iban: "IBAN", total_chf: "합계 금액", invoice_no: "청구서 번호", vendor: "거래처", addressee: "수신인", parsed: "올바른 JSON"};
+const EXTRACT_EN = {iban: "IBAN", total_chf: "total amount", invoice_no: "invoice number", vendor: "supplier", addressee: "addressee", parsed: "valid JSON"};
+const DEC_KO = {pay: "지급", escalate: "보류", reject: "거절"};
+const riskName = (code, en) => t(RISK_KO[code] || en || code, en || code);
+const gateName = g => LANG === "ko" && GATE_KO[g] ? `${GATE_KO[g]}` : g;
+const actName = a => LANG === "ko" ? (ACTION_KO[a] || a) : a;
+const decName = d => LANG === "ko" ? (DEC_KO[d] || d) : d;
+const kindName = k => k === "fraud" ? t("사기 신호", "fraud signal") : t("통제·한도", "control limit");
+
+// ---------------------------------------------------------------- helpers
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
 const chf0 = x => x == null ? "–" : Number(x).toLocaleString("de-CH",{maximumFractionDigits:0});
 const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
-const dec = d => `<span class="pill ${esc(d)}">${esc(d)}</span>`;
+const dec = d => `<span class="pill ${esc(d)}">${esc(decName(d))}</span>`;
 async function api(path, opts) {
   const r = await fetch(path, opts); const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.detail || r.statusText); return j;
 }
 const post = (path, body) => api(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})});
-const RISK_ORDER = ["E_IBAN_CHANGED","R_IBAN_INVALID","R_DUPLICATE","E_VAT_MISMATCH","E_WRONG_ADDRESSEE","MODEL_FLAGGED",
-                    "E_NEW_VENDOR","E_LIMIT_SINGLE","E_LIMIT_MONTH","R_SCOPE"];
+const C = {paid:"var(--st-good)", escalated:"var(--st-warn)", rejected:"var(--st-crit)", fraud:"var(--s-fraud)", control:"var(--s-control)"};
+const decisionLegend = () => [[t("지급", "paid"), C.paid], [t("보류 (사람 확인)", "held for a human"), C.escalated], [t("거절", "rejected"), C.rejected]];
+const riskLegend = () => [[t("사기 신호", "fraud signal"), C.fraud], [t("통제·한도", "control limit"), C.control]];
+const legend = items => `<div class="legend">${items.map(([l, c]) => `<span><i style="background:${c}"></i>${esc(l)}</span>`).join("")}</div>`;
+const more = (summary, html, open = false) => `<details class="more" ${open ? "open" : ""}><summary>${esc(summary)}</summary><div>${html}</div></details>`;
+function stacked(rows, fmt = x => x) {  // one shared scale so rows compare
+  const max = Math.max(1, ...rows.map(r => r.parts.reduce((s, p) => s + p.v, 0)));
+  return `<div class="bars">${rows.map(r => { const tot = r.parts.reduce((s, p) => s + p.v, 0);
+    return `<div class="lb">${r.href ? `<a href="${r.href}">${esc(r.label)}</a>` : esc(r.label)}</div>
+      <div class="track">${r.parts.filter(p => p.v > 0).map(p => `<div class="seg" style="width:${100 * p.v / max}%;background:${p.color}"
+        data-tip="${esc(`${r.label} · ${p.name}: ${fmt(p.v)}`)}"></div>`).join("")}</div>
+      <div class="vl">${r.value ?? fmt(tot)}</div>`; }).join("")}</div>`;
+}
+const bars = (rows, opts = {}) => stacked(rows.map(r => ({label: r.label, href: r.href, value: r.value ?? (opts.fmt || (x => x))(r.v),
+  parts: [{v: r.v, color: r.color || opts.color || C.control, name: r.tip || ""}]})), opts.fmt || (x => x));
+function scaled(rows, max, opts = {}) {
+  return `<div class="bars">${rows.map(r => `<div class="lb">${esc(r.label)}</div>
+    <div class="track"><div class="seg" style="width:${100 * Math.max(0, r.v) / max}%;background:${r.color || opts.color || C.control}"
+      data-tip="${esc(`${r.label}: ${r.value ?? r.v}`)}"></div></div><div class="vl">${r.value ?? r.v}</div>`).join("")}</div>`;
+}
+const bullet = (v, max, tip) => `<div class="bullet" style="flex:1" data-tip="${esc(tip)}"><div class="fill" style="width:${Math.min(100, 100 * v / max)}%"></div></div>`;
+document.addEventListener("mousemove", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]"), tip = $("tip");
+  if (!el) { tip.style.display = "none"; return; }
+  tip.textContent = el.dataset.tip; tip.style.display = "block";
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY + 14) + "px";
+});
 
-// ---------------------------------------------------------------- routing
-function route() {
+// ---------------------------------------------------------------- sidebar + routing
+let OV = null;
+const statusOf = c => c.mandate.revoked ? {k: "revoked", color: "var(--mute)", label: t("위임 취소", "mandate revoked")}
+  : !c.agent.active ? {k: "off", color: "var(--st-crit)", label: t("에이전트 정지", "agent off")}
+  : (c.fraud_signals > 0 || c.queue_open > 0) ? {k: "attention", color: "var(--st-warn)", label: t("확인 필요", "needs attention")}
+  : {k: "ok", color: "var(--st-good)", label: t("정상", "all clear")};
+async function sidebar(active) {
+  OV = await api("/api/overview");
+  $("side").innerHTML = `<div class="brand"><i>■</i> ${esc(OV.firm)}</div>
+    <a href="#/" class="${active === "overview" ? "on" : ""}"><span class="nm">${t("전체 현황", "Overview")}</span></a>
+    <div class="sec">${t("고객사", "CLIENTS")}</div>
+    ${OV.clients.map(c => { const s = statusOf(c); return `<a href="#/c/${c.client_id}" class="${active === c.client_id ? "on" : ""}" title="${esc(c.name)} · ${esc(s.label)}">
+      <span class="dot" style="background:${s.color}"></span><span class="nm">${esc(c.name)}</span>${c.queue_open ? `<span class="badge">${c.queue_open}</span>` : ""}</a>`; }).join("")}
+    <div class="sec">${t("사무소", "FIRM")}</div>
+    <a href="#/evaluation" class="${active === "evaluation" ? "on" : ""}"><span class="nm">${t("평가 결과", "Evaluation")}</span></a>
+    <a href="#/ledger" class="${active === "ledger" ? "on" : ""}"><span class="nm">${t("장부", "Ledger")}</span></a>
+    <div class="foot">${esc(OV.model)} · ${esc(OV.llm_mode)}<br>
+      <span class="dot" style="background:var(--st-good)"></span> ${t("정상", "clear")} &nbsp;<span class="dot" style="background:var(--st-warn)"></span> ${t("확인 필요", "attention")}<br>
+      <span class="dot" style="background:var(--st-crit)"></span> ${t("에이전트 정지", "agent off")} &nbsp;<span class="dot" style="background:var(--mute)"></span> ${t("위임 취소", "no mandate")}
+      <div class="row"><button class="btn" onclick="setLang('${LANG === "ko" ? "en" : "ko"}')">${LANG === "ko" ? "English" : "한국어"}</button></div></div>`;
+}
+async function route() {
   const h = location.hash.replace(/^#\/?/, "").split("/");
-  document.querySelectorAll(".top a").forEach(a => a.classList.toggle("on", a.dataset.r === (h[0] === "c" ? "" : h[0] || "")));
+  await sidebar(h[0] === "c" ? h[1] : h[0] || "overview");
   if (h[0] === "c") return clientPage(h[1], h[2] || "overview");
   if (h[0] === "evaluation") return evaluation();
   if (h[0] === "ledger") return ledgerPage();
   return dashboard();
 }
-$("top").innerHTML = [["", "Clients"], ["evaluation", "Evaluation"], ["ledger", "Ledger"]]
-  .map(([r, t]) => `<a href="#/${r}" data-r="${r}">${t}</a>`).join("");
 window.addEventListener("hashchange", route);
 
-// ---------------------------------------------------------------- dashboard
-async function dashboard() {
-  const o = await api("/api/overview");
-  $("firm").textContent = o.firm; $("meta").textContent = `${o.model} · ${o.llm_mode}`;
-  const t = o.totals, active = o.clients.filter(c => !c.mandate.revoked);
-  const codes = RISK_ORDER.filter(c => o.risk_totals[c]);
-  const max = Math.max(1, ...o.clients.flatMap(c => codes.map(k => c.risks[k]?.count || 0)));
-  $("main").innerHTML = `
-  <div class="kpis">
-    <div class="kpi"><small>Clients (active)</small><b>${o.clients.length} (${active.length})</b></div>
-    <div class="kpi"><small>Invoices processed</small><b>${t.invoices}</b></div>
-    <div class="kpi"><small>Paid automatically</small><b class="ok">CHF ${chf0(t.paid_chf)}</b><small>${t.paid} invoices</small></div>
-    <div class="kpi"><small>Held back</small><b class="warn">CHF ${chf0(t.held_chf)}</b><small>${t.escalated} escalated · ${t.rejected} rejected</small></div>
-    <div class="kpi"><small>Fraud signals detected</small><b class="bad">${t.fraud_signals}</b></div>
-    <div class="kpi"><small>Waiting for a human</small><b>${t.queue_open}</b></div>
-    <div class="kpi"><small>Refused by the gate</small><b>${t.gate_rejections}</b></div>
-    <div class="kpi"><small>Ledger</small><b class="${o.ledger_ok && o.audit_ok ? "ok" : "bad"}">${o.ledger_ok && o.audit_ok ? "verified" : "BROKEN"}</b><small>signatures + identity audit</small></div>
-  </div>
-  <h2>Clients</h2>
-  <div class="grid">${o.clients.map(clientCard).join("")}</div>
-  <div class="card heat"><h2>Risk signals by client</h2>
-    <p class="mute">What the agents held back, by signal. Red = fraud signal, amber = control limit. Counted from the signed ledger.</p>
-    <table><tr><th>Signal</th>${o.clients.map(c => `<th class="n"><a href="#/c/${c.client_id}">${c.client_id}</a></th>`).join("")}<th class="n">Total</th></tr>
-    ${codes.map(k => `<tr><td class="${o.risk_totals[k].kind === "fraud" ? "bad" : "warn"}">${esc(o.risk_totals[k].label)}</td>
-      ${o.clients.map(c => { const n = c.risks[k]?.count || 0;
-        return `<td class="n" style="background:rgba(var(--heat),${n ? .12 + .5 * n / max : 0})">${n || ""}</td>`; }).join("")}
-      <td class="n"><b>${o.risk_totals[k].count}</b></td></tr>`).join("")}</table></div>`;
+// ---------------------------------------------------------------- overview
+const riskSum = (c, k) => Object.values(c.risks).filter(r => r.kind === k).reduce((s, r) => s + r.count, 0);
+const decisionParts = c => [{v: c.paid, color: C.paid, name: t("지급", "paid")}, {v: c.escalated, color: C.escalated, name: t("보류", "held")},
+                            {v: c.rejected, color: C.rejected, name: t("거절", "rejected")}];
+function topRisk(c) {
+  const e = Object.entries(c.risks).sort((a, b) => (b[1].kind === "fraud") - (a[1].kind === "fraud") || b[1].count - a[1].count)[0];
+  return e ? `<span class="${e[1].kind === "fraud" ? "bad" : "warn"}">${esc(riskName(e[0], e[1].label))} ${e[1].count}</span>` : `<span class="mute">–</span>`;
 }
-function clientCard(c) {
-  const pct = Math.min(100, Math.round(100 * c.paid_chf / c.mandate.monthly_limit_chf));
-  const top = Object.entries(c.risks).sort((a, b) => b[1].count - a[1].count).slice(0, 4);
-  return `<a class="client ${c.mandate.revoked ? "off" : ""}" href="#/c/${c.client_id}">
-    <div class="row" style="justify-content:space-between;margin:0"><h3>${esc(c.name)}</h3>
-      ${c.mandate.revoked ? `<span class="pill bad">mandate revoked</span>` : c.agent.active ? `<span class="pill ok">agent v${c.agent.generation}</span>` : `<span class="pill bad">agent off</span>`}</div>
-    <div class="meta">${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()}</div>
-    ${c.mandate.revoked ? `<p class="mute">No agent works for this client. ${c.gate_rejections} requests refused.</p>` : `
-    <div class="bar"><i style="width:${pct}%"></i></div>
-    <div class="meta">Paid CHF ${chf0(c.paid_chf)} of CHF ${chf0(c.mandate.monthly_limit_chf)} monthly limit</div>
-    <div class="row" style="margin-top:6px;font-size:13px"><span class="ok">${c.paid} paid</span> · <span class="warn">${c.escalated} held</span> · <span class="bad">${c.rejected} rejected</span> · ${c.queue_open} waiting</div>`}
-    <div class="chips">${top.map(([k, r]) => `<span class="chip ${r.kind}">${esc(r.label)} ${r.count}</span>`).join("")}</div></a>`;
+function statusBoard(o) {
+  const maxR = Math.max(1, ...o.clients.map(c => riskSum(c, "fraud") + riskSum(c, "control")));
+  return `<div class="board">
+    <div class="hd">${t("고객사", "Client")}</div><div class="hd">${t("상태", "Status")}</div><div class="hd">${t("승인 대기", "Waiting")}</div>
+    <div class="hd opt">${t("이달 지급 / 월 한도", "Paid / monthly limit")}</div><div class="hd">${t("위험 신호 (사기 · 통제)", "Risk signals (fraud · control)")}</div><div class="hd opt">${t("가장 큰 위험", "Top risk")}</div>
+    ${o.clients.map(c => { const s = statusOf(c), f = riskSum(c, "fraud"), k = riskSum(c, "control");
+      return `<div><span class="dot" style="background:${s.color}"></span><a class="cl" href="#/c/${c.client_id}">${esc(c.name)}</a></div>
+      <div><span class="pill" style="color:${s.color === "var(--mute)" ? "var(--mute)" : s.k === "ok" ? "var(--t-good)" : s.k === "attention" ? "var(--t-warn)" : "var(--t-crit)"}">${esc(s.label)}</span></div>
+      <div>${c.queue_open ? `<b>${c.queue_open}</b> ${t("건", "")}` : `<span class="mute">0</span>`}</div>
+      <div class="opt">${c.mandate.revoked ? `<span class="mute">${t("위임 취소됨", "revoked")}</span>` :
+        `${bullet(c.paid_chf, c.mandate.monthly_limit_chf, `CHF ${chf0(c.paid_chf)} / ${chf0(c.mandate.monthly_limit_chf)}`)}<span class="meta">${Math.round(100 * c.paid_chf / c.mandate.monthly_limit_chf)}%</span>`}</div>
+      <div><div class="mini" data-tip="${esc(`${t("사기 신호", "fraud")} ${f} · ${t("통제·한도", "control")} ${k}`)}">
+          ${f ? `<i style="width:${100 * f / maxR}%;background:${C.fraud}"></i>` : ""}${k ? `<i style="width:${100 * k / maxR}%;background:${C.control}"></i>` : ""}</div>
+        <span class="meta" style="white-space:nowrap">${f} · ${k}</span></div>
+      <div class="opt" style="font-size:12px">${topRisk(c)}</div>`; }).join("")}</div>`;
+}
+async function dashboard() {
+  const o = OV, tt = o.totals, active = o.clients.filter(c => !c.mandate.revoked);
+  const attention = o.clients.filter(c => ["attention", "off"].includes(statusOf(c).k)).length;
+  $("main").innerHTML = `<h1>${t("전체 현황", "Overview")}</h1>
+  <p class="sub">${t(`고객사 ${o.clients.length}곳 · 위임 활성 ${active.length}곳 · 모든 수치는 서명된 장부에서 계산`, `${o.clients.length} clients · ${active.length} with an active mandate · computed from the signed ledger`)}</p>
+  <div class="kpis">
+    <div class="kpi"><small>${t("확인이 필요한 고객사", "Clients needing attention")}</small><b class="${attention ? "warn" : "ok"}">${attention} / ${o.clients.length}</b></div>
+    <div class="kpi"><small>${t("승인 대기", "Waiting for a human")}</small><b>${tt.queue_open}</b></div>
+    <div class="kpi"><small>${t("사기 신호", "Fraud signals")}</small><b class="bad">${tt.fraud_signals}</b></div>
+    <div class="kpi"><small>${t("보류한 금액", "Held back")}</small><b>CHF ${chf0(tt.held_chf)}</b></div>
+    <div class="kpi"><small>${t("자동 지급", "Paid automatically")}</small><b>CHF ${chf0(tt.paid_chf)}</b></div>
+    <div class="kpi"><small>${t("장부", "Ledger")}</small><b class="${o.ledger_ok && o.audit_ok ? "ok" : "bad"}">${o.ledger_ok && o.audit_ok ? t("검증됨", "verified") : t("손상", "broken")}</b></div>
+  </div>
+  <div class="card"><h2>${t("고객사 현황판", "Client status board")}</h2><p class="sub">${t("고객사마다 지금 상태와 위험을 한 줄로. 이름을 누르면 상세 화면으로 가요.", "Each client's state and risk at a glance. Click a name for details.")}</p>
+    ${statusBoard(o)}${legend(riskLegend())}</div>
+  <div class="grid2">
+    <div class="card"><h2>${t("고객사별 처리 결과", "Decisions by client")}</h2><p class="sub">${t("각 고객사 에이전트가 청구서를 어떻게 처리했는지.", "What each client's agent did with its invoices.")}</p>${legend(decisionLegend())}
+      ${stacked(o.clients.map(c => ({label: c.name, href: `#/c/${c.client_id}`, parts: decisionParts(c), value: c.mandate.revoked ? t("위임 없음", "no mandate") : undefined})))}</div>
+    <div class="card"><h2>${t("위험 신호 유형", "Risk signals by type")}</h2><p class="sub">${t("전체 고객사에서 청구서를 막은 이유.", "Why invoices were held back, across all clients.")}</p>${legend(riskLegend())}
+      ${bars(Object.entries(o.risk_totals).map(([k, r]) => ({label: riskName(k, r.label), v: r.count, color: C[r.kind], tip: kindName(r.kind)})))}</div>
+  </div>
+  <div class="card"><h2>${t("상세", "Details")}</h2>
+    ${more(t("고객사 요약 표", "Client summary table"), `<table><tr><th>${t("고객사", "Client")}</th><th>${t("상태", "Status")}</th><th class="n">${t("처리", "Invoices")}</th><th class="n">${t("지급", "Paid")}</th><th class="n">${t("보류", "Held")}</th><th class="n">${t("거절", "Rejected")}</th><th class="n">${t("지급 CHF", "Paid CHF")}</th><th class="n">${t("보류 CHF", "Held CHF")}</th><th class="n">${t("승인 대기", "Waiting")}</th><th class="n">${t("문지기 거부", "Gate refused")}</th></tr>
+      ${o.clients.map(c => `<tr><td><a href="#/c/${c.client_id}">${esc(c.name)}</a></td><td>${esc(statusOf(c).label)}</td>
+        <td class="n">${c.invoices}</td><td class="n">${c.paid}</td><td class="n">${c.escalated}</td><td class="n">${c.rejected}</td><td class="n">${chf0(c.paid_chf)}</td><td class="n">${chf0(c.held_chf)}</td><td class="n">${c.queue_open}</td><td class="n">${c.gate_rejections}</td></tr>`).join("")}</table>`)}
+    ${more(t("고객사 × 위험 신호 (히트맵 표)", "Risk signals by client and type (heat table)"), heatTable(o))}</div>`;
+}
+function heatTable(o) {
+  const codes = Object.keys(o.risk_totals);
+  const max = Math.max(1, ...o.clients.flatMap(c => codes.map(k => c.risks[k]?.count || 0)));
+  return `<table class="heat"><tr><th>${t("신호", "Signal")}</th><th>${t("종류", "Kind")}</th>${o.clients.map(c => `<th class="n">${c.client_id}</th>`).join("")}<th class="n">${t("합계", "Total")}</th></tr>
+    ${codes.map(k => `<tr><td>${esc(riskName(k, o.risk_totals[k].label))}</td><td class="mute">${esc(kindName(o.risk_totals[k].kind))}</td>${o.clients.map(c => { const n = c.risks[k]?.count || 0;
+      return `<td class="n" style="background:rgba(var(--heat),${n ? .12 + .55 * n / max : 0})">${n || ""}</td>`; }).join("")}<td class="n"><b>${o.risk_totals[k].count}</b></td></tr>`).join("")}</table>`;
 }
 
 // ---------------------------------------------------------------- client page
-const CTABS = [["overview","Overview"],["invoices","Invoices & decisions"],["queue","Approvals"],["agent","Agent settings"],["files","Payment files"],["ledger","Ledger"]];
+const ctabs = () => [["overview", t("현황", "Overview")], ["invoices", t("청구서", "Invoices")], ["queue", t("승인", "Approvals")],
+  ["agent", t("에이전트 설정", "Agent settings")], ["files", t("지급 파일", "Payment files")], ["ledger", t("장부", "Ledger")]];
 async function clientPage(cid, tab) {
   const c = await api(`/api/clients/${cid}`);
-  const status = c.mandate.revoked ? `<span class="pill bad">mandate revoked ${esc(c.mandate.revoked_at)}</span>`
-    : c.agent.active ? `<span class="pill ok">agent ${esc(c.agent.seat)} v${c.agent.generation} active</span>` : `<span class="pill bad">agent switched off</span>`;
+  const status = c.mandate.revoked ? `<span class="pill bad">${t("위임 취소", "mandate revoked")} ${esc(c.mandate.revoked_at)}</span>`
+    : c.agent.active ? `<span class="pill ok">${t("에이전트", "agent")} ${esc(c.agent.seat)} v${c.agent.generation}</span>` : `<span class="pill bad">${t("에이전트 정지", "agent switched off")}</span>`;
   const body = ({overview: cOverview, invoices: cInvoices, queue: cQueue, agent: cAgent, files: cFiles, ledger: cLedger}[tab] || cOverview)(c);
-  $("main").innerHTML = `<p class="meta"><a href="#/">← all clients</a></p>
-    <div class="row" style="justify-content:space-between;margin:0 0 4px"><h2 style="font-size:20px;margin:0">${esc(c.name)}</h2>${status}</div>
-    <div class="meta">${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()} · client DID <code>${short(c.mandate.client_did)}</code></div>
-    <nav class="tabs">${CTABS.map(([k, t]) => `<a href="#/c/${cid}/${k}" class="${k === tab ? "on" : ""}">${t}${k === "queue" && c.queue_open ? ` (${c.queue_open})` : ""}</a>`).join("")}</nav>
+  $("main").innerHTML = `<div class="row" style="justify-content:space-between;margin:0"><h1>${esc(c.name)}</h1>${status}</div>
+    <div class="meta">${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()} · ${t("고객 DID", "client DID")} <code>${short(c.mandate.client_did)}</code></div>
+    <nav class="tabs">${ctabs().map(([k, n]) => `<a href="#/c/${cid}/${k}" class="${k === tab ? "on" : ""}">${n}${k === "queue" && c.queue_open ? ` (${c.queue_open})` : ""}</a>`).join("")}</nav>
     ${body}`;
   if (tab === "invoices" && $("ptext")) $("ptext").value = SAMPLES[cid] || "";
 }
 function cOverview(c) {
   const risks = Object.entries(c.risks);
+  const dsum = d => c.decisions.filter(e => e.decision === d && e.gate === "OK" && !e.grant_ref).reduce((s, e) => s + (e.amount_chf || 0), 0);
   return `<div class="kpis">
-    <div class="kpi"><small>Invoices processed</small><b>${c.invoices}</b></div>
-    <div class="kpi"><small>Paid automatically</small><b class="ok">CHF ${chf0(c.paid_chf)}</b><small>${c.paid} invoices</small></div>
-    <div class="kpi"><small>Held back</small><b class="warn">CHF ${chf0(c.held_chf)}</b><small>${c.escalated} escalated · ${c.rejected} rejected</small></div>
-    <div class="kpi"><small>Fraud signals</small><b class="bad">${c.fraud_signals}</b></div>
-    <div class="kpi"><small>Approved by a human</small><b>${c.approved_by_human}</b></div>
-    <div class="kpi"><small>Refused by the gate</small><b>${c.gate_rejections}</b></div></div>
-  <div class="two"><div class="card"><h2>Risk signals</h2>${risks.length ? `<table>${risks.map(([k, r]) =>
-      `<tr><td class="${r.kind === "fraud" ? "bad" : "warn"}">${esc(r.label)}</td><td class="mute">${r.kind}</td><td class="n"><b>${r.count}</b></td></tr>`).join("")}</table>` : `<p class="mute">none</p>`}</div>
-    <div class="card"><h2>Mandate (signed by the client)</h2><table>
-      <tr><th>Delegated expenses</th><td>${esc(c.mandate.allowed_categories.join(", "))}</td></tr>
-      <tr><th>Single / monthly limit</th><td>CHF ${chf0(c.mandate.single_limit_chf)} / ${chf0(c.mandate.monthly_limit_chf)}</td></tr>
-      <tr><th>Valid</th><td>${esc(c.mandate.valid_from)} – ${esc(c.mandate.valid_until)}</td></tr>
-      <tr><th>Client signature</th><td class="${c.mandate_ok ? "ok" : "bad"}">${c.mandate_ok ? "verified" : "INVALID"}</td></tr></table></div></div>
-  <div class="card"><h2>What the agent held back and why</h2>${riskTable(c.risky)}</div>`;
+    <div class="kpi"><small>${t("처리한 청구서", "Invoices processed")}</small><b>${c.invoices}</b></div>
+    <div class="kpi"><small>${t("자동 지급", "Paid automatically")}</small><b>CHF ${chf0(c.paid_chf)}</b><div class="meta">${c.paid} ${t("건", "invoices")}</div></div>
+    <div class="kpi"><small>${t("보류한 금액", "Held back")}</small><b>CHF ${chf0(c.held_chf)}</b><div class="meta">${t(`보류 ${c.escalated} · 거절 ${c.rejected}`, `${c.escalated} held · ${c.rejected} rejected`)}</div></div>
+    <div class="kpi"><small>${t("사기 신호", "Fraud signals")}</small><b class="bad">${c.fraud_signals}</b></div>
+    <div class="kpi"><small>${t("사람이 승인", "Approved by a human")}</small><b>${c.approved_by_human}</b></div>
+    <div class="kpi"><small>${t("문지기 거부", "Refused by the gate")}</small><b>${c.gate_rejections}</b></div></div>
+  <div class="grid2">
+    <div class="card"><h2>${t("결정별 금액", "Where the money went")}</h2><p class="sub">${t("결정별 CHF 합계.", "CHF by decision.")}</p>
+      ${bars([{label: t("지급", "paid"), v: dsum("pay"), color: C.paid}, {label: t("보류 (사람 확인)", "held for a human"), v: dsum("escalate"), color: C.escalated},
+              {label: t("거절", "rejected"), v: dsum("reject"), color: C.rejected}], {fmt: x => "CHF " + chf0(x)})}
+      <h3>${t("이달 지급 / 월 한도", "Paid vs monthly limit")}</h3>${c.mandate.revoked ? `<p class="mute">${t("위임 취소됨", "mandate revoked")}</p>` :
+        `<div class="row" style="margin:0">${bullet(c.paid_chf, c.mandate.monthly_limit_chf, `CHF ${chf0(c.paid_chf)} / ${chf0(c.mandate.monthly_limit_chf)}`)}
+         <span class="meta">CHF ${chf0(c.paid_chf)} / ${chf0(c.mandate.monthly_limit_chf)}</span></div>`}</div>
+    <div class="card"><h2>${t("위험 신호", "Risk signals")}</h2><p class="sub">${t("청구서를 막은 이유.", "Why invoices were held back.")}</p>${legend(riskLegend())}
+      ${risks.length ? bars(risks.map(([k, r]) => ({label: riskName(k, r.label), v: r.count, color: C[r.kind], tip: kindName(r.kind)}))) : `<p class="mute">${t("없음", "none")}</p>`}</div>
+  </div>
+  <div class="card"><h2>${t("상세", "Details")}</h2>
+    ${more(t(`에이전트가 막은 청구서와 이유 (${c.risky.length})`, `What the agent held back and why (${c.risky.length})`), riskTable(c.risky))}
+    ${more(t("고객이 서명한 위임장", "Mandate signed by the client"), `<table>
+      <tr><th>${t("맡긴 지출", "Delegated expenses")}</th><td>${esc(c.mandate.allowed_categories.join(", "))}</td></tr>
+      <tr><th>${t("건당 / 월 한도", "Single / monthly limit")}</th><td>CHF ${chf0(c.mandate.single_limit_chf)} / ${chf0(c.mandate.monthly_limit_chf)}</td></tr>
+      <tr><th>${t("유효 기간", "Valid")}</th><td>${esc(c.mandate.valid_from)} – ${esc(c.mandate.valid_until)}</td></tr>
+      <tr><th>${t("고객 서명", "Client signature")}</th><td class="${c.mandate_ok ? "ok" : "bad"}">${c.mandate_ok ? t("검증됨", "verified") : t("무효", "INVALID")}</td></tr></table>`)}</div>`;
 }
 function riskTable(rows) {
-  if (!rows.length) return `<p class="mute">nothing held back</p>`;
-  return `<table><tr><th>Case</th><th>Supplier</th><th class="n">CHF</th><th>Decision</th><th>Signals</th><th>Reason</th></tr>${rows.map(e =>
+  if (!rows.length) return `<p class="mute">${t("막은 청구서 없음", "nothing held back")}</p>`;
+  return `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("신호", "Signals")}</th><th>${t("이유", "Reason")}</th></tr>${rows.map(e =>
     `<tr><td>${esc(e.case_id)}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td><td>${dec(e.decision)}</td>
-     <td>${e.risk.map(r => `<span class="chip ${r.kind}">${esc(r.label)}</span>`).join(" ")}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table>`;
+     <td>${e.risk.map(r => `<span class="${r.kind === "fraud" ? "bad" : "warn"}">${esc(riskName(r.code, r.label))}</span>`).join("<br>")}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table>`;
 }
 function cInvoices(c) {
-  return `<div class="card"><h2>Process a new invoice</h2>
-    <p class="mute">Apertus reads it, the badge checks the mandate, Apertus reviews the content; the agent signs the decision and the gate checks the signature before it is recorded.</p>
+  const by = {}; c.decisions.forEach(e => { const k = e.gate !== "OK" ? "gate" : e.decision; by[k] = (by[k] || 0) + 1; });
+  const colors = {pay: C.paid, escalate: C.escalated, reject: C.rejected, gate: "var(--mute)"};
+  const label = k => k === "gate" ? t("문지기 거부", "refused by gate") : decName(k);
+  return `<div class="card"><h2>${t("새 청구서 처리", "Process a new invoice")}</h2>
+    <p class="sub">${t("Apertus가 읽고, 배지가 위임장을 확인하고, Apertus가 내용을 검토해요. 에이전트가 결정에 서명하면 문지기가 확인한 뒤 기록돼요.",
+      "Apertus reads it, the badge checks the mandate, Apertus reviews the content; the agent signs the decision and the gate checks it before it is recorded.")}</p>
     <textarea id="ptext"></textarea>
-    <div class="row"><button class="btn primary" onclick="processInvoice('${c.client_id}')" ${c.agent.active ? "" : "disabled"}>Run agent</button><span id="pstatus" class="mute"></span></div>
+    <div class="row"><button class="btn primary" onclick="processInvoice('${c.client_id}')" ${c.agent.active ? "" : "disabled"}>${t("에이전트 실행", "Run agent")}</button><span id="pstatus" class="mute"></span></div>
     <div id="presult"></div></div>
-  <div class="card"><h2>All decisions (${c.decisions.length})</h2><table>
-    <tr><th>#</th><th>Case</th><th>Supplier</th><th class="n">CHF</th><th>Decision</th><th>Checks</th><th>Gate</th><th>Reason</th></tr>
-    ${c.decisions.map(e => `<tr><td>${e.seq}</td><td>${esc(e.case_id)}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td>
-      <td>${e.decision ? dec(e.decision) : ""}</td><td class="mute">${esc((e.checks || []).join(", "))}</td>
-      <td class="${e.gate === "OK" ? "ok" : "bad"}">${esc(e.gate)}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table></div>`;
+  <div class="card"><h2>${t(`결정 (${c.decisions.length}건)`, `Decisions (${c.decisions.length})`)}</h2>
+    ${bars(Object.entries(by).map(([k, v]) => ({label: label(k), v, color: colors[k]})))}
+    ${more(t("전체 결정 목록", "All decisions"), `<table><tr><th>#</th><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("검사", "Checks")}</th><th>${t("문지기", "Gate")}</th><th>${t("이유", "Reason")}</th></tr>
+      ${c.decisions.map(e => `<tr><td>${e.seq}</td><td>${esc(e.case_id)}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td>
+        <td>${e.decision ? dec(e.decision) : ""}</td><td class="mute">${esc((e.checks || []).map(x => riskName(x)).join(", "))}</td>
+        <td class="${e.gate === "OK" ? "ok" : "bad"}">${esc(gateName(e.gate))}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table>`)}</div>`;
 }
 async function processInvoice(cid) {
-  $("pstatus").textContent = "running…"; $("presult").innerHTML = "";
+  $("pstatus").textContent = t("처리 중…", "running…"); $("presult").innerHTML = "";
   try {
     const h = await post(`/api/clients/${cid}/process`, {invoice_text: $("ptext").value});
     $("pstatus").textContent = "";
-    $("presult").innerHTML = `<h3>Decision: ${dec(h.decision)}</h3><p>${esc(h.reason)}</p>
-      <p>Signed by agent v${h.generation} <code>${short(h.agent_did)}</code> · gate: ${h.executed ? `<span class="ok">${esc(h.gate)} — recorded</span>` : `<span class="bad">${esc(h.gate)} — not executed</span>`}</p>
-      ${h.findings.length ? `<table><tr><th>Check</th><th>Detail</th></tr>${h.findings.map(f => `<tr><td class="${f.severity === "reject" ? "bad" : "warn"}">${esc(f.code)}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="ok">all hard checks passed</p>`}
-      <details><summary>Fields read by Apertus</summary><pre>${esc(JSON.stringify(h.fields, null, 2))}</pre></details>`;
+    $("presult").innerHTML = `<h3>${t("결정", "Decision")}: ${dec(h.decision)}</h3><p>${esc(h.reason)}</p>
+      <p>${t("서명한 에이전트", "Signed by agent")} v${h.generation} <code>${short(h.agent_did)}</code> · ${t("문지기", "gate")}: ${h.executed ? `<span class="ok">${esc(gateName(h.gate))} — ${t("기록됨", "recorded")}</span>` : `<span class="bad">${esc(gateName(h.gate))} — ${t("실행 안 됨", "not executed")}</span>`}</p>
+      ${more(t("검사 결과", "Checks"), h.findings.length ? `<table><tr><th>${t("검사", "Check")}</th><th>${t("내용", "Detail")}</th></tr>${h.findings.map(f => `<tr><td class="${f.severity === "reject" ? "bad" : "warn"}">${esc(riskName(f.code))}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="ok">${t("모든 하드 체크 통과", "all hard checks passed")}</p>`, true)}
+      ${more(t("Apertus가 읽은 필드", "Fields read by Apertus"), `<pre>${esc(JSON.stringify(h.fields, null, 2))}</pre>`)}`;
   } catch (e) { $("pstatus").textContent = e.message; }
 }
 function cQueue(c) {
-  if (!c.queue.length) return `<div class="card mute">Nothing waiting for this client.</div>`;
-  return c.queue.map(i => `<div class="card"><div class="row" style="justify-content:space-between;margin:0">
-      <div><b>${esc(i.vendor)}</b> · CHF ${chf(i.amount_chf)} · <span class="mute">${i.case_id}</span></div>
-      ${i.status === "open" ? dec("escalate") : `<span class="pill ${i.status === "approved" ? "ok" : "bad"}">${i.status}</span>`}</div>
-      <p><b>Why held:</b> ${esc(i.reason)}</p>
-      <details><summary>Invoice</summary><pre>${esc(i.invoice_text)}</pre></details>
-      ${i.status === "open" ? `<input id="n-${i.case_id}" placeholder="Reviewer note (why) — becomes a lesson for this client's agent" style="width:100%">
-      <div class="row"><button class="btn" onclick="act('${i.case_id}','approve')">Approve payment</button>
-      <button class="btn primary" onclick="act('${i.case_id}','reject')">Reject</button></div>` : i.note ? `<p class="mute">Note: ${esc(i.note)}</p>` : ""}</div>`).join("");
+  const open = c.queue.filter(i => i.status === "open");
+  if (!c.queue.length) return `<div class="card mute">${t("이 고객사는 승인 대기 건이 없어요.", "Nothing waiting for this client.")}</div>`;
+  const st = s => s === "open" ? `<span class="warn">${t("대기", "open")}</span>` : s === "approved" ? `<span class="ok">${t("승인됨", "approved")}</span>` : `<span class="bad">${t("거절됨", "rejected")}</span>`;
+  return `<div class="card"><h2>${t(`사람 확인 대기 (${open.length}건)`, `Held for a human (${open.length} open)`)}</h2><p class="sub">${t("대기 건별 금액.", "Amount per held invoice.")}</p>
+    ${open.length ? bars(open.map(i => ({label: `${i.case_id} · ${i.vendor}`, v: Number(i.amount_chf) || 0, color: C.escalated})), {fmt: x => "CHF " + chf0(x)}) : `<p class="mute">${t("없음", "none")}</p>`}</div>
+  <div class="card"><h2>${t("검토", "Review")}</h2>${c.queue.map(i => `<details class="more"><summary>${esc(i.case_id)} · ${esc(i.vendor)} · CHF ${chf(i.amount_chf)} — ${st(i.status)}</summary><div>
+      <p><b>${t("보류 이유", "Why held")}:</b> ${esc(i.reason)}</p><pre>${esc(i.invoice_text)}</pre>
+      ${i.status === "open" ? `<input id="n-${i.case_id}" placeholder="${t("검토 메모 (이유) — 이 고객사 에이전트의 교훈이 돼요", "Reviewer note (why) — becomes a lesson for this client's agent")}" style="width:100%">
+      <div class="row"><button class="btn" onclick="act('${i.case_id}','approve')">${t("지급 승인", "Approve payment")}</button>
+      <button class="btn primary" onclick="act('${i.case_id}','reject')">${t("거절", "Reject")}</button></div>` : i.note ? `<p class="mute">${t("메모", "Note")}: ${esc(i.note)}</p>` : ""}</div></details>`).join("")}</div>`;
 }
 async function act(id, action) {
   try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); route(); } catch (e) { alert(e.message); }
 }
 function cAgent(c) {
   const a = c.agent, b = a.badge || {}, card = a.card || {}, L = c.lessons;
-  if (!a.generation) return `<div class="card">No agent has been hired for this client${c.mandate.revoked ? " — the client revoked its mandate" : ""}.</div>`;
-  return `<div class="two"><div class="card"><h2>Agent ${esc(card.name)} ${a.active ? `<span class="pill ok">active</span>` : `<span class="pill bad">revoked</span>`}</h2>
-    <table><tr><th>DID</th><td><code>${esc(a.did)}</code></td></tr>
-      <tr><th>Entity card</th><td>${esc(card.operator)} · responsible: ${esc(card.responsible_human)} · AI: ${card.is_ai ? "yes" : "?"} · firm signature ${a.card_ok ? "✓" : "✗"}</td></tr>
-      <tr><th>Badge</th><td>${esc((b.actions || []).join(", ") || "no actions")} · only for ${esc((b.clients || []).join(", "))} · cap CHF ${chf0(b.max_single_chf)} · valid ${esc(b.valid_from)} – ${esc(b.valid_until)} · firm signature ${a.badge_ok ? "✓" : "✗"}</td></tr>
-      <tr><th>Earlier generations</th><td>${a.revoked.map(short).join("<br>") || "none"}</td></tr></table>
-    <div class="row"><input id="killnote" placeholder="Reason (becomes a lesson)" style="flex:1">
-      <button class="btn primary" onclick="agentAct('${c.client_id}','kill')" ${a.active ? "" : "disabled"}>Kill switch</button>
-      <button class="btn" onclick="agentAct('${c.client_id}','replace')" ${c.mandate.revoked ? "disabled" : ""}>Replace with v${a.generation + 1}</button></div></div>
-  <div class="card"><h2>Firm-side settings</h2>
-    <p class="mute">Set by the firm and signed into the agent's badge. The client's own limits (mandate) apply on top and only the client can change them.</p>
-    <label>Cap per payment without a human grant (CHF)</label><br><input id="cap" type="number" min="1" value="${b.max_single_chf}">
-    <h3>Allowed actions</h3>${a.all_actions.map(x => `<label><input type="checkbox" class="actchk" value="${x}" ${(b.actions || []).includes(x) ? "checked" : ""}> ${x}</label><br>`).join("")}
-    <div class="row"><button class="btn primary" onclick="saveSettings('${c.client_id}')" ${a.active ? "" : "disabled"}>Re-issue badge</button><span id="sstatus" class="mute"></span></div>
-    <h3>Client side (demo)</h3><button class="btn" onclick="revokeMandate('${c.client_id}')" ${c.mandate.revoked ? "disabled" : ""}>Simulate: client revokes its mandate</button></div></div>
-  <div class="two"><div class="card"><h2>Lessons</h2>
-    <h3>Binding for this seat</h3><ol>${L.binding.map(x => `<li>${esc(x.rule)} <span class="mute">(${x.seat === "*" ? "firm-wide" : "this client"}, manual gen ${x.from_manual_generation})</span></li>`).join("") || "<li class='mute'>none</li>"}</ol>
-    ${L.reference.length ? `<h3>Other clients' seats — reference only</h3><ul>${L.reference.map(x => `<li class="mute">[${esc(x.seat)}] ${esc(x.rule)}</li>`).join("")}</ul>` : ""}
-    <h3>Pending reviewer notes (${L.pending.length})</h3><ul>${L.pending.map(n => `<li>${esc(n)}</li>`).join("") || "<li class='mute'>none — reject a held invoice with a note</li>"}</ul>
-    <div class="row"><button class="btn primary" onclick="publishLessons('${c.client_id}')" ${L.pending.length ? "" : "disabled"}>Publish next manual generation</button><span id="lstatus" class="mute"></span></div>
-    <p class="mute">Manual sha256 <code>${esc(L.manual_sha256.slice(0, 16))}…</code></p></div>
-  <div class="card"><h2>Try to break it</h2>
-    <div class="row"><button class="btn" onclick="attackGate('${c.client_id}','replay')">Replay this agent's last request</button>
-      <button class="btn" onclick="attackGate('${c.client_id}','forged')">Forge a payment in its name</button></div>
+  if (!a.generation) return `<div class="card">${t("이 고객사에는 채용된 에이전트가 없어요", "No agent has been hired for this client")}${c.mandate.revoked ? t(" — 고객이 위임을 취소했어요.", " — the client revoked its mandate.") : "."}</div>`;
+  const gates = {}; c.rejections.forEach(e => gates[e.gate] = (gates[e.gate] || 0) + 1);
+  return `<div class="grid2"><div class="card"><h2>${t("에이전트", "Agent")} ${esc(card.name)} ${a.active ? `<span class="pill ok">${t("활성", "active")}</span>` : `<span class="pill bad">${t("정지", "revoked")}</span>`}</h2>
+    <p class="sub">DID <code>${short(a.did)}</code> · ${t("상한", "cap")} CHF ${chf0(b.max_single_chf)} · ${esc((b.actions || []).map(actName).join(", ") || t("허용 행동 없음", "no actions"))}</p>
+    <div class="row"><input id="killnote" placeholder="${t("사유 (교훈이 돼요)", "Reason (becomes a lesson)")}" style="flex:1">
+      <button class="btn primary" onclick="agentAct('${c.client_id}','kill')" ${a.active ? "" : "disabled"}>${t("긴급 정지", "Kill switch")}</button>
+      <button class="btn" onclick="agentAct('${c.client_id}','replace')" ${c.mandate.revoked ? "disabled" : ""}>${t(`v${a.generation + 1}로 교체`, `Replace with v${a.generation + 1}`)}</button></div>
+    ${more(t("신원 문서", "Identity documents"), `<table><tr><th>DID</th><td><code>${esc(a.did)}</code></td></tr>
+      <tr><th>${t("사원증", "Entity card")}</th><td>${esc(card.operator)} · ${t("책임자", "responsible")}: ${esc(card.responsible_human)} · AI: ${card.is_ai ? t("예", "yes") : "?"} · ${t("사무소 서명", "firm signature")} ${a.card_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>${t("배지", "Badge")}</th><td>${esc((b.actions || []).map(actName).join(", ") || "–")} · ${t("담당", "only for")} ${esc((b.clients || []).join(", "))} · ${t("상한", "cap")} CHF ${chf0(b.max_single_chf)} · ${t("유효", "valid")} ${esc(b.valid_from)} – ${esc(b.valid_until)} · ${t("사무소 서명", "firm signature")} ${a.badge_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>${t("이전 세대", "Earlier generations")}</th><td>${a.revoked.map(short).join("<br>") || t("없음", "none")}</td></tr></table>`)}</div>
+  <div class="card"><h2>${t("사무소 쪽 설정", "Firm-side settings")}</h2>
+    <p class="sub">${t("사무소가 정하고 배지에 서명해 넣어요. 고객의 한도(위임장)는 그 위에 따로 적용되고, 고객만 바꿀 수 있어요.", "Signed into the agent's badge by the firm. The client's own limits (mandate) apply on top and only the client can change them.")}</p>
+    <label>${t("사람 승인 없이 지급할 수 있는 건당 상한 (CHF)", "Cap per payment without a human grant (CHF)")}</label><br><input id="cap" type="number" min="1" value="${b.max_single_chf}">
+    <h3>${t("허용 행동", "Allowed actions")}</h3>${a.all_actions.map(x => `<label><input type="checkbox" class="actchk" value="${x}" ${(b.actions || []).includes(x) ? "checked" : ""}> ${esc(actName(x))}</label><br>`).join("")}
+    <div class="row"><button class="btn primary" onclick="saveSettings('${c.client_id}')" ${a.active ? "" : "disabled"}>${t("배지 재발급", "Re-issue badge")}</button><span id="sstatus" class="mute"></span></div>
+    ${more(t("고객 쪽 (데모)", "Client side (demo)"), `<button class="btn" onclick="revokeMandate('${c.client_id}')" ${c.mandate.revoked ? "disabled" : ""}>${t("시연: 고객이 위임 취소", "Simulate: client revokes its mandate")}</button>`)}</div></div>
+  <div class="grid2"><div class="card"><h2>${t("교훈", "Lessons")}</h2>
+    ${bars([{label: t("사무소 공통 (구속)", "firm-wide (binding)"), v: L.binding.filter(x => x.seat === "*").length, color: C.control},
+            {label: t("이 고객사 (구속)", "this client (binding)"), v: L.binding.filter(x => x.seat !== "*").length, color: C.control},
+            {label: t("다른 고객사 (참고)", "other clients (reference)"), v: L.reference.length, color: "var(--axis)"},
+            {label: t("대기 중 메모", "pending notes"), v: L.pending.length, color: C.fraud}])}
+    <div class="row"><button class="btn primary" onclick="publishLessons('${c.client_id}')" ${L.pending.length ? "" : "disabled"}>${t("다음 세대 매뉴얼 발행", "Publish next manual generation")}</button><span id="lstatus" class="mute"></span></div>
+    ${more(t("교훈 내용", "Lesson texts"), `<h3>${t("구속", "Binding")}</h3><ol>${L.binding.map(x => `<li>${esc(x.rule)} <span class="mute">(${x.seat === "*" ? t("사무소 공통", "firm-wide") : t("이 고객사", "this client")})</span></li>`).join("") || `<li class='mute'>${t("없음", "none")}</li>`}</ol>
+      ${L.reference.length ? `<h3>${t("참고만", "Reference only")}</h3><ul>${L.reference.map(x => `<li class="mute">[${esc(x.seat)}] ${esc(x.rule)}</li>`).join("")}</ul>` : ""}
+      <h3>${t("대기 중 검토 메모", "Pending reviewer notes")}</h3><ul>${L.pending.map(n => `<li>${esc(n)}</li>`).join("") || `<li class='mute'>${t("없음", "none")}</li>`}</ul>
+      <p class="mute">${t("매뉴얼 지문", "Manual sha256")} <code>${esc(L.manual_sha256.slice(0, 16))}…</code></p>`)}</div>
+  <div class="card"><h2>${t("뚫어 보기", "Try to break it")}</h2>
+    <div class="row"><button class="btn" onclick="attackGate('${c.client_id}','replay')">${t("마지막 요청 재탕", "Replay the last request")}</button>
+      <button class="btn" onclick="attackGate('${c.client_id}','forged')">${t("에이전트 이름으로 지급 위조", "Forge a payment")}</button></div>
     <p id="astatus" class="mute"></p>
-    <table><tr><th>#</th><th>Gate</th><th>Case / attack</th></tr>${c.rejections.map(e =>
-      `<tr><td>${e.seq}</td><td class="bad">${esc(e.gate)}</td><td>${esc(e.case_id || e.attack || "")}</td></tr>`).join("") || "<tr><td colspan=3 class='mute'>no refused requests</td></tr>"}</table></div></div>`;
+    <h3>${t("문지기가 거부한 요청", "Requests refused by the gate")}</h3>${Object.keys(gates).length ? bars(Object.entries(gates).map(([k, v]) => ({label: gateName(k), v, color: C.rejected}))) : `<p class="mute">${t("아직 없음", "none yet")}</p>`}
+    ${more(t("거부 목록", "Refused requests"), `<table><tr><th>#</th><th>${t("문지기", "Gate")}</th><th>${t("건 / 공격", "Case / attack")}</th></tr>${c.rejections.map(e =>
+      `<tr><td>${e.seq}</td><td class="bad">${esc(gateName(e.gate))}</td><td>${esc(e.case_id || e.attack || "")}</td></tr>`).join("") || `<tr><td colspan=3 class='mute'>${t("없음", "none")}</td></tr>`}</table>`)}</div></div>`;
 }
 async function agentAct(cid, what) {
   try { await post(`/api/clients/${cid}/agent/${what}`, what === "kill" ? {note: $("killnote").value} : {}); route(); } catch (e) { alert(e.message); }
@@ -245,65 +390,103 @@ async function saveSettings(cid) {
   catch (e) { $("sstatus").textContent = e.message; }
 }
 async function revokeMandate(cid) {
-  if (!confirm("Simulate the client revoking its mandate? Its agent can no longer act for it.")) return;
+  if (!confirm(t("고객이 위임을 취소하는 상황을 시연할까요? 이 고객사의 에이전트는 더 이상 일할 수 없어요.", "Simulate the client revoking its mandate? Its agent can no longer act for it."))) return;
   await post(`/api/clients/${cid}/revoke`); route();
 }
 async function publishLessons(cid) {
-  $("lstatus").textContent = "asking Apertus…";
+  $("lstatus").textContent = t("Apertus에게 요청 중…", "asking Apertus…");
   try { await post(`/api/clients/${cid}/lessons/publish`); route(); } catch (e) { $("lstatus").textContent = e.message; }
 }
 async function attackGate(cid, kind) {
-  try { const r = await post(`/api/clients/${cid}/attack/${kind}`); $("astatus").textContent = r.ok ? "accepted?!" : `blocked by the gate: ${r.gate}`; setTimeout(route, 1500); }
+  try { const r = await post(`/api/clients/${cid}/attack/${kind}`); $("astatus").textContent = r.ok ? t("통과?!", "accepted?!") : `${t("문지기가 막음", "blocked by the gate")}: ${gateName(r.gate)}`; setTimeout(route, 1500); }
   catch (e) { $("astatus").textContent = e.message; }
 }
 function cFiles(c) {
-  return `<div class="card"><h2>Payment files (ISO 20022 pain.001.001.09)</h2>
-    <p class="mute">For upload to ${esc(c.name)}'s bank. No payment provider in between. Each file was requested by this client's agent and passed the gate.</p>
-    <table><tr><th>File</th><th>Checks</th><th></th></tr>${c.files.map(f => `<tr><td>${f.file}</td>
-      <td>${f.validation_errors.length ? `<span class="bad">${esc(f.validation_errors.join("; "))}</span>` : `<span class="ok">counts, control sum, IBANs OK</span>`}</td>
-      <td><a href="/files/payments/${f.file}">download</a></td></tr>`).join("") || "<tr><td colspan=3 class='mute'>none</td></tr>"}</table></div>`;
+  return `<div class="card"><h2>${t("지급 파일 (ISO 20022 pain.001.001.09)", "Payment files (ISO 20022 pain.001.001.09)")}</h2>
+    <p class="sub">${t(`${c.name}의 은행에 올릴 파일. 이 고객사 에이전트가 요청했고 문지기를 통과했어요.`, `For upload to ${c.name}'s bank. Each file was requested by this client's agent and passed the gate.`)}</p>
+    <table><tr><th>${t("파일", "File")}</th><th>${t("검사", "Checks")}</th><th></th></tr>${c.files.map(f => `<tr><td>${f.file}</td>
+      <td>${f.validation_errors.length ? `<span class="bad">${esc(f.validation_errors.join("; "))}</span>` : `<span class="ok">${t("건수·합계·IBAN 정상", "counts, control sum, IBANs OK")}</span>`}</td>
+      <td><a href="/files/payments/${f.file}">${t("내려받기", "download")}</a></td></tr>`).join("") || `<tr><td colspan=3 class='mute'>${t("없음", "none")}</td></tr>`}</table></div>`;
 }
-function cLedger(c) { return `<div class="card"><h2>Ledger entries for this client (latest ${c.ledger.length})</h2>${ledgerTable(c.ledger)}</div>`; }
+function actionChart(rows) {
+  const by = {}; rows.forEach(e => by[e.action] = (by[e.action] || 0) + 1);
+  return bars(Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({label: actName(k), v, color: k === "request.rejected" ? C.rejected : C.control})));
+}
+function cLedger(c) {
+  return `<div class="card"><h2>${t("이 고객사의 장부 기록", "Ledger entries for this client")}</h2><p class="sub">${t(`최근 ${c.ledger.length}건, 행동별.`, `Latest ${c.ledger.length} entries by action.`)}</p>${actionChart(c.ledger)}
+    ${more(t("기록 목록", "Entries"), ledgerTable(c.ledger))}</div>`;
+}
 function ledgerTable(rows) {
-  return `<table><tr><th>#</th><th>Actor</th><th>Action</th><th>Gate</th><th>Client</th><th>Case</th><th class="n">CHF</th><th>Detail</th><th>Hash</th></tr>
-    ${rows.map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${dec(e.action)}</td>
-      <td class="${e.gate && e.gate !== "OK" ? "bad" : ""}">${esc(e.gate || "")}</td><td>${esc(e.client_id || "")}</td><td>${esc(e.case_id || "")}</td>
+  return `<table><tr><th>#</th><th>${t("행위자", "Actor")}</th><th>${t("행동", "Action")}</th><th>${t("문지기", "Gate")}</th><th>${t("고객사", "Client")}</th><th>${t("건", "Case")}</th><th class="n">CHF</th><th>${t("내용", "Detail")}</th><th>${t("해시", "Hash")}</th></tr>
+    ${rows.map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${esc(actName(e.action))}</td>
+      <td class="${e.gate && e.gate !== "OK" ? "bad" : ""}">${esc(e.gate ? gateName(e.gate) : "")}</td><td>${esc(e.client_id || "")}</td><td>${esc(e.case_id || "")}</td>
       <td class="n">${e.amount_chf != null ? chf(e.amount_chf) : ""}</td>
       <td class="mute">${esc(e.reason || e.note || e.file || e.attack || "")}</td><td><code>${esc(e.hash.slice(0, 10))}</code></td></tr>`).join("")}</table>`;
 }
 
-// ---------------------------------------------------------------- firm-wide pages
+// ---------------------------------------------------------------- firm pages
 async function ledgerPage() {
   const l = await api("/api/ledger");
-  $("main").innerHTML = `<div class="card"><h2>Audit ledger ${l.verifies ? `<span class="pill ok">chain + signatures verify</span>` : `<span class="pill bad">broken at #${l.first_bad}</span>`}
-      ${l.audit.ok ? `<span class="pill ok">identity audit OK</span>` : `<span class="pill bad">identity audit: ${l.audit.problems.length} problems</span>`}</h2>
-    <p class="mute">Opens with the firm (<code>${short(l.firm_did)}</code>) and ledger (<code>${short(l.ledger_did)}</code>) keys, every client mandate in full, then each agent's
-      entity card and badge as issued. ${l.audit.agent_actions} agent actions, all by agents the firm issued and had not revoked at the time: ${Object.values(l.audit.agents_issued).join(", ")}.</p>
-    ${ledgerTable(l.entries)}</div>`;
+  $("main").innerHTML = `<h1>${t("장부", "Ledger")}</h1><p class="sub">${t("덧붙이기만 하는 기록. 해시 체인으로 묶고 장부 키로 서명해요", "Append-only, hash-chained and signed with the ledger key")} <code>${short(l.ledger_did)}</code>.</p>
+  <div class="kpis"><div class="kpi"><small>${t("체인 + 서명", "Chain + signatures")}</small><b class="${l.verifies ? "ok" : "bad"}">${l.verifies ? t("검증됨", "verified") : t(`#${l.first_bad}에서 손상`, `broken at #${l.first_bad}`)}</b></div>
+    <div class="kpi"><small>${t("신원 감사", "Identity audit")}</small><b class="${l.audit.ok ? "ok" : "bad"}">${l.audit.ok ? t("정상", "OK") : l.audit.problems.length + t("건 문제", " problems")}</b><div class="meta">${t(`에이전트 행동 ${l.audit.agent_actions}건 확인`, `${l.audit.agent_actions} agent actions checked`)}</div></div>
+    <div class="kpi"><small>${t("발급된 에이전트", "Agents issued")}</small><b>${Object.keys(l.audit.agents_issued).length}</b><div class="meta">${t(`정지 ${l.audit.agents_revoked.length}`, `${l.audit.agents_revoked.length} revoked`)}</div></div></div>
+  <div class="card"><h2>${t("행동별 기록 수", "Entries by action")}</h2><p class="sub">${t(`최근 ${l.entries.length}건.`, `Latest ${l.entries.length} entries.`)}</p>${actionChart(l.entries)}
+    ${more(t("읽는 법", "How to read it"), `<p>${t("장부는 사무소 키", "The ledger opens with the firm key")} (<code>${short(l.firm_did)}</code>)${t("와 장부 키로 시작하고, 이어서 고객사 위임장 원본, 에이전트마다 발급된 사원증과 배지가 기록돼요. 신원 감사는 장부만 보고 '실행된 모든 에이전트 행동이 사무소가 발급했고 그 시점에 정지되지 않은 에이전트의 것인가'를 확인해요:",
+      " and the ledger key, then every client mandate in full and each agent's entity card and badge as issued. The identity audit checks from the ledger alone that every executed agent action came from an agent the firm issued and had not revoked:")} ${esc(Object.values(l.audit.agents_issued).join(", "))}.</p>`)}
+    ${more(t("기록 목록", "Entries"), ledgerTable(l.entries))}</div>`;
 }
 async function evaluation() {
   const s = await api("/api/evaluation"); const m = s.metrics;
-  if (!m.metrics) { $("main").innerHTML = `<div class="card">No evaluation results yet.</div>`; return; }
-  const sys = Object.keys(m.metrics), codes = Object.keys(m.metrics.baseline.by_reason_code);
-  $("main").innerHTML = `<div class="card"><h2>Evaluation: Apertus alone vs. Apertus + harness</h2>
-    <p class="mute">${m.n_test} synthetic test invoices in four languages, ${esc(m.model)}. Wrong payment = an invoice that must not be paid automatically, paid anyway.</p><table>
-    <tr><th>System</th><th class="n">Accuracy</th><th class="n">Wrong payments</th><th class="n">Wrongly paid CHF</th><th class="n">Missed payments</th><th class="n">Paid w/ wrong details</th></tr>
-    ${sys.map(k => { const x = m.metrics[k]; return `<tr><td>${k}</td><td class="n">${x.accuracy.toFixed(3)}</td><td class="n">${x.wrong_payments} (${x.wrong_payment_rate.toFixed(3)})</td>
-      <td class="n">${chf(x.wrong_payment_chf)}</td><td class="n">${x.missed_payment_rate.toFixed(3)}</td><td class="n">${x.paid_with_wrong_details ?? "n/a"}</td></tr>`; }).join("")}</table></div>
-  <div class="card"><h2>Correct decisions by case type</h2><table><tr><th>Case type</th>${sys.map(k => `<th class="n">${k}</th>`).join("")}</tr>
-    ${codes.map(c => `<tr><td>${c}</td>${sys.map(k => `<td class="n">${m.metrics[k].by_reason_code[c].toFixed(2)}</td>`).join("")}</tr>`).join("")}</table></div>
-  ${m.attacks ? `<div class="card"><h2>Agent verification: attacks against the gate</h2><table><tr><th>Scenario</th><th class="n">Attempts</th><th class="n">Blocked</th><th>Caught by</th></tr>
-    ${Object.entries(m.attacks).map(([k, r]) => `<tr><td>${esc(k)}</td><td class="n">${r.attempts}</td>
-      <td class="n ${k.startsWith("legitimate") ? "" : (r.blocked === r.attempts ? "ok" : "bad")}">${k.startsWith("legitimate") ? `accepted ${r.accepted}` : r.blocked}</td><td>${Object.keys(r.codes).join(", ")}</td></tr>`).join("")}</table></div>` : ""}
-  <div class="card"><h2>Extraction accuracy (Apertus)</h2><table><tr>${Object.keys(m.extraction).map(k => `<th class="n">${k}</th>`).join("")}</tr>
-    <tr>${Object.values(m.extraction).map(v => `<td class="n">${v.toFixed(3)}</td>`).join("")}</tr></table></div>
-  <div class="card"><h2>Firm-wide manual (generation 1)</h2><pre>${esc(s.manual)}</pre></div>`;
+  if (!m.metrics) { $("main").innerHTML = `<div class="card">${t("평가 결과가 아직 없어요.", "No evaluation results yet.")}</div>`; return; }
+  const sys = Object.keys(m.metrics), nonpay = Math.round(m.metrics.baseline.wrong_payments / Math.max(m.metrics.baseline.wrong_payment_rate, 1e-9));
+  const NAMES = {baseline: t("Apertus 단독", "Apertus alone"), badge_only: t("+ 배지 (하드 체크)", "+ badge (hard checks)"), harness_gen0: t("+ 리뷰, 매뉴얼 gen0", "+ review, manual gen 0"),
+                 harness_gen1: t("+ 리뷰, gen1 (교훈)", "+ review, gen 1 (lessons)"), harness_gen1_promoted: t("+ 교훈을 체크로 승격 ✱", "+ lessons promoted to checks ✱")};
+  const nm = k => NAMES[k] || k, codes = Object.keys(m.metrics.baseline.by_reason_code);
+  const maxChf = Math.max(...sys.map(k => m.metrics[k].wrong_payment_chf));
+  const last = sys[sys.length - 1];
+  const legit = Object.entries(m.attacks || {}).find(([k]) => k.startsWith("legitimate"));
+  $("main").innerHTML = `<h1>${t("평가 결과", "Evaluation")}</h1><p class="sub">${t(`합성 테스트 청구서 ${m.n_test}건 (4개 언어) · ${m.model} · 그중 ${nonpay}건은 자동 지급하면 안 되는 건`, `${m.n_test} synthetic test invoices in four languages · ${m.model} · ${nonpay} must not be paid automatically`)}</p>
+  <div class="grid2">
+    <div class="card"><h2>${t("잘못 지급", "Wrong payments")}</h2><p class="sub">${t(`보류·거절해야 했는데 지급한 건 (${nonpay}건 중). 낮을수록 좋아요.`, `Paid although they should have been held or rejected (of ${nonpay}). Lower is better.`)}</p>
+      ${scaled(sys.map(k => ({label: nm(k), v: m.metrics[k].wrong_payments, value: `${m.metrics[k].wrong_payments} / ${nonpay}`})), nonpay, {color: C.rejected})}</div>
+    <div class="card"><h2>${t("잘못 나간 금액", "Money paid wrongly")}</h2><p class="sub">${t("그 건들의 CHF 합계. 낮을수록 좋아요.", "CHF on those invoices. Lower is better.")}</p>
+      ${scaled(sys.map(k => ({label: nm(k), v: m.metrics[k].wrong_payment_chf, value: "CHF " + chf0(m.metrics[k].wrong_payment_chf)})), maxChf, {color: C.rejected})}</div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2>${t("정확도", "Accuracy")}</h2><p class="sub">${t("올바른 결정(지급·보류·거절) 비율, 0–1. 높을수록 좋아요.", "Correct decision (pay / hold / reject), 0–1. Higher is better.")}</p>
+      ${scaled(sys.map(k => ({label: nm(k), v: m.metrics[k].accuracy, value: m.metrics[k].accuracy.toFixed(3)})), 1)}
+      <p class="meta">${t("✱ 테스트 결과를 본 뒤에 추가한 것이라 블라인드 결과가 아니에요. 정상 지급을 놓친 건 'Apertus 단독'뿐이에요 (33건 중 1건).", "✱ added after seeing the test results; not a blind result. Only 'Apertus alone' missed a legitimate payment (1 of 33).")}</p></div>
+    <div class="card"><h2>${t("에이전트 신원·권한 공격", "Attacks on agent identity and authority")}</h2><p class="sub">${t("시나리오별로 문지기가 막은 비율.", "Share blocked by the gate, per scenario.")}</p>
+      ${m.attacks ? scaled(Object.entries(m.attacks).filter(([k]) => !k.startsWith("legitimate")).map(([k, r]) => ({label: t(ATTACK_KO[k] || k, k), v: r.blocked / r.attempts, value: `${r.blocked} / ${r.attempts}`})), 1, {color: C.paid}) : ""}
+      ${legit ? `<p class="meta">${t(`정상 요청 통과: ${legit[1].accepted} / ${legit[1].attempts}`, `Legitimate requests accepted: ${legit[1].accepted} / ${legit[1].attempts}`)}</p>` : ""}</div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2>${t("유형별 정답률", "Correct decisions by case type")}</h2><p class="sub">${t("Apertus 단독 vs 전체 하네스(마지막 행).", "Apertus alone vs. the full harness (last row).")}</p>${legend([[t("Apertus 단독", "Apertus alone"), C.fraud], [t("하네스", "harness"), C.control]])}
+      <div class="bars">${codes.map(cd => { const a = m.metrics.baseline.by_reason_code[cd], h = m.metrics[last].by_reason_code[cd],
+        lb = cd === "OK" ? t("정상 청구서", "legitimate invoice") : riskName(cd);
+        return `<div class="lb">${esc(lb)}</div><div class="pair" data-tip="${esc(`${lb}: ${t("단독", "alone")} ${a.toFixed(2)} → ${t("하네스", "harness")} ${h.toFixed(2)}`)}">
+          <i style="width:${100 * a}%;background:${C.fraud};min-width:${a ? 0 : 2}px"></i><i style="width:${100 * h}%;background:${C.control}"></i></div>
+          <div class="vl">${a.toFixed(2)} → ${h.toFixed(2)}</div>`; }).join("")}</div></div>
+    <div class="card"><h2>${t("Apertus 추출 정확도", "Extraction accuracy (Apertus)")}</h2><p class="sub">${t("청구서에서 필드를 맞게 읽은 비율, 0–1.", "Fields read correctly from the invoices, 0–1.")}</p>
+      ${scaled(Object.entries(m.extraction).map(([k, v]) => ({label: t(EXTRACT_KO[k] || k, EXTRACT_EN[k] || k), v, value: v.toFixed(3)})), 1)}</div>
+  </div>
+  <div class="card"><h2>${t("상세", "Details")}</h2>
+    ${more(t("전체 지표", "All metrics"), `<table><tr><th>${t("시스템", "System")}</th><th class="n">${t("정확도", "Accuracy")}</th><th class="n">${t("잘못 지급", "Wrong payments")}</th><th class="n">${t("잘못 나간 CHF", "Wrongly paid CHF")}</th><th class="n">${t("놓친 지급", "Missed payments")}</th><th class="n">${t("틀린 내용으로 지급", "Paid w/ wrong details")}</th><th class="n">${t("모델 실패", "Model failures")}</th></tr>
+      ${sys.map(k => { const x = m.metrics[k]; return `<tr><td>${nm(k)}</td><td class="n">${x.accuracy.toFixed(3)}</td><td class="n">${x.wrong_payments} (${x.wrong_payment_rate.toFixed(3)})</td>
+        <td class="n">${chf(x.wrong_payment_chf)}</td><td class="n">${x.missed_payment_rate.toFixed(3)}</td><td class="n">${x.paid_with_wrong_details ?? "n/a"}</td><td class="n">${x.model_failures}</td></tr>`; }).join("")}</table>`)}
+    ${more(t("유형별 정답률, 모든 시스템", "Correct decisions by case type, all systems"), `<table class="heat"><tr><th>${t("유형", "Case type")}</th>${sys.map(k => `<th class="n">${esc(nm(k))}</th>`).join("")}</tr>
+      ${codes.map(cd => `<tr><td>${esc(cd === "OK" ? t("정상 청구서", "legitimate") : riskName(cd))}</td>${sys.map(k => { const v = m.metrics[k].by_reason_code[cd];
+        return `<td class="n" style="background:rgba(var(--heat),${.08 + .55 * v})">${v.toFixed(2)}</td>`; }).join("")}</tr>`).join("")}</table>`)}
+    ${m.attacks ? more(t("공격 시나리오", "Attack scenarios"), `<table><tr><th>${t("시나리오", "Scenario")}</th><th class="n">${t("시도", "Attempts")}</th><th class="n">${t("차단", "Blocked")}</th><th>${t("잡은 검사", "Caught by")}</th></tr>
+      ${Object.entries(m.attacks).map(([k, r]) => `<tr><td>${esc(t(ATTACK_KO[k] || k, k))}</td><td class="n">${r.attempts}</td><td class="n">${k.startsWith("legitimate") ? t(`통과 ${r.accepted}`, `accepted ${r.accepted}`) : r.blocked}</td><td>${Object.keys(r.codes).map(gateName).join(", ")}</td></tr>`).join("")}</table>`) : ""}
+    ${more(t("사무소 공통 매뉴얼 (gen1)", "Firm-wide manual (generation 1)"), `<pre>${esc(s.manual)}</pre>`)}</div>`;
 }
 
 const SAMPLES = {
   C01: "Mühle Rüti AG\nMühlestrasse 12\n8630 Rüti ZH\n\nRechnung an:\nBäckerei Steiner GmbH\n8004 Zürich\n\nRECHNUNG\nRechnungs-Nr. R-2026-5555\nDatum: 08.10.2026\n\nPos. 1  Weizenmehl Typ 550, 25 kg  CHF 1'200.00\n\nTotal exkl. MWST: CHF 1'200.00\nMWST 8.1%: CHF 97.20\nRechnungsbetrag: CHF 1'297.20\n\nBitte überweisen Sie den Betrag auf folgendes Konto:\nIBAN CH86 7434 3949 3341 8924 5\nZahlbar bis: 07.11.2026",
 };
-api("/api/overview").then(o => { $("firm").textContent = o.firm; $("meta").textContent = `${o.model} · ${o.llm_mode}`; }).catch(() => {});
+document.documentElement.lang = LANG;
 route();
 </script>
 </body>
