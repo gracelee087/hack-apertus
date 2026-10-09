@@ -168,7 +168,19 @@ def overview():
     for c in clients:
         for code, r in c["risks"].items():
             total[code] += r["count"]
+    names_by_id = {c["client_id"]: c["name"] for c in clients}
+    alerts = []  # open approvals, fraud signals first, then by amount
+    for i in queue_items():
+        if i["status"] != "open":
+            continue
+        codes = [c for c in i.get("checks") or [] if c in RISKS] or ["MODEL_FLAGGED"]
+        fraud = any(RISKS[c][1] == "fraud" for c in codes)
+        alerts.append({"case_id": i["case_id"], "client_id": i["client_id"], "client": names_by_id.get(i["client_id"]),
+                       "vendor": i["vendor"], "amount_chf": i["amount_chf"], "fraud": fraud,
+                       "risks": [{"code": c, "label": RISKS[c][0], "kind": RISKS[c][1]} for c in codes]})
+    alerts.sort(key=lambda a: (not a["fraud"], -(a["amount_chf"] or 0)))
     return {"firm": identity.FIRM_NAME, "model": llm.model_name(), "llm_mode": llm.mode(), "clients": clients,
+            "alerts": alerts, "reviewer": identity.RESPONSIBLE_HUMAN,
             "risk_totals": {c: {"count": n, "label": RISKS[c][0], "kind": RISKS[c][1]} for c, n in total.most_common()},
             "totals": {k: sum(c[k] for c in clients) for k in ("invoices", "paid", "escalated", "rejected", "queue_open",
                                                                "paid_chf", "held_chf", "fraud_signals", "gate_rejections")},
