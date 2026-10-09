@@ -25,3 +25,6 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# Regenerated on every run (attack scenarios), large
+results/security_ledger.jsonl
