@@ -1,0 +1,36 @@
+name: CI
+
+# What the judges do: a clean checkout, no API key, Docker. Every push repeats it.
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: track_2b
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"  # same as the Dockerfile
+
+      - name: Install
+        run: pip install -r requirements.txt pytest
+
+      - name: Unit tests (offline, no API key)
+        run: python -m pytest tests -q
+
+      - name: Build the image the judges build
+        run: docker build -t payagent .
+
+      - name: Run the evaluation without a key (replays recorded Apertus responses)
+        run: |
+          mkdir -p ci-results
+          docker run --rm -v "$PWD/ci-results:/app/results" payagent python -m agent eval
+
+      - name: Metrics match the committed reference run
+        run: diff --strip-trailing-cr results/metrics.json ci-results/metrics.json
