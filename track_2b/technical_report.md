@@ -13,11 +13,15 @@ which delegated a different scope and limit. Generic AI tools in this market (e.
 read invoices; they do not *execute* payments within a provable delegation. We built an agent that
 does: Apertus reads multilingual invoices, a harness enforces each client's signed mandate in code,
 Apertus reviews the remaining content against a firm manual that improves from human overrules,
-and the output is a bank-ready ISO 20022 pain.001 file per client plus a hash-chained ledger of who
-did what for whom. On 78 synthetic test invoices in four languages, Apertus 8B alone paid
+and the output is a bank-ready ISO 20022 pain.001 file per client plus a signed ledger of who
+did what for whom. *Who* is provable: the agent has its own key and DID, a firm-signed ID card and
+badge, and every request it makes is signed and checked by a gate against the client's signed
+mandate before anything takes effect. On 78 synthetic test invoices in four languages, Apertus 8B alone paid
 **33 of 45** invoices it should not have paid (CHF 138,781); with the harness, **7 of 45**
 (CHF 26,771), and 2 of 45 (CHF 9,290) once two learned lessons were promoted to hard checks,
-while still paying all 33 legitimate invoices.
+while still paying all 33 legitimate invoices. Twelve kinds of attack on the agent's identity and
+authority (forged or replayed requests, revoked agent, tampered mandate, …) were blocked in 420 of
+420 attempts, with 35 of 35 legitimate requests accepted.
 
 ## 2. Architecture
 
@@ -30,16 +34,22 @@ invoice text ──► [Apertus: extract fields] ──► [Badge: mandate check
            pay ──► pain.001 per client      escalate ──► human queue ──► approve / reject + note
                                                                                    │
                      every step ──► hash-chained ledger        note ──► mask ──► [Apertus: distil rule] ──► manual gen N+1
+
+every agent action = request signed with the agent key ──► [Gate: G1 signature · G2 replay · G3 identity
+                                                          · G4 badge · G5 client mandate] ──► executed + logged | refused + logged
 ```
 
 | Component | File | Runs where |
 |---|---|---|
 | Synthetic data (mandates, suppliers, invoices, labels) | `src/agent/datagen.py` | build time, deterministic (seed 2026) |
 | Apertus client with record/replay cache | `src/agent/llm.py` | runtime; calls one OpenAI-compatible endpoint |
-| Badge (hard checks) + mock delegation credential | `src/agent/badge.py`, `credential.py` | runtime, pure Python |
+| Badge (hard mandate checks) + client-signed mandate | `src/agent/badge.py`, `credential.py` | runtime, pure Python |
 | Decision paths (baseline, harness) | `src/agent/decide.py` | runtime |
 | Lesson layer | `src/agent/lessons.py` | runtime |
-| Ledger, payment files | `src/agent/ledger.py`, `pain001.py` | runtime, pure Python |
+| Agent identity (Ed25519, did:key, entity card, badge, request stamps) | `src/agent/identity.py` | runtime |
+| Gate (five checks) and desk (hire, kill switch, replace, human grants) | `src/agent/gate.py`, `desk.py` | runtime |
+| Attack scenarios against the gate | `src/agent/security.py` | runtime, no model calls |
+| Ledger (hash chain + ledger-key signature), payment files | `src/agent/ledger.py`, `pain001.py` | runtime, pure Python |
 | Reviewer web app | `src/agent/app.py`, `static/index.html` | runtime, FastAPI on port 8000 |
 
 ### Target architecture (mandatory)
@@ -48,16 +58,42 @@ invoice text ──► [Apertus: extract fields] ──► [Badge: mandate check
 details, salaries and supplier relationships that it is bound by professional secrecy to protect;
 the deployment keeps all of it on the firm's own infrastructure.
 
-- **Runtime dependencies:** one container (Python 3.11, FastAPI, Uvicorn) and one
+- **Runtime dependencies:** one container (Python 3.11, FastAPI, Uvicorn, cryptography) and one
   OpenAI-compatible endpoint serving Apertus 8B (e.g. vLLM on a single GPU in the firm's server
   room or at a Swiss hosting partner). No other network access: no payment provider, no external
   API. Payments leave the system only as a pain.001 file that the firm uploads to the client's bank.
-- **Build-time dependencies:** the `python:3.11-slim` base image and two pip packages; Apertus
+- **Build-time dependencies:** the `python:3.11-slim` base image and three pip packages; Apertus
   weights from Hugging Face. After build, both can be mirrored internally, so the runtime can be air-gapped.
 - **During development** we called Apertus through the Public AI inference API (an official
   Hugging Face inference provider) because the organiser's CSCS key was not yet at hand. This is a
   development convenience, not the target deployment: swapping it for CSCS or an on-prem vLLM is a
   change of `LLM_BASE_URL` only, and the recorded responses make the evaluation independent of it.
+
+### Agent identity and verification
+
+The harness answers *what* the agent may do; this layer answers *who* did it, and lets anyone check.
+The concept follows the author's earlier "Agentic ID" design (know-your-agent: identity, badge,
+stamp, ledger, lessons); the code here is new.
+
+| Principal | Key | Signs |
+|---|---|---|
+| Client company | its own Ed25519 key (did:key, recorded at onboarding) | the mandate: scope, limits, validity, delegate = the firm |
+| Fiduciary firm | firm key | the agent's entity card (operator, responsible human, *is AI*) and badge (actions, clients, cap, validity) |
+| Agent, per seat generation | its own key → DID | every request: action, client, payload hash, nonce, time |
+| Ledger | ledger key | every ledger entry (on top of the hash chain) |
+
+The **gate** runs five checks on each request before it takes effect: G1 signature and payload
+hash, G2 nonce never seen and request fresh, G3 firm-issued entity card and agent not revoked,
+G4 badge covers this action, client, date and amount (above the badge cap only with a human grant
+for that exact case), G5 the client's mandate is validly signed, names our firm and is in force.
+The **kill switch** revokes the current agent generation; **replacing** it hires v2 with a new key
+and DID, while the seat's lessons carry over (lessons bind the seat's own lineage; other seats'
+lessons would be reference only). Human approvals become grants with a reference in the ledger.
+
+This maps onto obligations a Swiss fiduciary and its clients care about: FINMA Guidance 08/2024
+asks for an inventory, documentation, monitoring and that responsibility stays with people
+(entity card names the responsible human; ledger); EU AI Act Art. 12 (logging) and Art. 14
+(human oversight, ability to stop: queue, grants, kill switch) if the firm serves EU clients.
 
 ## 3. Use of Apertus
 
@@ -141,6 +177,24 @@ amount: on a VAT-mismatch invoice the model reported net + VAT instead of the st
    asserts "correct totals" without doing the arithmetic. Promoting those two lessons to code
    (last row) closes most of the gap: soft control finds the rule, hard control enforces it.
 
+**Agent verification.** Each attack below was replayed once for each of the 35 invoices the
+production configuration paid, each time against a freshly hired agent (`src/agent/security.py`,
+no model calls):
+
+| Scenario | Blocked | Caught by |
+|---|---|---|
+| legitimate request (control) | 0 / 35 (35 accepted) | — |
+| forged signature in the agent's name | 35 / 35 | G1 |
+| amount / IBAN changed after signing | 35 / 35 | G1 |
+| replayed request · stale request (1 h) | 35 / 35 · 35 / 35 | G2 |
+| unknown agent key · revoked agent v1 after kill switch | 35 / 35 · 35 / 35 | G3 |
+| client not delegated · above cap without grant · expired badge | 35 / 35 each | G4 |
+| mandate limits tampered · mandate naming another delegate · mandate revoked | 35 / 35 each | G5 |
+
+In the reference run the gate accepted all 78 agent decisions for active clients' invoices plus the
+4 payment files, and refused the 4 decisions for the client whose mandate was already revoked
+(not in the agent's badge). The ledger's chain and signatures verify.
+
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
 all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/test_core.py`).
 
@@ -149,8 +203,12 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
 - Synthetic invoices are cleaner than scanned PDFs; we feed text, no OCR. Real invoices (QR-bill,
   scans) would need a document-reading step, and extraction accuracy would drop.
 - 78 test cases: differences of one or two cases are noise. No confidence intervals.
-- The delegation credential is an HMAC mock, not a real verifiable credential (e.g. swiyu SD-JWT VC,
-  planned launch 2026-12-01); the ledger is hash-chained but not signed or anchored externally.
+- Identity uses real Ed25519 signatures and did:key, but the documents are a simple JSON format,
+  not W3C Verifiable Credentials or swiyu SD-JWT VCs (swiyu planned launch 2026-12-01). Demo keys are
+  derived from fixed seeds for reproducibility; in production the firm and ledger keys belong in an
+  HSM, the agent key only in memory. Client DIDs are "registered at onboarding" by a demo rule.
+  The ledger is signed but not anchored externally. The attack scenarios are ones we designed; they
+  show the checks work, not that no other attack exists.
 - pain.001 files are checked structurally (counts, control sum, IBAN checksums); the official
   XSD and the Swiss SPS rules were not validated offline.
 - Lessons are learned from 42 training cases with simulated reviewer notes; the case types in
@@ -168,7 +226,7 @@ Commit: ⟨pending⟩.
 
 ## 8. Next steps
 
-Real verifiable credentials (swiyu) for mandates; QR-bill and PDF input; a sign-off workflow in the
+Mandates as swiyu verifiable credentials and keys in an HSM; QR-bill and PDF input; a sign-off workflow in the
 app for promoting lessons to hard checks (done by hand here); a fresh, unseen test set to measure the
 promoted checks blind; pilot with one Treuhand office on historical, anonymised
 payment runs; integration as a layer on top of existing Swiss ERP/accounting software rather than a replacement.

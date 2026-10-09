@@ -13,13 +13,14 @@
     "single_limit_chf": 5000,
     "monthly_limit_chf": 20000,
     "revoked": false,
-    "agent_id": "agent:treuhand-desk-01",
     "valid_from": "2026-01-01",
     "valid_until": "2026-12-31",
     "debtor_iban": "CH4325613651127989360",
     "issued_by": "Bäckerei Steiner GmbH (Geschäftsführung)",
+    "client_did": "did:key:z6MkvYDKuXhQhs5WmgezeRBAKRtgADtD8wxAshZEFEFpx9Vg",
+    "delegate": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
     "revoked_at": null,
-    "signature": "06062bbf57c901d54758b66290484d81a1999b4da96b87631933842248e176ba"
+    "signature": "8wr4-BcGUw5_50c8X0KjRsEa_7N-M6c6XwQxZcU4YJCgSPDqTQ07jslv0RgtNYG46LC0EqG5I-Xs728SyKYUAQ"
   },
   {
     "client_id": "C02",
@@ -35,13 +36,14 @@
     "single_limit_chf": 3000,
     "monthly_limit_chf": 12000,
     "revoked": false,
-    "agent_id": "agent:treuhand-desk-01",
     "valid_from": "2026-01-01",
     "valid_until": "2026-12-31",
     "debtor_iban": "CH9077085215762041417",
     "issued_by": "Studio Grafico Bernasconi Sagl (Geschäftsführung)",
+    "client_did": "did:key:z6MknUyuYG2rsfZ3ETHMjmjfL6zo2efvJjTaiv5NCuHZJBXC",
+    "delegate": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
     "revoked_at": null,
-    "signature": "090b31f6b0fd5d0b47fde076b1e37905a29967dcd68dd45c1c40dc19dab1e056"
+    "signature": "EBbk3Jhxwu6LKFKtf776IP_3GxXl7bqludk4x6N_T8na0O72m4qS_ZQULuGSGbLHgEwLS8kIbxoAOBH7t0FhAQ"
   },
   {
     "client_id": "C03",
@@ -58,13 +60,14 @@
     "single_limit_chf": 8000,
     "monthly_limit_chf": 25000,
     "revoked": false,
-    "agent_id": "agent:treuhand-desk-01",
     "valid_from": "2026-01-01",
     "valid_until": "2026-12-31",
     "debtor_iban": "CH6039266760973163650",
     "issued_by": "Cabinet Favre Sàrl (Geschäftsführung)",
+    "client_did": "did:key:z6Mkg6ibYKkgky69tscfbobLEYQFiZw9oxA4MzQifEmWQhJd",
+    "delegate": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
     "revoked_at": null,
-    "signature": "9bf581d501afa1cae4a2ae945499a1b1bd986c5161837d7d727207fa6006ba36"
+    "signature": "I97WIn6Qy5mF6NcidCXDFFs4KlFGjDdItG1kMMTzAqoZjgGd5xfrCBZgavWg1BAjejdv1xKl6TTlWEMnqtO2DQ"
   },
   {
     "client_id": "C04",
@@ -79,13 +82,14 @@
     "single_limit_chf": 6000,
     "monthly_limit_chf": 20000,
     "revoked": true,
-    "agent_id": "agent:treuhand-desk-01",
     "valid_from": "2026-01-01",
     "valid_until": "2026-12-31",
     "debtor_iban": "CH9491459561951903465",
     "issued_by": "Velo Gerber AG (Geschäftsführung)",
+    "client_did": "did:key:z6Mkpq361hMyEuK2MgfRcH8pMn6YziiXBx6UdumWrgvVeKgB",
+    "delegate": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
     "revoked_at": "2026-09-30",
-    "signature": "922e38849af7f57dc8c455b26d107e66829a7503faa5230b7c796f7cc79f5ea1"
+    "signature": "cThsDQ1TC6yJnZyiSYKKbZ80qmvQ8y8Iszofgi70JnDrcic8QumQjeroU_ePYW0riMcvhzh4AExdsA-aJN4-BA"
   },
   {
     "client_id": "C05",
@@ -102,12 +106,13 @@
     "single_limit_chf": 10000,
     "monthly_limit_chf": 40000,
     "revoked": false,
-    "agent_id": "agent:treuhand-desk-01",
     "valid_from": "2026-01-01",
     "valid_until": "2026-12-31",
     "debtor_iban": "CH9385047953541165689",
     "issued_by": "Alpine Data Lab AG (Geschäftsführung)",
+    "client_did": "did:key:z6MksGwRDgb6LL9uuHTYYxtJ8Sg6WkwfxQkSN7jNUBEreUy1",
+    "delegate": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
     "revoked_at": null,
-    "signature": "a3da988a145be0e350c375f7aae5ca1874cc22bd5f3fecab0a58e1b81389c8a5"
+    "signature": "O7hS7xqYWCWVMpkljYDxFDsuoPjlIdLddVBK6h5VeWdRt0ltYvIAl6r_4Qrcvc-4PeF3Kue46sNkikNAQLAJDQ"
   }
 ]

@@ -48,4 +48,26 @@ Rules distilled by Apertus into manual generation 1 (sha256 `a62b583e11c0d832…
 ## Outputs
 
 Payment files (pain.001.001.09): {"C01": {"transactions": 11, "total_chf": 13830.0, "validation_errors": []}, "C02": {"transactions": 8, "total_chf": 9130.0, "validation_errors": []}, "C03": {"transactions": 10, "total_chf": 24140.0, "validation_errors": []}, "C05": {"transactions": 6, "total_chf": 18250.0, "validation_errors": []}}
-Ledger hash chain verifies: True
+Ledger (hash chain + ledger-key signatures) verifies: True
+Gate results for the reference run's agent requests: {"OK": 78, "G4_CLIENT_NOT_COVERED": 4}
+
+## Agent verification: attacks against the gate
+
+Every request is signed by the agent's key and must pass the gate's five checks.
+Each attack is tried once per paid invoice of the reference run.
+
+| Scenario | Attempts | Blocked | Caught by |
+|---|---|---|---|
+| legitimate request (control) | 35 | 0 (accepted 35) | OK |
+| forged signature | 35 | 35 | G1_SIGNATURE_INVALID |
+| tampered amount / IBAN after signing | 35 | 35 | G1_PAYLOAD_TAMPERED |
+| replayed request | 35 | 35 | G2_REPLAY |
+| stale request (1 h old) | 35 | 35 | G2_STALE |
+| unknown agent key | 35 | 35 | G3_NO_VALID_ENTITY_CARD |
+| revoked agent (v1 after kill switch) | 35 | 35 | G3_AGENT_REVOKED |
+| client not delegated to this agent | 35 | 35 | G4_CLIENT_NOT_COVERED |
+| amount above badge cap, no human grant | 35 | 35 | G4_ABOVE_BADGE_CAP_NO_GRANT |
+| expired badge | 35 | 35 | G4_BADGE_EXPIRED |
+| mandate limits tampered | 35 | 35 | G5_MANDATE_INVALID |
+| mandate delegated to someone else | 35 | 35 | G5_MANDATE_INVALID |
+| mandate revoked by client | 35 | 35 | G5_MANDATE_REVOKED |

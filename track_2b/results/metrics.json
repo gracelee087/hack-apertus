@@ -182,5 +182,115 @@
       "validation_errors": []
     }
   },
-  "ledger_verifies": true
+  "ledger_verifies": true,
+  "gate_reference_run": {
+    "OK": 78,
+    "G4_CLIENT_NOT_COVERED": 4
+  },
+  "attacks": {
+    "legitimate request (control)": {
+      "attempts": 35,
+      "accepted": 35,
+      "blocked": 0,
+      "codes": {
+        "OK": 35
+      }
+    },
+    "forged signature": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G1_SIGNATURE_INVALID": 35
+      }
+    },
+    "tampered amount / IBAN after signing": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G1_PAYLOAD_TAMPERED": 35
+      }
+    },
+    "replayed request": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G2_REPLAY": 35
+      }
+    },
+    "stale request (1 h old)": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G2_STALE": 35
+      }
+    },
+    "unknown agent key": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G3_NO_VALID_ENTITY_CARD": 35
+      }
+    },
+    "revoked agent (v1 after kill switch)": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G3_AGENT_REVOKED": 35
+      }
+    },
+    "client not delegated to this agent": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G4_CLIENT_NOT_COVERED": 35
+      }
+    },
+    "amount above badge cap, no human grant": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G4_ABOVE_BADGE_CAP_NO_GRANT": 35
+      }
+    },
+    "expired badge": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G4_BADGE_EXPIRED": 35
+      }
+    },
+    "mandate limits tampered": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G5_MANDATE_INVALID": 35
+      }
+    },
+    "mandate delegated to someone else": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G5_MANDATE_INVALID": 35
+      }
+    },
+    "mandate revoked by client": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G5_MANDATE_REVOKED": 35
+      }
+    }
+  }
 }

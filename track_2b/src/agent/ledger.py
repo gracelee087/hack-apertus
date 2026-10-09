@@ -1,8 +1,15 @@
-"""Append-only, hash-chained audit ledger: who acted for which client, on what basis."""
+"""Append-only audit ledger: hash-chained and signed with the ledger key.
+
+Who acted (agent DID or human), for which client, under which manual, with which gate result.
+"""
+import base64
 import json
 import threading
 from datetime import datetime, timezone
 
+from cryptography.exceptions import InvalidSignature
+
+from . import identity
 from .common import canonical, sha256
 
 GENESIS = "0" * 64
@@ -12,6 +19,7 @@ class Ledger:
     def __init__(self, path):
         self.path = path
         self.lock = threading.Lock()
+        self.key = identity.ledger_key()
         self.entries = []
         if path.exists():
             with open(path, encoding="utf-8") as f:
@@ -23,6 +31,7 @@ class Ledger:
             entry = {"seq": len(self.entries) + 1, "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                      **fields, "prev": prev}
             entry["hash"] = sha256(canonical(entry))
+            entry["sig"] = base64.urlsafe_b64encode(self.key.sign(entry["hash"].encode())).decode()
             self.entries.append(entry)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.path, "a", encoding="utf-8", newline="\n") as f:
@@ -30,12 +39,21 @@ class Ledger:
             return entry
 
 
+def ledger_did() -> str:
+    return identity.did_of(identity.ledger_key())
+
+
 def verify(entries: list):
-    """Return (ok, index of first bad entry or None)."""
+    """Return (ok, index of first bad entry or None): chain, hashes and ledger signatures."""
+    pub = identity.public_key(ledger_did())
     prev = GENESIS
     for i, e in enumerate(entries):
-        body = {k: v for k, v in e.items() if k != "hash"}
+        body = {k: v for k, v in e.items() if k not in ("hash", "sig")}
         if e.get("prev") != prev or sha256(canonical(body)) != e.get("hash"):
+            return False, i
+        try:
+            pub.verify(base64.urlsafe_b64decode(e.get("sig", "")), e["hash"].encode())
+        except (InvalidSignature, ValueError, TypeError):
             return False, i
         prev = e["hash"]
     return True, None

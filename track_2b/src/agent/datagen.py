@@ -6,12 +6,13 @@ Everything here is fictional. Labels come from how each case is constructed
 import random
 from datetime import date, timedelta
 
-from . import credential
-from .common import DATA, format_iban, make_ch_iban, write_jsonl
 import json
 
+from . import credential, identity
+from .common import DATA, format_iban, make_ch_iban, write_jsonl
+
 SEED = 2026
-AGENT_ID = "agent:treuhand-desk-01"
+SEAT = "payments-desk"
 TODAY = date(2026, 10, 9)
 
 CLIENTS = [
@@ -178,8 +179,10 @@ def build():
 
     mandates = []
     for c in CLIENTS:
-        m = dict(c, agent_id=AGENT_ID, valid_from="2026-01-01", valid_until="2026-12-31",
-                 debtor_iban=rand_iban(), issued_by=f"{c['name']} (Geschäftsführung)")
+        m = dict(c, valid_from="2026-01-01", valid_until="2026-12-31",
+                 debtor_iban=rand_iban(), issued_by=f"{c['name']} (Geschäftsführung)",
+                 client_did=credential.registered_did(c["client_id"]),
+                 delegate=identity.did_of(identity.firm_key()))
         m["revoked_at"] = "2026-09-30" if m["revoked"] else None
         m["signature"] = credential.sign(m)
         mandates.append(m)

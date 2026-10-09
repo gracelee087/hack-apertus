@@ -47,6 +47,7 @@ code { font-size:12.5px; }
 <nav id="nav"></nav>
 <main>
   <section id="overview"></section>
+  <section id="agent"></section>
   <section id="queue"></section>
   <section id="process">
     <div class="card"><h2>Process a new invoice</h2>
@@ -63,11 +64,12 @@ code { font-size:12.5px; }
   <section id="files"></section>
 </main>
 <script>
-const TABS = [["overview","Evaluation"],["queue","Approval queue"],["process","Process invoice"],
+const TABS = [["overview","Evaluation"],["agent","Agent identity"],["queue","Approval queue"],["process","Process invoice"],
               ["mandates","Mandates"],["lessons","Lessons"],["ledger","Ledger"],["files","Payment files"]];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
 const dec = d => `<span class="pill ${esc(d)}">${esc(d)}</span>`;
 async function api(path, opts) {
   const r = await fetch(path, opts); const j = await r.json().catch(() => ({}));
@@ -78,7 +80,7 @@ const post = (path, body) => api(path, {method:"POST", headers:{"Content-Type":"
 function show(id) {
   document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === id));
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.id === id));
-  ({overview, queue, mandates, lessons, ledger, files, process: loadClients})[id]();
+  ({overview, agent, queue, mandates, lessons, ledger, files, process: loadClients})[id]();
 }
 $("nav").innerHTML = TABS.map(([id, t]) => `<button data-id="${id}" onclick="show('${id}')">${t}</button>`).join("");
 
@@ -109,7 +111,49 @@ async function overview() {
   <div class="card"><h2>Extraction accuracy (Apertus)</h2>
     <table><tr>${Object.keys(m.extraction).map(k => `<th>${k}</th>`).join("")}</tr>
     <tr>${Object.values(m.extraction).map(v => `<td class="n">${v.toFixed(3)}</td>`).join("")}</tr></table></div>
+  ${m.attacks ? `<div class="card"><h2>Agent verification: attacks against the gate</h2>
+    <p class="mute">Each attack replayed over every invoice the agent paid. No model calls involved.</p><table>
+    <tr><th>Scenario</th><th>Attempts</th><th>Blocked</th><th>Caught by</th></tr>
+    ${Object.entries(m.attacks).map(([k, r]) => `<tr><td>${esc(k)}</td><td class="n">${r.attempts}</td>
+      <td class="n ${k.startsWith("legitimate") ? "" : (r.blocked === r.attempts ? "pay" : "reject")}">${k.startsWith("legitimate") ? `accepted ${r.accepted}` : r.blocked}</td>
+      <td>${Object.keys(r.codes).join(", ")}</td></tr>`).join("")}</table></div>` : ""}
   <div class="card"><h2>Current manual</h2><p class="mute">sha256 <code>${s.manual_sha256}</code></p><pre>${esc(s.manual)}</pre></div>`;
+}
+
+async function agent() {
+  const a = await api("/api/agent");
+  const b = a.badge || {}, c = a.card || {};
+  $("agent").innerHTML = `<div class="card"><h2>Agent ${esc(c.name || "–")} ${a.active ? `<span class="pill pay">active</span>` : `<span class="pill reject">revoked</span>`}</h2>
+    <p class="mute">Every action this agent takes is a request signed with its own key and checked by the gate:
+      G1 signature · G2 replay · G3 identity · G4 badge · G5 client mandate. Requests that fail are not executed.</p>
+    <table>
+      <tr><th>DID (agent key)</th><td><code>${esc(a.did)}</code></td></tr>
+      <tr><th>Seat · generation</th><td>${esc(a.seat)} · v${a.generation}</td></tr>
+      <tr><th>Entity card</th><td>operator ${esc(c.operator)}, responsible: ${esc(c.responsible_human)} · signed by firm <code>${short(c.issuer)}</code> ${a.card_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>Badge</th><td>actions ${esc((b.actions || []).join(", "))} · clients ${esc((b.clients || []).join(", "))} · cap CHF ${chf(b.max_single_chf)} without a human grant · valid ${esc(b.valid_from)} – ${esc(b.valid_until)} ${a.badge_ok ? "✓" : "✗"}</td></tr>
+      <tr><th>Ledger key</th><td><code>${short(a.ledger_did)}</code></td></tr>
+      <tr><th>Revoked generations</th><td>${a.revoked_agents.map(short).join("<br>") || "none"}</td></tr>
+    </table>
+    <div class="row"><input id="killnote" placeholder="Reason for the kill switch (becomes a lesson)" style="flex:1">
+      <button class="btn primary" onclick="killAgent()">Kill switch</button>
+      <button class="btn" onclick="replaceAgent()">Replace with v${a.generation + 1}</button></div></div>
+    <div class="card"><h2>Try to break it</h2>
+      <div class="row"><button class="btn" onclick="attackGate('replay')">Replay the last request</button>
+      <button class="btn" onclick="attackGate('forged')">Forge a payment in the agent's name</button>
+      <span id="astatus" class="mute"></span></div>
+      <p class="mute">Requests rejected by the gate so far: <b>${a.requests_rejected}</b></p>
+      <table><tr><th>#</th><th>Gate</th><th>Client</th><th>Case / attack</th></tr>${a.last_rejections.slice().reverse().map(e =>
+        `<tr><td>${e.seq}</td><td class="reject">${esc(e.gate)}</td><td>${esc(e.client_id || "")}</td><td>${esc(e.case_id || e.attack || "")}</td></tr>`).join("")}</table></div>`;
+}
+async function killAgent() {
+  try { await post("/api/agent/kill", {note: $("killnote").value}); agent(); } catch (e) { alert(e.message); }
+}
+async function replaceAgent() {
+  try { await post("/api/agent/replace"); agent(); } catch (e) { alert(e.message); }
+}
+async function attackGate(kind) {
+  try { const r = await post(`/api/attack/${kind}`); $("astatus").textContent = r.ok ? "accepted?!" : `blocked: ${r.gate}`; setTimeout(agent, 900); }
+  catch (e) { $("astatus").textContent = e.message; }
 }
 
 async function queue() {
@@ -145,6 +189,7 @@ async function processInvoice() {
     const h = await post("/api/process", {client_id: $("pclient").value, invoice_text: $("ptext").value});
     $("pstatus").textContent = "";
     $("presult").innerHTML = `<div class="card"><h2>Decision: ${dec(h.decision)}</h2><p>${esc(h.reason)}</p>
+      <p>Signed by agent v${h.generation} <code>${short(h.agent_did)}</code> · gate: ${h.executed ? `<span class="pay">${esc(h.gate)} — recorded</span>` : `<span class="reject">${esc(h.gate)} — not executed</span>`}</p>
       <h2>Badge checks</h2>${h.findings.length ? `<table><tr><th>Severity</th><th>Check</th><th>Detail</th></tr>${h.findings.map(f =>
         `<tr><td>${dec(f.severity)}</td><td>${f.code}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="pay">all hard checks passed</p>`}
       <h2>Fields read by Apertus</h2><pre>${esc(JSON.stringify(h.fields, null, 2))}</pre></div>`;
@@ -154,11 +199,11 @@ async function processInvoice() {
 async function mandates() {
   const ms = await api("/api/mandates");
   $("mandates").innerHTML = `<div class="card"><h2>Client mandates (delegation credentials)</h2>
-    <p class="mute">What each client allowed this agent (<code>agent:treuhand-desk-01</code>) to do. Signature-checked on every decision. Revoking is the kill switch.</p>
+    <p class="mute">What each client delegated to the firm, signed with the client's own key (did:key) and naming the firm as delegate. The gate checks it on every request; revoking it stops the agent for that client at once.</p>
     <table><tr><th>Client</th><th>Allowed categories</th><th>Single limit</th><th>Monthly limit</th><th>Valid</th><th>Status</th><th></th></tr>
     ${ms.map(m => `<tr><td>${esc(m.name)}</td><td>${m.allowed_categories.join(", ")}</td><td class="n">${chf(m.single_limit_chf)}</td>
       <td class="n">${chf(m.monthly_limit_chf)}</td><td>${m.valid_from} – ${m.valid_until}</td>
-      <td>${m.revoked ? `<span class="pill reject">revoked ${m.revoked_at}</span>` : `<span class="pill pay">active</span>`} ${m.signature_ok ? "✓ sig" : "✗ sig"}</td>
+      <td>${m.revoked ? `<span class="pill reject">revoked ${m.revoked_at}</span>` : `<span class="pill pay">active</span>`} ${m.signature_ok ? "✓ client sig" : "✗ sig"}<br><code>${short(m.client_did)}</code></td>
       <td>${m.revoked ? "" : `<button class="btn" onclick="revoke('${m.client_id}')">Revoke</button>`}</td></tr>`).join("")}</table></div>`;
 }
 async function revoke(cid) {
@@ -170,7 +215,8 @@ async function lessons() {
   const l = await api("/api/lessons");
   $("lessons").innerHTML = `<div class="card"><h2>Lesson layer — manual generation ${l.generation}</h2>
     <p class="mute">Reviewer overrules are masked (no names, amounts, IBANs), distilled by Apertus into rules, and appended to the manual. The manual's sha256 is written to the ledger. No model weights change.</p>
-    <h2>Current lessons</h2><ol>${l.rules.map(r => `<li>${esc(r)}</li>`).join("") || "<li class='mute'>none</li>"}</ol>
+    <h2>Lessons binding seat ${esc(l.seat)} (inherited by every new generation)</h2><ol>${l.lessons.filter(x => x.seat === l.seat).map(x => `<li>${esc(x.rule)} <span class="mute">(manual gen ${x.from_manual_generation})</span></li>`).join("") || "<li class='mute'>none</li>"}</ol>
+    ${l.lessons.some(x => x.seat !== l.seat) ? `<h2>Other seats (reference only)</h2><ul>${l.lessons.filter(x => x.seat !== l.seat).map(x => `<li>[${esc(x.seat)}] ${esc(x.rule)}</li>`).join("")}</ul>` : ""}
     <h2>Pending reviewer notes (${l.pending_notes.length})</h2><ul>${l.pending_notes.map(n => `<li>${esc(n)}</li>`).join("") || "<li class='mute'>none — reject an item in the queue with a note</li>"}</ul>
     <div class="row"><button class="btn primary" onclick="publish()">Publish next manual generation</button><span id="lstatus" class="mute"></span></div></div>
     <div class="card"><h2>Where generation 1 came from</h2><p class="mute">${l.train.overruled ?? 0} of ${l.train.train_cases ?? 0} training-split decisions were overruled.</p>
@@ -184,11 +230,12 @@ async function publish() {
 async function ledger() {
   const l = await api("/api/ledger");
   $("ledger").innerHTML = `<div class="card"><h2>Audit ledger ${l.verifies ? `<span class="pill pay">hash chain verifies</span>` : `<span class="pill reject">broken at #${l.first_bad}</span>`}</h2>
-    <p class="mute">Append-only. Each entry stores the previous entry's hash: who acted, for which client, under which manual.</p>
-    <table><tr><th>#</th><th>Actor</th><th>Action</th><th>Client</th><th>Case</th><th>CHF</th><th>Detail</th><th>Hash</th></tr>
-    ${l.entries.slice().reverse().map(e => `<tr><td>${e.seq}</td><td>${esc(e.actor)}</td><td>${dec(e.action)}</td><td>${e.client_id ?? ""}</td>
+    <p class="mute">Append-only. Each entry stores the previous entry's hash and is signed with the ledger key <code>${short(l.ledger_did)}</code>: who acted (agent DID or human), for which client, under which manual, with which gate result.</p>
+    <table><tr><th>#</th><th>Actor</th><th>Action</th><th>Gate</th><th>Client</th><th>Case</th><th>CHF</th><th>Detail</th><th>Hash</th></tr>
+    ${l.entries.slice().reverse().map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${dec(e.action)}</td>
+      <td class="${e.gate && e.gate !== "OK" ? "reject" : ""}">${esc(e.gate || "")}</td><td>${e.client_id ?? ""}</td>
       <td>${e.case_id ?? ""}</td><td class="n">${e.amount_chf != null ? chf(e.amount_chf) : ""}</td>
-      <td>${esc(e.reason || e.note || e.file || (e.manual_sha256 ? "manual " + e.manual_sha256.slice(0, 12) : ""))}</td>
+      <td>${esc(e.reason || e.note || e.file || e.attack || (e.agent_did ? "agent " + e.agent_did.slice(-8) : "") || (e.manual_sha256 ? "manual " + e.manual_sha256.slice(0, 12) : ""))}</td>
       <td><code>${e.hash.slice(0, 10)}</code></td></tr>`).join("")}</table></div>`;
 }
 

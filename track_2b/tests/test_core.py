@@ -1,12 +1,13 @@
 """Offline tests for the deterministic parts: badge, IBAN, credential, ledger, payment file, masking."""
 import copy
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from agent import badge, credential, datagen, lessons, pain001  # noqa: E402
+from agent import badge, credential, datagen, identity, lessons, pain001  # noqa: E402
+from agent.desk import Desk  # noqa: E402
 from agent.common import iban_valid, make_ch_iban  # noqa: E402
 from agent.ledger import Ledger, verify  # noqa: E402
 
@@ -60,6 +61,44 @@ def test_tampered_credential_is_rejected():
     c = next(c for c in CASES if c["client_id"] == "C01" and c["reason_code"] == "OK")
     verdict, findings = badge.check(m, VENDORS["C01"], c["prior_payments"], gold_fields(c))
     assert verdict == "reject" and "CREDENTIAL_INVALID" in [f["code"] for f in findings]
+
+
+def test_did_and_signed_documents():
+    k = identity.key("t")
+    did = identity.did_of(k)
+    assert did.startswith("did:key:z6Mk")  # standard prefix for Ed25519 did:key
+    assert identity.public_key(did).public_bytes_raw() == k.public_key().public_bytes_raw()
+    doc = identity.sign_doc({"type": "X", "n": 1}, k)
+    assert identity.verify_doc(doc) and not identity.verify_doc({**doc, "n": 2})
+
+
+def _desk(tmp_path):
+    d = Desk(Ledger(tmp_path / "l.jsonl"), copy.deepcopy(BY_ID),
+             clock=lambda: datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc))
+    d.hire(manual_sha256="x")
+    return d
+
+
+def test_gate_accepts_legit_and_blocks_replay(tmp_path):
+    d = _desk(tmp_path)
+    payload = {"case_id": "T1", "amount_chf": 100.0, "executes_payment": True, "client_id": "C01"}
+    st = identity.stamp(d.agent_key, "payment.decide", "C01", payload, d.clock())
+    assert d.submit(st, payload)["gate"] == "OK"
+    assert d.submit(st, payload)["gate"] == "G2_REPLAY"
+    assert verify(d.ledger.entries) == (True, None)
+
+
+def test_kill_switch_and_grant(tmp_path):
+    d = _desk(tmp_path)
+    big = {"case_id": "T2", "amount_chf": 25000.0, "executes_payment": True}
+    assert d.request("payment.decide", "C05", big)["gate"] == "G4_ABOVE_BADGE_CAP_NO_GRANT"
+    ref = d.grant("T2", 25000.0, "checked with client")
+    assert d.request("payment.decide", "C05", {**big, "grant_ref": ref})["gate"] == "OK"
+    d.kill("test")
+    assert d.request("payment.decide", "C01", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "G3_AGENT_REVOKED"
+    d.hire(manual_sha256="x")
+    assert d.generation == 2
+    assert d.request("payment.decide", "C01", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"
 
 
 def test_ledger_detects_tampering(tmp_path):

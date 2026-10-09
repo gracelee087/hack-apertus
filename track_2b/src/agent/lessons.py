@@ -38,11 +38,16 @@ def distill(masked_notes: list) -> list:
     return rules or sorted(set(masked_notes))[:5]
 
 
-def manual_with_lessons(rules: list, generation: int) -> str:
-    if not rules:
-        return prompts.MANUAL_GEN0
-    lines = "\n".join(f"L{i + 1}. {r}" for i, r in enumerate(rules))
-    return f"{prompts.MANUAL_GEN0}\n\nLessons from reviewer feedback (generation {generation}):\n{lines}"
+def manual_with_lessons(rules: list, generation: int, reference: list = ()) -> str:
+    """Binding lessons come from this seat's lineage; other seats' lessons are appended as reference only."""
+    text = prompts.MANUAL_GEN0
+    if rules:
+        lines = "\n".join(f"L{i + 1}. {r}" for i, r in enumerate(rules))
+        text += f"\n\nLessons from reviewer feedback (generation {generation}):\n{lines}"
+    if reference:
+        lines = "\n".join(f"- {r}" for r in reference)
+        text += f"\n\nLessons from other seats, for reference only (not binding):\n{lines}"
+    return text
 
 
 def fingerprint(text: str) -> str:

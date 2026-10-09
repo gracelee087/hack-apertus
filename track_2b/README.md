@@ -12,11 +12,18 @@ English — while a **harness** keeps it inside what each client actually delega
    that don't add up, invoices addressed to someone else).
 4. **Lessons**: when a human overrules the agent, the note is masked, Apertus distils it into a
    rule, and the next manual generation is fingerprinted in the ledger. No weights change.
-5. **Outputs**: one ISO 20022 `pain.001.001.09` file per client for its bank, an approval queue
-   for everything the agent may not pay alone, and a hash-chained audit ledger.
+5. **Agent identity and gate**: the agent has its own Ed25519 key and DID, a firm-signed ID card
+   and badge; clients sign their mandates. Every agent action is a signed, single-use request that
+   a gate checks (signature, replay, identity, badge, mandate) before it takes effect. Kill switch,
+   replacement by the next generation, and human grants for amounts above the badge cap.
+6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client for its bank, an approval queue
+   for everything the agent may not pay alone, and a hash-chained, signed audit ledger.
 
-The evaluation compares **Apertus alone** against **Apertus + harness** on 78 synthetic test
-invoices with planted faults. See `results/summary.md` and `technical_report.md`.
+Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 45 invoices it
+must not pay (CHF 138,781); with the harness 7 (CHF 26,771), and 2 (CHF 9,290) with two lessons
+promoted to hard checks, with no legitimate payment missed. Twelve attack types on the agent's
+identity and authority: 420 / 420 blocked, 35 / 35 legitimate requests accepted.
+See `results/summary.md` and `technical_report.md`.
 
 ## Run
 
@@ -35,7 +42,7 @@ Tests: `pip install pytest && python -m pytest tests`.
 
 | Path | Content |
 |---|---|
-| `src/agent/` | datagen, llm client (record/replay), badge, decide, lessons, ledger, pain001, evaluate, web app |
+| `src/agent/` | datagen, llm client (record/replay), badge, decide, lessons, identity, gate, desk, security, ledger, pain001, evaluate, web app |
 | `data/` | synthetic mandates, suppliers, 120 invoices (labels + reviewer notes), recorded Apertus responses |
 | `results/` | metrics, predictions, payment files, ledger from the reference run |
 | `tests/` | offline tests for the deterministic parts |
