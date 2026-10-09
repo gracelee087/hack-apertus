@@ -18,10 +18,11 @@ SYSTEMS = {
     "harness_gen0": "Apertus extraction + badge + review with manual gen 0",
     "harness_gen1": "Apertus extraction + badge + review with manual gen 1 (lessons)",
     "harness_gen1_promoted": "as gen 1, plus two lessons promoted to hard checks (sum, addressee); added after test results",
-    "harness_gen1_promoted_risk": "as above, plus a second look: risk score >= 50 sends a payment to a human; added after test results",
+    "harness_gen1_promoted_grounded": "as above, plus a grounding check (IBAN and total must be written in the invoice); added after the study tune set",
+    "harness_gen1_promoted_risk": "as above, plus a second look: a high risk score sends a payment to a human; added after test results",
 }
 PRODUCTION = "harness_gen1_promoted_risk"  # the configuration whose ledger, payment files and queue are written
-BEFORE_RISK = "harness_gen1_promoted"  # the risk model is evaluated against what the system does without it
+BEFORE_RISK = "harness_gen1_promoted_grounded"  # the risk model is evaluated against what the system does without it
 
 
 def load():
@@ -63,7 +64,8 @@ def evaluate_case(c, mandates, suppliers, manual1):
     h0 = decide.harness(c, m, sup, prompts.MANUAL_GEN0, fields=fields)
     h1 = decide.harness(c, m, sup, manual1, fields=fields)
     h2 = decide.harness(c, m, sup, manual1, fields=fields, promoted=True)
-    h3 = decide.second_look(h2, *risk.scorer().score(c, fields))
+    h2g = decide.harness(c, m, sup, manual1, fields=fields, promoted=True, grounded=True)
+    h3 = decide.second_look(h2g, *risk.scorer().score(c, fields))
 
     def view(h, decision):
         v = {"decision": decision, "reason": h.get("reason", ""), "findings": h["findings"]}
@@ -75,7 +77,8 @@ def evaluate_case(c, mandates, suppliers, manual1):
             "reason_code": c["reason_code"], "gold": c["gold"], "fields": fields, "baseline": base,
             "badge_only": view({"findings": h0["findings"]}, h0["badge_only"]),
             "harness_gen0": view(h0, h0["decision"]), "harness_gen1": view(h1, h1["decision"]),
-            "harness_gen1_promoted": view(h2, h2["decision"]), "harness_gen1_promoted_risk": view(h3, h3["decision"]),
+            "harness_gen1_promoted": view(h2, h2["decision"]),
+            "harness_gen1_promoted_grounded": view(h2g, h2g["decision"]), "harness_gen1_promoted_risk": view(h3, h3["decision"]),
             "risk_score": h3["risk_score"]}
 
 

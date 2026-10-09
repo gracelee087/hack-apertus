@@ -358,3 +358,17 @@ def test_agent_cap_must_be_a_finite_positive_number(tmp_path, monkeypatch):
             raise AssertionError(f"cap {cap} accepted")
         except app.HTTPException as e:
             assert e.status_code == 400
+
+
+def test_grounding_holds_values_not_written_in_the_invoice():
+    from agent import decide
+    case = next(c for c in CASES if c["reason_code"] == "OK")
+    m, sup = BY_ID[case["client_id"]], VENDORS[case["client_id"]]
+    fields = gold_fields(case)
+    assert badge.grounding(case["invoice_text"], fields) == []
+    assert decide.harness(case, m, sup, "manual", fields=fields, grounded=True, promoted=True)["badge"] != "reject"
+    made_up = fields | {"total_chf": round(fields["total_chf"] + 10, 2)}  # e.g. a total computed, not read
+    assert [f["code"] for f in badge.grounding(case["invoice_text"], made_up)] == ["E_NOT_IN_DOCUMENT"]
+    misread = fields | {"vendor_iban": fields["vendor_iban"][:-1] + str((int(fields["vendor_iban"][-1]) + 1) % 10)}
+    h = decide.harness(case, m, sup, "manual", fields=misread, grounded=True)
+    assert h["decision"] == "escalate" and "R_IBAN_INVALID" not in [f["code"] for f in h["findings"]]

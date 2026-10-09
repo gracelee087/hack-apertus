@@ -259,7 +259,7 @@ table.agents td, table.agents th { white-space:nowrap; padding:8px 8px; } table.
 let LANG = (() => { try { return localStorage.getItem("lang") || "en"; } catch (e) { return "en"; } })();
 const t = (ko, en) => LANG === "ko" ? ko : en;
 function setLang(l) { LANG = l; try { localStorage.setItem("lang", l); } catch (e) {} document.documentElement.lang = l; route(); }
-const RISK_KO = {E_IBAN_CHANGED: "계좌 변경", R_IBAN_INVALID: "잘못된 IBAN", R_DUPLICATE: "중복 청구", E_VAT_MISMATCH: "금액 합계 불일치",
+const RISK_KO = {E_NOT_IN_DOCUMENT: "읽은 값이 문서에 없음", FILE_INVALID: "지급 파일 미발행", E_IBAN_CHANGED: "계좌 변경", R_IBAN_INVALID: "잘못된 IBAN", R_DUPLICATE: "중복 청구", E_VAT_MISMATCH: "금액 합계 불일치",
   E_WRONG_ADDRESSEE: "다른 회사 앞 청구서", MODEL_FLAGGED: "Apertus 검토 경고 (재촉·비밀 요구 등)", E_NEW_VENDOR: "새 거래처",
   E_LIMIT_SINGLE: "건당 한도 초과", E_LIMIT_MONTH: "월 한도 초과", R_SCOPE: "위임 범위 밖", R_REVOKED: "위임 취소",
   CREDENTIAL_INVALID: "위임장 서명 무효", E_PRESSURE: "사기성 재촉 문구", EXTRACTION_INCOMPLETE: "청구서 판독 실패", CATEGORY_UNCLEAR: "지출 유형 불명",
@@ -292,7 +292,7 @@ const FEAT = {amount_z: ["평소 대비 금액", "amount vs usual"], iban_change
   duplicate: ["중복 청구", "duplicate"], over_single_limit: ["건당 한도 초과", "above single limit"], out_of_scope: ["위임 범위 밖", "outside the mandate"], month_load: ["월 한도 소진율", "monthly limit used"]};
 const featName = f => FEAT[f] ? t(FEAT[f][0], FEAT[f][1]) : f;
 const DEC_KO = {pay: "지급", escalate: "보류", reject: "거절"};
-const RISK_EN = {E_IBAN_CHANGED: "Bank details changed", R_IBAN_INVALID: "Invalid IBAN", R_DUPLICATE: "Duplicate invoice", E_VAT_MISMATCH: "Amounts do not add up",
+const RISK_EN = {E_NOT_IN_DOCUMENT: "Read value not in the invoice", FILE_INVALID: "Payment file not issued", E_IBAN_CHANGED: "Bank details changed", R_IBAN_INVALID: "Invalid IBAN", R_DUPLICATE: "Duplicate invoice", E_VAT_MISMATCH: "Amounts do not add up",
   E_WRONG_ADDRESSEE: "Addressed to another company", MODEL_FLAGGED: "Flagged by Apertus review", E_NEW_VENDOR: "New supplier", E_LIMIT_SINGLE: "Above single-payment limit",
   E_LIMIT_MONTH: "Monthly limit exceeded", R_SCOPE: "Outside the mandate's scope", R_REVOKED: "Mandate revoked", CREDENTIAL_INVALID: "Mandate signature invalid",
   E_PRESSURE: "Pressure to pay", EXTRACTION_INCOMPLETE: "Could not read the invoice", CATEGORY_UNCLEAR: "Expense type unclear",
@@ -357,7 +357,7 @@ const pipe = (steps, tags = stLabel) => `<div class="pipe">${steps.map((s, i) =>
   <small title="${esc(s.detail || "")}">${esc(s.detail || "")}</small></div>`).join("")}</div>`;
 const dots = steps => `<span class="dots" data-tip="${esc(steps.map(s => `${s.name}: ${stLabel(s.state)}`).join("  →  "))}" aria-label="${esc(steps.map(s => `${s.name}: ${stLabel(s.state)}`).join(", "))}">${steps.map(s => `<i class="${s.state}"></i>`).join("")}</span>`;
 const FLOW = () => [t("Apertus가 읽기", "Apertus reads"), t("하드 체크 (코드)", "Hard checks (code)"), t("Apertus 검토", "Apertus review"), t("위험 점수 (데이터과학)", "Risk score (data science)"), t("문지기 (서명·권한)", "Gate (signature, authority)"), t("결과", "Outcome")];
-const SECOND_LOOK = 50;  // same threshold as decide.SECOND_LOOK
+const SECOND_LOOK = 25;  // same threshold as decide.SECOND_LOOK
 function flowFromResult(h, owner) {  // a live run of the agent on one invoice
   const f = h.findings || [], hard = f.filter(x => x.code !== "RISK_SCORE"), hit = f.some(x => x.code === "RISK_SCORE"), F = FLOW(), fl = h.fields || {};
   const readBad = !!fl.error || hard.some(x => x.code === "EXTRACTION_INCOMPLETE"), rev = h.review ? h.review.decision : null;
@@ -523,7 +523,7 @@ function queueMini(rows) {  // the top of the work queue: one line per invoice
     ${rows.map(a => `<tr><td><span class="rank top">${a.rank}</span></td><td><code>${esc(a.case_id)}</code></td>
       <td title="${esc(`${a.client} · ${a.vendor}`)}"><a href="#/c/${a.client_id}">${esc(a.client)}</a> <span class="meta">· ${esc(a.vendor)}</span></td>
       <td title="${esc(a.risks.map(r => riskName(r.code, r.label)).join(", "))}"><span class="sig ${a.risks[0].kind === "fraud" ? "bad" : "warn"}">${esc(riskName(a.risks[0].code, a.risks[0].label))}</span>${a.risks.length > 1 ? ` <span class="meta">+${a.risks.length - 1}</span>` : ""}</td>
-      <td class="n">${a.risk_score == null ? `<span class="mute">–</span>` : `<b class="${a.risk_score >= 50 ? "bad" : a.risk_score >= 20 ? "warn" : "mute"}">${Math.round(a.risk_score)}</b>`}</td>
+      <td class="n">${a.risk_score == null ? `<span class="mute">–</span>` : `<b class="${a.risk_score >= SECOND_LOOK ? "bad" : a.risk_score >= 20 ? "warn" : "mute"}">${Math.round(a.risk_score)}</b>`}</td>
       <td class="n" style="white-space:nowrap">${a.slack == null ? "–" : `${a.slack}${t("일", "d")}`}</td>
       <td class="n"><b>${chf(a.amount_chf)}</b></td>
       <td class="n"><a href="#/c/${a.client_id}/queue/${encodeURIComponent(a.case_id)}" title="${t("검토", "Review")}">${ic("arrow", 14)}</a></td></tr>`).join("")}</table>`;
@@ -584,7 +584,7 @@ function alertTable(rows) {
     ${rows.map(a => `<tr><td><span class="rank ${a.rank <= 3 ? "top" : ""}">${a.rank}</span></td><td>${a.fraud ? `<span class="pill bad">${t("사기 의심", "Fraud risk")}</span>` : `<span class="pill warn">${t("통제·한도", "Control")}</span>`}</td>
       <td><code>${esc(a.case_id)}</code></td><td><a href="#/c/${a.client_id}">${esc(a.client)}</a></td><td>${esc(a.vendor)}</td>
       <td>${a.risks.map(r => `<span class="sig ${r.kind === "fraud" ? "bad" : "warn"}">${esc(riskName(r.code, r.label))}</span>`).join("")}</td>
-      <td class="n" style="white-space:nowrap" data-tip="${esc(a.risk_score == null ? "" : `${t("예상 손실", "expected loss")} CHF ${chf0(a.expected_loss_chf)} · ${a.risk_factors.map(([f]) => featName(f)).join(", ")}`)}">${a.risk_score == null ? `<span class="mute">–</span>` : `<b class="${a.risk_score >= 50 ? "bad" : a.risk_score >= 20 ? "warn" : "mute"}">${Math.round(a.risk_score)}</b>`}</td>
+      <td class="n" style="white-space:nowrap" data-tip="${esc(a.risk_score == null ? "" : `${t("예상 손실", "expected loss")} CHF ${chf0(a.expected_loss_chf)} · ${a.risk_factors.map(([f]) => featName(f)).join(", ")}`)}">${a.risk_score == null ? `<span class="mute">–</span>` : `<b class="${a.risk_score >= SECOND_LOOK ? "bad" : a.risk_score >= 20 ? "warn" : "mute"}">${Math.round(a.risk_score)}</b>`}</td>
       <td style="white-space:nowrap">${a.days_left == null ? "–" : `D-${a.days_left} <span class="meta">${esc(a.due_date.slice(5).replace("-", "/"))}</span>`}</td>
       <td class="n" style="white-space:nowrap" data-tip="${esc(t(`마감까지 ${a.days_left}일 − 확인·은행 ${a.days_needed}일`, `${a.days_left} days to due − ${a.days_needed} to verify and bank`))}">${spare(a)}</td>
       <td class="n"><b>${chf(a.amount_chf)}</b></td>
@@ -653,7 +653,7 @@ function cTodo(c) {  // what needs a human now, in order, with the decision butt
       <span data-tip="${esc(x.rank ? t(`사무소 전체 처리 순서 ${x.rank}위`, `#${x.rank} in the firm-wide queue`) : "")}"><span class="rank ${k < 3 ? "top" : ""}">${k + 1}</span></span><span><code>${esc(i.case_id)}</code></span>
       <span title="${esc(i.vendor)}">${esc(i.vendor)}</span>
       <span title="${esc(sig.map(r => riskName(r.code, r.label)).join(", "))}">${sig.length ? `<span class="sig ${sig[0].kind === "fraud" ? "bad" : "warn"}">${esc(riskName(sig[0].code, sig[0].label))}</span>${sig.length > 1 ? ` <span class="meta">+${sig.length - 1}</span>` : ""}` : ""}</span>
-      <span class="n">${x.risk_score == null ? `<span class="mute">–</span>` : `<b class="${x.risk_score >= 50 ? "bad" : x.risk_score >= 20 ? "warn" : "mute"}">${Math.round(x.risk_score)}</b>`}</span>
+      <span class="n">${x.risk_score == null ? `<span class="mute">–</span>` : `<b class="${x.risk_score >= SECOND_LOOK ? "bad" : x.risk_score >= 20 ? "warn" : "mute"}">${Math.round(x.risk_score)}</b>`}</span>
       <span class="n">${x.slack == null ? "–" : `${x.slack}${t("일", "d")}`}</span><span class="n"><b>${chf(i.amount_chf)}</b></span><span class="chev">${ic("chev", 14)}</span></summary>
       <div>${pipe(flowFromEntry({...i, decision: "escalate", gate: "OK", action: "payment.decide"}))}
         <p><b>${t("보류 이유", "Why held")}:</b> ${esc(i.reason)}</p>
@@ -869,7 +869,7 @@ async function databasePage() {  // the files the system is built and tested on,
   const total = d.files.reduce((s, f) => s + f.bytes, 0), byType = {}, bySplit = {};
   d.cases.forEach(c => { byType[c.type] = (byType[c.type] || 0) + 1; bySplit[c.split] = (bySplit[c.split] || 0) + 1; });
   const LAYER = {"hard check": t("하드 체크 (코드)", "hard check (code)"), "promoted lesson": t("승격된 교훈 (코드)", "promoted lesson (code)"),
-    "content review": t("내용 검토 (Apertus)", "content review (Apertus)"), "second look": t("한 번 더 보기 (위험 점수)", "second look (risk score)"), gate: t("문지기", "gate")};
+    "content review": t("내용 검토 (Apertus)", "content review (Apertus)"), "second look": t("한 번 더 보기 (위험 점수)", "second look (risk score)"), grounding: t("문서 근거 확인 (코드)", "grounding (code)"), gate: t("문지기", "gate")};
   const EFFECT = {reject: [t("거절", "reject"), "bad"], "to a human": [t("사람에게", "to a human"), "warn"], refused: [t("요청 거부", "refused"), "bad"]};
   const W = {
     files: {title: t("데이터 파일", "Data files"), icon: "file", render: () => `<p class="sub">${t("모두 합성(가상) 데이터예요. 실제 회사·사람·계좌는 없어요. 라이선스 CDLA-Permissive-2.0.", "All synthetic and fictional: no real companies, people or accounts. Licence CDLA-Permissive-2.0.")}</p>
@@ -1104,7 +1104,7 @@ async function dataSciencePage() {
     ${more(t("읽어 보기", "Read"), `<ul><li>${t("학습 데이터가 합성이라, 모델이 생성기 규칙을 일부 다시 배워요. 실제 성능은 사무소의 실제 기록으로 다시 재야 해요.", "Synthetic training data: the model partly relearns the generator. Real performance must be re-measured on the firm's records.")}</li>
       <li>${t("테스트 78건(사기 23건)은 작아서 AUC의 불확실성이 커요. 신뢰구간은 계산하지 않았어요.", "78 test invoices (23 fraud) is small; AUC is uncertain and no confidence interval was computed.")}</li>
       <li>${t("점수는 확률처럼 보여도 학습 데이터의 사기 비율(15.7%)에 맞춰져 있어요. 실제 사기 비율은 훨씬 낮아요.", "Scores look like probabilities but are calibrated to the training fraud rate (15.7%); real fraud is much rarer.")}</li>
-      <li>${t("점수 50 이상이면 에이전트가 지급하려던 건도 사람에게 넘겨요(한 번 더 보기). 기준 50은 아직 따로 정한 검증 데이터로 고르지 않았어요.", "A score of 50 or more sends a payment the agent would make to a human (second look). The threshold of 50 has not yet been chosen on separate validation data.")}</li></ul>`, true)}</div>`;
+      <li>${t("점수 25 이상이면 에이전트가 지급하려던 건도 사람에게 넘겨요(한 번 더 보기). 기준 25는 따로 만든 500건(기준 선택용)에서 미리 정한 규칙으로 골랐고, 최종 1,000건에는 고정해서 썼어요.", "A score of 25 or more sends a payment the agent would make to a human (second look). The threshold was chosen on a separate 500-invoice tune set by a rule fixed in advance, then kept fixed for the final 1,000.")}</li></ul>`, true)}</div>`;
 }
 async function analyticsPage() {
   const a = await api("/api/analytics");
@@ -1156,6 +1156,7 @@ async function evaluation() {
   const sys = Object.keys(m.metrics), nonpay = Math.round(m.metrics.baseline.wrong_payments / Math.max(m.metrics.baseline.wrong_payment_rate, 1e-9));
   const NAMES = {baseline: t("Apertus 단독", "Apertus alone"), badge_only: t("+ 배지 (하드 체크)", "+ badge (hard checks)"), harness_gen0: t("+ 리뷰, 매뉴얼 gen0", "+ review, manual gen 0"),
                  harness_gen1: t("+ 리뷰, gen1 (교훈)", "+ review, gen 1 (lessons)"), harness_gen1_promoted: t("+ 교훈을 체크로 승격 ✱", "+ lessons promoted to checks ✱"),
+                 harness_gen1_promoted_grounded: t("+ 문서에 적힌 값인지 확인 ✱", "+ grounding check ✱"),
                  harness_gen1_promoted_risk: t("+ 위험 점수로 한 번 더 보기 ✱", "+ risk-score second look ✱")};
   const nm = k => NAMES[k] || k, codes = Object.keys(m.metrics.baseline.by_reason_code);
   const last = sys[sys.length - 1];

@@ -37,6 +37,7 @@ RISKS = {  # finding code -> (label, kind)
     "MODEL_FLAGGED": ("Flagged by Apertus review (e.g. pressure, secrecy)", "fraud"),
     "RISK_SCORE": ("High risk score (second look)", "fraud"),
     "FILE_INVALID": ("Payment file not issued", "control"),
+    "E_NOT_IN_DOCUMENT": ("Read value not in the invoice", "control"),
     "E_NEW_VENDOR": ("New supplier", "control"),
     "E_LIMIT_SINGLE": ("Above single-payment limit", "control"),
     "E_LIMIT_MONTH": ("Monthly limit exceeded", "control"),
@@ -368,7 +369,7 @@ def process(cid: str, inv: Text):
         case = {"case_id": f"LIVE-{secrets.token_hex(3).upper()}", "client_id": cid, "invoice_text": inv.invoice_text,
                 "prior_payments": prior_payments(cid)}
     sup = load_json(DATA / "vendors.json").get(cid, [])
-    h = decide.harness(case, m, sup, manual, promoted=True)  # model calls run outside the lock
+    h = decide.harness(case, m, sup, manual, promoted=True, grounded=True)  # model calls run outside the lock
     f = h["fields"]
     amount = badge._num(f.get("total_chf"))
     score, factors = risk.scorer().score(case, f)
@@ -629,11 +630,12 @@ RULES = [  # layer, code, what happens, where it is enforced
     ("hard check", "E_LIMIT_SINGLE", "to a human", "badge.py: above the mandate's single-payment limit"),
     ("hard check", "E_LIMIT_MONTH", "to a human", "badge.py: month total would exceed the mandate"),
     ("hard check", "EXTRACTION_INCOMPLETE", "to a human", "badge.py: supplier, IBAN or a positive total could not be read"),
+    ("grounding", "E_NOT_IN_DOCUMENT", "to a human", "badge.grounding: the IBAN or total Apertus read is not written in the invoice"),
     ("hard check", "CATEGORY_UNCLEAR", "to a human", "badge.py: expense type unclear"),
     ("promoted lesson", "E_VAT_MISMATCH", "to a human", "badge.promoted_checks: net + VAT != total"),
     ("promoted lesson", "E_WRONG_ADDRESSEE", "to a human", "badge.promoted_checks: invoice addressed to another company"),
     ("content review", "MODEL_FLAGGED", "to a human", "decide.review: Apertus reads against the firm manual and lessons"),
-    ("second look", "RISK_SCORE", "to a human", "decide.second_look: risk score >= 50 on an invoice the agent would pay"),
+    ("second look", "RISK_SCORE", "to a human", "decide.second_look: risk score >= 25 on an invoice the agent would pay (threshold chosen on the study tune set)"),
     ("gate", "G1", "refused", "gate.py: signature and payload hash"),
     ("gate", "G2", "refused", "gate.py: nonce never seen, request fresh"),
     ("gate", "G3", "refused", "gate.py: firm-issued entity card, agent not revoked"),

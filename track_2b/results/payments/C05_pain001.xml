@@ -4,8 +4,8 @@
     <GrpHdr>
       <MsgId>C05-20261009-01</MsgId>
       <CreDtTm>2026-10-09T09:00:00</CreDtTm>
-      <NbOfTxs>5</NbOfTxs>
-      <CtrlSum>13600.00</CtrlSum>
+      <NbOfTxs>4</NbOfTxs>
+      <CtrlSum>9550.00</CtrlSum>
       <InitgPty>
         <Nm>Alpine Data Lab AG</Nm>
       </InitgPty>
@@ -13,8 +13,8 @@
     <PmtInf>
       <PmtInfId>C05-20261009-01-1</PmtInfId>
       <PmtMtd>TRF</PmtMtd>
-      <NbOfTxs>5</NbOfTxs>
-      <CtrlSum>13600.00</CtrlSum>
+      <NbOfTxs>4</NbOfTxs>
+      <CtrlSum>9550.00</CtrlSum>
       <ReqdExctnDt>
         <Dt>2026-10-09</Dt>
       </ReqdExctnDt>
@@ -103,25 +103,6 @@
         </CdtrAcct>
         <RmtInf>
           <Ustrd>FT-2026-2464</Ustrd>
-        </RmtInf>
-      </CdtTrfTxInf>
-      <CdtTrfTxInf>
-        <PmtId>
-          <EndToEndId>T111</EndToEndId>
-        </PmtId>
-        <Amt>
-          <InstdAmt Ccy="CHF">4050.00</InstdAmt>
-        </Amt>
-        <Cdtr>
-          <Nm>Northlake Advisory GmbH</Nm>
-        </Cdtr>
-        <CdtrAcct>
-          <Id>
-            <IBAN>CH5488664640630870078</IBAN>
-          </Id>
-        </CdtrAcct>
-        <RmtInf>
-          <Ustrd>F-2026-5032</Ustrd>
         </RmtInf>
       </CdtTrfTxInf>
     </PmtInf>

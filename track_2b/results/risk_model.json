@@ -105,12 +105,6 @@
         "reason_code": "E_PRESSURE",
         "risk_score": 99.9,
         "rank_among_passed": 2
-      },
-      {
-        "case_id": "T111",
-        "reason_code": "E_VAT_MISMATCH",
-        "risk_score": 1.2,
-        "rank_among_passed": 26
       }
     ]
   },

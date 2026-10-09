@@ -65,7 +65,7 @@ def review(case: dict, mandate: dict, fields: dict, manual: str) -> dict:
         return {"decision": "escalate", "reason": "model failure", "error": f"{type(e).__name__}: {e}"}
 
 
-SECOND_LOOK = 50.0  # risk score (0-100) from which an invoice the agent would pay goes to a human
+SECOND_LOOK = 25.0  # risk score (0-100) from which an invoice the agent would pay goes to a human; chosen on the study's tune set
 
 
 def second_look(result: dict, risk_score: float, factors=()) -> dict:
@@ -80,13 +80,18 @@ def second_look(result: dict, risk_score: float, factors=()) -> dict:
 
 
 def harness(case: dict, mandate: dict, suppliers: list, manual: str, fields: dict = None,
-            promoted: bool = False) -> dict:
+            promoted: bool = False, grounded: bool = False) -> dict:
     fields = fields if fields is not None else extract(case)
     verdict, findings = badge.check(mandate, suppliers, case["prior_payments"], fields, today=TODAY)
     if promoted:
         findings = findings + badge.promoted_checks(mandate, fields)
         if verdict == "pass" and findings:
             verdict = "escalate"
+    if grounded and (g := badge.grounding(case["invoice_text"], fields)):
+        if "IBAN" in g[0]["msg"]:  # a misread account is a reading problem for a human, not a checksum rejection
+            findings = [f for f in findings if f["code"] != "R_IBAN_INVALID"]
+        findings = findings + g
+        verdict = "reject" if any(f["severity"] == "reject" for f in findings) else "escalate"
     result = {"fields": fields, "badge": verdict, "findings": findings, "badge_only": "pay" if verdict == "pass" else verdict}
     if verdict != "pass":
         result.update(decision=verdict, reason="; ".join(f["msg"] for f in findings))

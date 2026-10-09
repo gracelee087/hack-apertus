@@ -55,6 +55,31 @@ def _num(x):
     return v if math.isfinite(v) else None
 
 
+def amounts_in(text: str) -> set:
+    """Every amount written in the text, as a number (1'234.50, 1 234,50, CHF 1,234.50, 570.00 ...)."""
+    out = set()
+    for m in re.finditer(r"\d[\d'’ .,]*\d|\d", text):
+        s = re.sub(r"['’ ]", "", m.group())
+        s = re.sub(r"[.,]", "", s[:-3]) + "." + s[-2:] if re.search(r"[.,]\d{2}$", s) else re.sub(r"[.,]", "", s)
+        try:
+            out.add(round(float(s), 2))
+        except ValueError:
+            pass
+    return out
+
+
+def grounding(text: str, fields: dict) -> list:
+    """Fields the payment depends on must be written in the document: the IBAN as a whole IBAN, the total as
+    an amount. A model that fills a gap (a total from net + VAT, a reference read as an IBAN) is caught here.
+    Added after the study's tune set (technical report, section 6)."""
+    ibans = {normalize_iban(m.group()) for m in re.finditer(r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{1,4}){3,8}\b", text)}
+    iban, total = normalize_iban(fields.get("vendor_iban")), _num(fields.get("total_chf"))
+    missing = ([f"IBAN {iban}"] if iban and iban not in ibans else []) + \
+              ([f"total CHF {total:.2f}"] if total is not None and round(total, 2) not in amounts_in(text) else [])
+    return [{"severity": "escalate", "code": "E_NOT_IN_DOCUMENT",
+             "msg": f"not written in the invoice: {', '.join(missing)}"}] if missing else []
+
+
 def already_paid(prior: list, vendor, invoice_no) -> bool:
     """Same supplier and invoice number among this month's payments."""
     inv_no = str(invoice_no or "").strip().upper()

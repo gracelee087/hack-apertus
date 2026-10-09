@@ -86,8 +86,8 @@ def _errors(p):
 
 
 def at(p, t):
-    """Production decision with the second look at threshold t (100 = off): the promoted harness, then the score."""
-    d = p["harness_gen1_promoted"]["decision"]
+    """Production decision with the second look at threshold t (100 = off): the harness before the score, then the score."""
+    d = p[evaluate.BEFORE_RISK]["decision"]
     return "escalate" if d == "pay" and t < 100 and p["risk_score"] >= t else d
 
 
@@ -115,7 +115,7 @@ def wilson(k, n, z=1.96):
 
 def report(preds, threshold):
     for p in preds:  # the production system of this study: the chosen threshold
-        p["production"] = {"decision": at(p, threshold), "findings": [], "error": p["harness_gen1_promoted"].get("error")}
+        p["production"] = {"decision": at(p, threshold), "findings": [], "error": p[evaluate.BEFORE_RISK].get("error")}
     systems = list(evaluate.SYSTEMS) + ["production"]
     nonpay, pay = sum(p["label"] != "pay" for p in preds), sum(p["label"] == "pay" for p in preds)
     out = {}
