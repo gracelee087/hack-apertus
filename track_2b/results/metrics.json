@@ -187,6 +187,16 @@
     "OK": 78,
     "G4_CLIENT_NOT_COVERED": 4
   },
+  "identity_audit": {
+    "firm_did": "did:key:z6MkezoPMcLqKUjJZcUSuFqWQcCovPqSnoJPteuoPBQfzP4b",
+    "agents_issued": {
+      "did:key:z6MkrauM73rpFTZ833R5hLG2eup3BqZQqdwiWXV5uPMoMghQ": "payments-desk.v1"
+    },
+    "agents_revoked": [],
+    "agent_actions": 78,
+    "problems": [],
+    "ok": true
+  },
   "attacks": {
     "legitimate request (control)": {
       "attempts": 35,

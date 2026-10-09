@@ -50,6 +50,7 @@ Rules distilled by Apertus into manual generation 1 (sha256 `a62b583e11c0d832…
 Payment files (pain.001.001.09): {"C01": {"transactions": 11, "total_chf": 13830.0, "validation_errors": []}, "C02": {"transactions": 8, "total_chf": 9130.0, "validation_errors": []}, "C03": {"transactions": 10, "total_chf": 24140.0, "validation_errors": []}, "C05": {"transactions": 6, "total_chf": 18250.0, "validation_errors": []}}
 Ledger (hash chain + ledger-key signatures) verifies: True
 Gate results for the reference run's agent requests: {"OK": 78, "G4_CLIENT_NOT_COVERED": 4}
+Identity audit from the ledger alone: 78 agent actions, all by agents the firm issued and had not revoked: True (agents issued: {"did:key:z6MkrauM73rpFTZ833R5hLG2eup3BqZQqdwiWXV5uPMoMghQ": "payments-desk.v1"})
 
 ## Agent verification: attacks against the gate
 

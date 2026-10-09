@@ -230,6 +230,8 @@ async function publish() {
 async function ledger() {
   const l = await api("/api/ledger");
   $("ledger").innerHTML = `<div class="card"><h2>Audit ledger ${l.verifies ? `<span class="pill pay">hash chain verifies</span>` : `<span class="pill reject">broken at #${l.first_bad}</span>`}</h2>
+    <p>${l.audit.ok ? `<span class="pill pay">identity audit OK</span>` : `<span class="pill reject">identity audit: ${l.audit.problems.length} problems</span>`}
+      <span class="mute">${l.audit.agent_actions} agent actions, all by agents issued by the firm (${Object.values(l.audit.agents_issued).join(", ")}) and not revoked at the time. Checked from the ledger alone.</span></p>
     <p class="mute">Append-only. Each entry stores the previous entry's hash and is signed with the ledger key <code>${short(l.ledger_did)}</code>: who acted (agent DID or human), for which client, under which manual, with which gate result.</p>
     <table><tr><th>#</th><th>Actor</th><th>Action</th><th>Gate</th><th>Client</th><th>Case</th><th>CHF</th><th>Detail</th><th>Hash</th></tr>
     ${l.entries.slice().reverse().map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${dec(e.action)}</td>

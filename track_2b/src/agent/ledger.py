@@ -43,6 +43,31 @@ def ledger_did() -> str:
     return identity.did_of(identity.ledger_key())
 
 
+def audit_identities(entries: list) -> dict:
+    """An auditor's check from the ledger alone: every agent action was taken by an agent whose entity
+    card the firm issued (signature verified) earlier in the ledger and which was not revoked at that time."""
+    firm = next((e["firm_did"] for e in entries if e.get("action") == "ledger.opened"), None)
+    issued, revoked, problems, actions = {}, set(), [], 0
+    for e in entries:
+        a, actor = e.get("action"), e.get("actor", "")
+        if a == "identity.issued":
+            card = e.get("entity_card") or {}
+            if identity.verify_doc(card) and card.get("issuer") == firm and card.get("subject") == e.get("agent_did"):
+                issued[card["subject"]] = card["name"]
+            else:
+                problems.append((e["seq"], "card not issued by the firm"))
+        elif a == "agent.revoked":
+            revoked.add(e.get("agent_did"))
+        elif "gate" in e and e.get("gate") == "OK":
+            actions += 1
+            if actor not in issued:
+                problems.append((e["seq"], "action by an agent never issued"))
+            elif actor in revoked:
+                problems.append((e["seq"], "action by a revoked agent"))
+    return {"firm_did": firm, "agents_issued": issued, "agents_revoked": sorted(revoked),
+            "agent_actions": actions, "problems": problems, "ok": bool(firm) and not problems}
+
+
 def verify(entries: list):
     """Return (ok, index of first bad entry or None): chain, hashes and ledger signatures."""
     pub = identity.public_key(ledger_did())

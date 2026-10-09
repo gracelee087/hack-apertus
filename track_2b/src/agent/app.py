@@ -12,7 +12,7 @@ from . import credential, decide, identity, lessons, llm, pain001
 from .common import DATA, RESULTS, load_json, normalize_iban, sha256
 from .datagen import SEAT, TODAY
 from .desk import Desk
-from .ledger import Ledger, ledger_did, verify
+from .ledger import Ledger, audit_identities, ledger_did, verify
 
 app = FastAPI(title="Treuhand payment agent")
 lock = threading.Lock()
@@ -289,7 +289,8 @@ def publish():
 @app.get("/api/ledger")
 def ledger():
     ok, bad = verify(LEDGER.entries)
-    return {"verifies": ok, "first_bad": bad, "ledger_did": ledger_did(), "entries": LEDGER.entries[-200:]}
+    return {"verifies": ok, "first_bad": bad, "ledger_did": ledger_did(), "audit": audit_identities(LEDGER.entries),
+            "entries": LEDGER.entries[-200:]}
 
 
 @app.get("/files/payments/{name}")

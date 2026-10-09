@@ -89,6 +89,11 @@ for that exact case), G5 the client's mandate is validly signed, names our firm 
 The **kill switch** revokes the current agent generation; **replacing** it hires v2 with a new key
 and DID, while the seat's lessons carry over (lessons bind the seat's own lineage; other seats'
 lessons would be reference only). Human approvals become grants with a reference in the ledger.
+The ledger starts at issuance: it opens with the firm and ledger DIDs, then every client mandate
+in full with the client's signature, then each agent generation's entity card and badge in full
+(`identity.issued`, `delegation.issued`) and its manual fingerprint (`policy.changed`). An auditor
+can therefore check from the ledger alone that every executed agent action was taken by an agent
+the firm had issued and not yet revoked (`audit_identities`; reference run: 78 of 78).
 
 This maps onto obligations a Swiss fiduciary and its clients care about: FINMA Guidance 08/2024
 asks for an inventory, documentation, monitoring and that responsibility stays with people

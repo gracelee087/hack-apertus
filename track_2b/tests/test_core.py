@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from agent import badge, credential, datagen, identity, lessons, pain001  # noqa: E402
 from agent.desk import Desk  # noqa: E402
 from agent.common import iban_valid, make_ch_iban  # noqa: E402
-from agent.ledger import Ledger, verify  # noqa: E402
+from agent.ledger import Ledger, audit_identities, verify  # noqa: E402
 
 MANDATES, VENDORS, CASES = datagen.build()
 BY_ID = {m["client_id"]: m for m in MANDATES}
@@ -99,6 +99,22 @@ def test_kill_switch_and_grant(tmp_path):
     d.hire(manual_sha256="x")
     assert d.generation == 2
     assert d.request("payment.decide", "C01", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"
+
+
+def test_identity_is_recorded_from_issuance(tmp_path):
+    d = Desk(Ledger(tmp_path / "l.jsonl"), copy.deepcopy(BY_ID),
+             clock=lambda: datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc))
+    d.open_books()
+    d.hire(manual_sha256="x")
+    actions = [e["action"] for e in d.ledger.entries]
+    assert actions[:1] == ["ledger.opened"] and actions.count("mandate.registered") == 5
+    assert actions[-3:] == ["identity.issued", "delegation.issued", "policy.changed"]
+    d.request("payment.decide", "C01", {"case_id": "T1", "amount_chf": 10.0})
+    audit = audit_identities(d.ledger.entries)
+    assert audit["ok"] and audit["agent_actions"] == 1
+    d.kill("t")
+    d.ledger.entries.append({"seq": 99, "actor": d.agent_did, "gate": "OK", "action": "payment.decide"})
+    assert not audit_identities(d.ledger.entries)["ok"]  # an action recorded after revocation is flagged
 
 
 def test_ledger_detects_tampering(tmp_path):

@@ -10,7 +10,7 @@ from . import badge, decide, identity, lessons, llm, pain001, prompts, security
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256, write_jsonl
 from .datagen import TODAY
 from .desk import Desk
-from .ledger import Ledger, verify
+from .ledger import Ledger, audit_identities, verify
 
 SYSTEMS = {
     "baseline": "Apertus alone (policy + manual in prompt)",
@@ -138,6 +138,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
             stale.unlink()
     led = Ledger(ledger_path)
     desk = Desk(led, mandates, clock=world_clock())
+    desk.open_books()
     led.append(actor=identity.RESPONSIBLE_HUMAN, action="manual.published", generation=0,
                manual_sha256=lesson_info["manual_gen0_sha256"])
     led.append(actor=identity.RESPONSIBLE_HUMAN, action="manual.published", generation=1,
@@ -186,7 +187,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
     (out / "desk.json").write_text(json.dumps(desk.dump(), ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "queue.json").write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "manual_gen1.md").write_text(manual1 + "\n", encoding="utf-8")
-    return files, verify(led.entries)[0], dict(gate_codes)
+    return files, verify(led.entries)[0], dict(gate_codes), audit_identities(led.entries)
 
 
 def world_clock(start=None):
@@ -206,7 +207,7 @@ def _num(x):
         return None
 
 
-def summary_md(metrics, extraction, lesson_info, files, ledger_ok, n_test, gate_codes, attacks):
+def summary_md(metrics, extraction, lesson_info, files, ledger_ok, n_test, gate_codes, attacks, audit):
     rows = "\n".join(
         f"| {name} | {SYSTEMS[name]} | {m['accuracy']:.3f} | {m['wrong_payment_rate']:.3f} "
         f"({m['wrong_payments']}) | {m['wrong_payment_chf']:,.2f} | {m['missed_payment_rate']:.3f} | {m['model_failures']} |"
@@ -248,6 +249,7 @@ Rules distilled by Apertus into manual generation 1 (sha256 `{lesson_info['manua
 Payment files (pain.001.001.09): {json.dumps(files)}
 Ledger (hash chain + ledger-key signatures) verifies: {ledger_ok}
 Gate results for the reference run's agent requests: {json.dumps(gate_codes)}
+Identity audit from the ledger alone: {audit["agent_actions"]} agent actions, all by agents the firm issued and had not revoked: {audit["ok"]} (agents issued: {json.dumps(audit["agents_issued"])})
 
 ## Agent verification: attacks against the gate
 
@@ -277,13 +279,13 @@ def run():
 
     metrics = {s: score(preds, s) for s in SYSTEMS}
     extraction = extraction_scores(preds)
-    files, ledger_ok, gate_codes = write_outputs(test, preds, mandates, manual1, lesson_info, out)
+    files, ledger_ok, gate_codes, audit = write_outputs(test, preds, mandates, manual1, lesson_info, out)
     attacks = security.run(preds, mandates, out)
     report = {"model": llm.model_name(), "llm_mode": llm.mode(), "n_test": len(test), "metrics": metrics,
               "extraction": extraction, "lessons": lesson_info, "payment_files": files, "ledger_verifies": ledger_ok,
-              "gate_reference_run": gate_codes, "attacks": attacks}
+              "gate_reference_run": gate_codes, "identity_audit": audit, "attacks": attacks}
     (out / "metrics.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    md = summary_md(metrics, extraction, lesson_info, files, ledger_ok, len(test), gate_codes, attacks)
+    md = summary_md(metrics, extraction, lesson_info, files, ledger_ok, len(test), gate_codes, attacks, audit)
     (out / "summary.md").write_text(md, encoding="utf-8")
     print(md, flush=True)
     return report

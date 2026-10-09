@@ -8,8 +8,7 @@ key, DID, entity card and badge, and the seat's lessons carry over.
 import secrets
 from datetime import datetime, timezone
 
-from . import gate, identity
-from .common import canonical, sha256
+from . import credential, gate, identity
 from .datagen import SEAT
 
 
@@ -31,18 +30,36 @@ class Desk:
                 "seen_nonces": sorted(self.seen_nonces), "grants": self.grants, "cards": self.cards,
                 "badges": self.badges, "last_stamp": self.last_stamp}
 
-    # --- hiring, kill switch, replacement -------------------------------------------------
+    # --- opening the books, hiring, kill switch, replacement ---------------------------------
+    def open_books(self):
+        """First entries of a ledger: who signs what, and every client mandate in force, in full."""
+        firm = identity.did_of(identity.firm_key())
+        self.ledger.append(actor=firm, action="ledger.opened", firm=identity.FIRM_NAME, firm_did=firm,
+                           ledger_did=identity.did_of(identity.ledger_key()),
+                           note="firm key signs agent cards and badges; ledger key signs every entry")
+        for cid, m in self.mandates.items():
+            self.ledger.append(actor=m["client_did"], action="mandate.registered", client_id=cid,
+                               mandate={k: m[k] for k in credential.SIGNED_FIELDS}, client_signature=m["signature"],
+                               signature_ok=credential.verify(m),
+                               note=f"{m['name']} delegates payments to the firm"
+                                    + (f" (revoked {m['revoked_at']})" if m["revoked"] else ""))
+
     def hire(self, manual_sha256: str, valid_from="2026-01-01", valid_until="2026-12-31"):
+        """Issue a new agent generation: key -> DID, entity card, badge, manual. Each in full in the ledger."""
         self.generation += 1
         clients = [cid for cid, m in self.mandates.items() if not m["revoked"]]
         card = identity.entity_card(SEAT, self.generation)
         self.cards[card["subject"]] = card
         self.badges[card["subject"]] = identity.agent_badge(SEAT, self.generation, clients, valid_from, valid_until)
-        self.ledger.append(actor=f"firm:{identity.FIRM_NAME}", action="agent.hired", seat=SEAT,
-                           generation=self.generation, agent_did=self.agent_did,
-                           card_sha256=sha256(canonical(self.card)), badge_sha256=sha256(canonical(self.badge)),
-                           clients=clients, max_single_chf=self.badge["max_single_chf"],
-                           manual_sha256=manual_sha256, responsible_human=identity.RESPONSIBLE_HUMAN)
+        firm = identity.did_of(identity.firm_key())
+        common = {"seat": SEAT, "generation": self.generation, "agent_did": self.agent_did}
+        self.ledger.append(actor=firm, action="identity.issued", **common, entity_card=self.card,
+                           note=f"entity card for {self.card['name']}, responsible: {identity.RESPONSIBLE_HUMAN}")
+        self.ledger.append(actor=firm, action="delegation.issued", **common, badge=self.badge,
+                           note=f"badge: {', '.join(self.badge['actions'])} for {', '.join(clients)}, "
+                                f"cap CHF {self.badge['max_single_chf']:,.0f}")
+        self.ledger.append(actor=firm, action="policy.changed", **common, manual_sha256=manual_sha256,
+                           note="manual (incl. the seat's lessons) given to this generation")
 
     def kill(self, reason: str = ""):
         self.revoked_agents.add(self.agent_did)
