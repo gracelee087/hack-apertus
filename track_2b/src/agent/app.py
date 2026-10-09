@@ -13,10 +13,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from . import credential, decide, identity, lessons, llm, pain001
-from .common import DATA, RESULTS, load_json, normalize_iban, sha256
+from . import badge, credential, decide, identity, lessons, llm, pain001
+from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256
 from .datagen import TODAY
 from .desk import ACTIONS, Desk, seat_of
+from .evaluate import PRODUCTION
 from .ledger import Ledger, audit_identities, ledger_did, verify
 
 app = FastAPI(title="Treuhand payment agents")
@@ -41,6 +42,11 @@ RISKS = {  # finding code -> (label, kind)
     "EXTRACTION_INCOMPLETE": ("Could not read the invoice", "control"),
     "CATEGORY_UNCLEAR": ("Expense type unclear", "control"),
 }
+# days a human needs before the money can go: phone the supplier on a known number, or ask the client
+VERIFY_DAYS = {"E_IBAN_CHANGED": 2, "MODEL_FLAGGED": 2, "E_WRONG_ADDRESSEE": 2, "E_VAT_MISMATCH": 2, "E_NEW_VENDOR": 2,
+               "E_LIMIT_SINGLE": 3, "E_LIMIT_MONTH": 3, "R_SCOPE": 3}
+BANK_DAYS = 1  # the payment file goes to the bank a day before the due date
+OUTLIER_RATIO = 2.5  # invoice at least this many times the supplier's median amount for this client
 
 
 def _read(path, default):
@@ -156,6 +162,13 @@ def index():
     return PAGE
 
 
+def _days_until(iso):
+    try:
+        return (datetime.fromisoformat(str(iso)).date() - TODAY).days
+    except ValueError:
+        return None
+
+
 # --- portfolio -----------------------------------------------------------------------------
 
 @app.get("/api/overview")
@@ -175,10 +188,17 @@ def overview():
             continue
         codes = [c for c in i.get("checks") or [] if c in RISKS] or ["MODEL_FLAGGED"]
         fraud = any(RISKS[c][1] == "fraud" for c in codes)
+        days_left = _days_until(i.get("due_date"))
+        need = max(VERIFY_DAYS.get(c, 1) for c in codes) + BANK_DAYS
         alerts.append({"case_id": i["case_id"], "client_id": i["client_id"], "client": names_by_id.get(i["client_id"]),
                        "vendor": i["vendor"], "amount_chf": i["amount_chf"], "fraud": fraud,
+                       "due_date": i.get("due_date"), "days_left": days_left, "days_needed": need,
+                       "slack": None if days_left is None else days_left - need,
                        "risks": [{"code": c, "label": RISKS[c][0], "kind": RISKS[c][1]} for c in codes]})
-    alerts.sort(key=lambda a: (not a["fraud"], -(a["amount_chf"] or 0)))
+    # priority: fraud first, then least time to spare before the due date, then amount
+    alerts.sort(key=lambda a: (not a["fraud"], a["slack"] if a["slack"] is not None else 10**6, -(a["amount_chf"] or 0)))
+    for n, a in enumerate(alerts, 1):
+        a["rank"] = n
     return {"firm": identity.FIRM_NAME, "model": llm.model_name(), "llm_mode": llm.mode(), "clients": clients,
             "alerts": alerts, "reviewer": identity.RESPONSIBLE_HUMAN,
             "risk_totals": {c: {"count": n, "label": RISKS[c][0], "kind": RISKS[c][1]} for c, n in total.most_common()},
@@ -414,6 +434,49 @@ def evaluation():
     s = state()
     return {"metrics": _read(RESULTS / "metrics.json", {}), "manual": manual_text(s, FIRM_WIDE),
             "llm_mode": llm.mode(), "model": llm.model_name()}
+
+
+@app.get("/api/analytics")
+def analytics():
+    """Risk analytics for the firm: who caught what (test set), account reuse across clients, amount outliers."""
+    preds = read_jsonl(RESULTS / "predictions.jsonl") if (RESULTS / "predictions.jsonl").exists() else []
+    production = PRODUCTION
+    caught = {}  # reason code -> how the production system handled invoices it must not pay automatically
+    for p in preds:
+        if p["label"] == "pay":
+            continue
+        h = p.get(production) or {}
+        how = "missed" if h.get("decision") == "pay" else "code" if h.get("findings") else "review"
+        caught.setdefault(p["reason_code"], Counter())[how] += 1
+    decided = [e for e in LEDGER.entries if e.get("action") == "payment.decide" and e.get("gate") == "OK"
+               and not e.get("grant_ref")]
+    by_iban = {}
+    for e in decided:
+        if e.get("iban"):
+            x = by_iban.setdefault(e["iban"], {"vendors": {}, "clients": set(), "cases": []})
+            x["vendors"].setdefault(badge._fold(e.get("vendor")), e.get("vendor") or "?")  # one name per spelling
+            x["clients"].add(e["client_id"])
+            x["cases"].append(e.get("case_id"))
+    reused = [{"iban": k, "vendors": sorted(v["vendors"].values()), "clients": sorted(v["clients"]), "cases": v["cases"]}
+              for k, v in by_iban.items() if len(v["vendors"]) > 1 or len(v["clients"]) > 1]
+    amounts = {}
+    for e in decided:
+        if e.get("amount_chf"):
+            amounts.setdefault((e["client_id"], e.get("vendor")), []).append(e)
+    outliers = []
+    for (cid, vendor), es in amounts.items():
+        if len(es) < 3:
+            continue
+        med = sorted(x["amount_chf"] for x in es)[len(es) // 2]
+        for e in es:
+            if med and e["amount_chf"] / med >= OUTLIER_RATIO:
+                outliers.append({"case_id": e.get("case_id"), "client_id": cid, "vendor": vendor,
+                                 "amount_chf": e["amount_chf"], "median_chf": med,
+                                 "ratio": round(e["amount_chf"] / med, 1), "decision": e.get("decision")})
+    outliers.sort(key=lambda o: -o["ratio"])
+    return {"production": production, "n_test": len(preds),
+            "caught": {k: {"code": c["code"], "review": c["review"], "missed": c["missed"]} for k, c in caught.items()},
+            "ibans_seen": len(by_iban), "iban_reuse": reused, "outlier_ratio": OUTLIER_RATIO, "outliers": outliers}
 
 
 @app.get("/api/ledger")

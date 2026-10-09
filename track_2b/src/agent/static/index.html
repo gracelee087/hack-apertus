@@ -137,7 +137,7 @@ details.more > div > table tr:last-child > td { border-bottom:0; }
 .board .hd { background:var(--thead); color:var(--mute); font-weight:650; font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
 .board a.cl { text-decoration:none; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--brand); }
 .board a.cl:hover { text-decoration:underline; }
-.board + .legend { margin-top:14px; }
+.board + .legend, .bars + .legend { margin-top:14px; }
 .mini { display:flex; gap:2px; height:12px; flex:1; min-width:60px; }
 .mini i { display:block; height:100%; } .mini i:last-child { border-radius:0 3px 3px 0; }
 .heat td.n { min-width:54px; }
@@ -150,6 +150,17 @@ details.more > div > table tr:last-child > td { border-bottom:0; }
 .sig { display:inline-block; font-size:12px; margin:1px 6px 1px 0; }
 .card-h { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .card-h .sub { border:0 !important; margin:2px 0 14px !important; padding:0 !important; }
+.uplot { display:grid; grid-template-columns:120px 1fr; row-gap:6px; column-gap:12px; margin:2px 0 18px; }
+.uplot .lb { font-size:12.5px; color:var(--ink2); align-self:center; white-space:nowrap; }
+.uplot .lane { position:relative; height:34px; border-left:1px solid var(--axis); background:linear-gradient(var(--line),var(--line)) center/100% 1px no-repeat; }
+.uplot .zone { position:absolute; top:0; bottom:0; left:0; background:color-mix(in srgb, var(--st-crit) 8%, transparent); border-right:1px dashed color-mix(in srgb, var(--st-crit) 50%, transparent); }
+.uplot .zone b { position:absolute; top:-1px; left:6px; font-size:10.5px; font-weight:700; color:var(--t-crit); letter-spacing:.04em; }
+.uplot .pt { position:absolute; width:12px; height:12px; border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 0 0 2px var(--card); cursor:pointer; }
+.uplot .pt:hover { transform:translate(-50%,-50%) scale(1.35); }
+.uplot .ax { position:relative; height:16px; font-size:11px; color:var(--mute); }
+.uplot .ax span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
+.rank { display:inline-grid; place-items:center; min-width:24px; height:24px; border-radius:6px; background:var(--chip); font-weight:700; font-size:12px; }
+.rank.top { background:var(--brand); color:var(--brand-ink); }
 #tip { position:fixed; pointer-events:none; z-index:10; background:var(--card); color:var(--ink); border:1px solid var(--line);
        border-radius:6px; padding:6px 9px; font-size:12.5px; box-shadow:0 6px 18px rgba(0,0,0,.14); display:none; max-width:300px; }
 @media (max-width:1100px) { .user div { display:none; } }
@@ -280,6 +291,7 @@ async function sidebar(active) {
       <span class="dot" style="background:${s.color}"></span><span class="nm">${esc(c.name)}</span>${c.queue_open ? `<span class="badge">${c.queue_open}</span>` : ""}</a>`; }).join("")}
     <div class="sec">${t("사무소", "Firm")}</div>
     <a href="#/evaluation" class="${active === "evaluation" ? "on" : ""}">${ic("chart")}<span class="nm">${t("평가 결과", "Evaluation")}</span></a>
+    <a href="#/analytics" class="${active === "analytics" ? "on" : ""}">${ic("shield")}<span class="nm">${t("위험 분석", "Risk analytics")}</span></a>
     <a href="#/ledger" class="${active === "ledger" ? "on" : ""}">${ic("book")}<span class="nm">${t("장부", "Ledger")}</span></a>
     <div class="foot">${ic("cpu", 13)} ${esc(OV.model)}<br>
       <span class="dot" style="background:var(--st-good)"></span> ${t("정상", "clear")} &nbsp;<span class="dot" style="background:var(--st-warn)"></span> ${t("확인 필요", "attention")}<br>
@@ -302,10 +314,12 @@ async function route() {
   const cl = h[0] === "c" && OV.clients.find(c => c.client_id === h[1]);
   topbar(h[0] === "c" ? [[t("고객사", "Clients"), "#/"], [cl ? cl.name : h[1], `#/c/${h[1]}`], [(ctabs().find(x => x[0] === (h[2] || "overview")) || ["", ""])[1]]]
     : h[0] === "evaluation" ? [[t("사무소", "Firm")], [t("평가 결과", "Evaluation")]]
-    : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("장부", "Ledger")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
+    : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("장부", "Ledger")]]
+    : h[0] === "analytics" ? [[t("사무소", "Firm")], [t("위험 분석", "Risk analytics")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
   if (h[0] === "c") return clientPage(h[1], h[2] || "overview");
   if (h[0] === "evaluation") return evaluation();
   if (h[0] === "ledger") return ledgerPage();
+  if (h[0] === "analytics") return analyticsPage();
   return dashboard();
 }
 window.addEventListener("hashchange", route);
@@ -337,7 +351,7 @@ function statusBoard(o) {
 async function dashboard() {
   const o = OV, tt = o.totals, active = o.clients.filter(c => !c.mandate.revoked);
   const attention = o.clients.filter(c => ["attention", "off"].includes(statusOf(c).k)).length;
-  const fraudAlerts = o.alerts.filter(a => a.fraud).length;
+  const fraudAlerts = o.alerts.filter(a => a.fraud).length, urgent = o.alerts.filter(a => a.slack != null && a.slack <= URGENT);
   $("main").innerHTML = `${pageHead(t("전체 현황", "Overview"), t(`고객사 ${o.clients.length}곳 · 위임 활성 ${active.length}곳 · 모든 수치는 서명된 장부에서 계산`, `${o.clients.length} clients · ${active.length} with an active mandate · computed from the signed ledger`))}
   <div class="kpis six">
     ${kpi("building", t("확인이 필요한 고객사", "Clients needing attention"), `${attention} / ${o.clients.length}`, {tone: attention ? "warn" : "good"})}
@@ -347,8 +361,11 @@ async function dashboard() {
     ${kpi("coins", t("자동 지급", "Paid automatically"), `CHF ${chf0(tt.paid_chf)}`, {tone: "good", meta: t(`${tt.paid}건`, `${tt.paid} invoices`)})}
     ${kpi("shield", t("장부·신원 감사", "Ledger & identity audit"), o.ledger_ok && o.audit_ok ? t("검증됨", "Verified") : t("손상", "Broken"), {tone: o.ledger_ok && o.audit_ok ? "good" : "crit", cls: o.ledger_ok && o.audit_ok ? "ok" : "bad"})}
   </div>
-  <div class="card"><div class="card-h"><div><h2>${ic("alert", 17)} ${t("조치 필요", "Action needed")}</h2><p class="sub">${t("모든 고객사의 사람 확인 대기 건. 사기 신호가 먼저, 그다음 금액이 큰 순서.", "Everything waiting for a human, across clients. Fraud signals first, then by amount.")}</p></div>
-    <span class="pill warn">${t(`${o.alerts.length}건 대기`, `${o.alerts.length} open`)}</span></div>
+  <div class="card"><div class="card-h"><div><h2>${ic("alert", 17)} ${t("처리 순서", "Work queue by priority")}</h2><p class="sub">${t("모든 고객사의 사람 확인 대기 건을 처리할 순서대로. 사기 의심 먼저 → 마감 전 여유가 적은 순 → 금액. 여유 = 마감까지 남은 날 − 확인에 걸리는 날(계좌·내용 확인 전화 2일, 고객 승인 3일) − 은행 1일.",
+      "Everything waiting for a human, in the order to handle it: fraud risk first, then least time to spare before the due date, then amount. Spare = days to due date − days to verify (phone check 2, client approval 3) − 1 bank day.")}</p></div>
+    <div class="row" style="margin:0">${urgent.length ? `<span class="pill bad">${t(`지금 바로 ${urgent.length}건`, `${urgent.length} urgent`)}</span>` : ""}<span class="pill warn">${t(`${o.alerts.length}건 대기`, `${o.alerts.length} open`)}</span></div></div>
+    ${urgencyPlot(o.alerts)}
+    ${urgent.length ? "" : `<p class="meta" style="margin:-6px 0 14px">${ic("check", 13)} ${o.alerts.length ? t(`여유 ${URGENT}일 이하인 급한 건은 없어요. 가장 여유가 적은 건: ${o.alerts.filter(a => a.slack != null).sort((a, b) => a.slack - b.slack)[0]?.case_id} (${Math.min(...o.alerts.filter(a => a.slack != null).map(a => a.slack))}일).`, `Nothing within ${URGENT} days of spare time. Tightest: ${o.alerts.filter(a => a.slack != null).sort((a, b) => a.slack - b.slack)[0]?.case_id} (${Math.min(...o.alerts.filter(a => a.slack != null).map(a => a.slack))} days).`) : ""}</p>`}
     ${alertTable(o.alerts.slice(0, 8))}
     ${o.alerts.length > 8 ? more(t(`나머지 ${o.alerts.length - 8}건`, `${o.alerts.length - 8} more`), alertTable(o.alerts.slice(8))) : ""}</div>
   <div class="card"><h2>${t("고객사 현황판", "Client status board")}</h2><p class="sub">${t("고객사마다 지금 상태와 위험을 한 줄로. 이름을 누르면 상세 화면으로 가요.", "Each client's state and risk at a glance. Click a name for details.")}</p>
@@ -367,12 +384,31 @@ async function dashboard() {
 }
 function alertTable(rows) {
   if (!rows.length) return `<p class="mute">${t("대기 건 없음", "nothing waiting")}</p>`;
-  return `<div class="alerts"><table><tr><th>${t("심각도", "Severity")}</th><th>${t("건", "Case")}</th><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("신호", "Signals")}</th><th class="n">CHF</th><th></th></tr>
-    ${rows.map(a => `<tr><td>${a.fraud ? `<span class="pill bad">${t("사기 의심", "Fraud risk")}</span>` : `<span class="pill warn">${t("통제·한도", "Control")}</span>`}</td>
+  const spare = a => a.slack == null ? `<span class="mute">–</span>` : `<b class="${a.slack <= URGENT ? "bad" : a.slack <= 7 ? "warn" : ""}">${a.slack}${t("일", "d")}</b>`;
+  return `<div class="alerts"><table><tr><th>#</th><th>${t("심각도", "Severity")}</th><th>${t("건", "Case")}</th><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("신호", "Signals")}</th><th>${t("마감", "Due")}</th><th class="n">${t("여유", "Spare")}</th><th class="n">CHF</th><th></th></tr>
+    ${rows.map(a => `<tr><td><span class="rank ${a.rank <= 3 ? "top" : ""}">${a.rank}</span></td><td>${a.fraud ? `<span class="pill bad">${t("사기 의심", "Fraud risk")}</span>` : `<span class="pill warn">${t("통제·한도", "Control")}</span>`}</td>
       <td><code>${esc(a.case_id)}</code></td><td><a href="#/c/${a.client_id}">${esc(a.client)}</a></td><td>${esc(a.vendor)}</td>
       <td>${a.risks.map(r => `<span class="sig ${r.kind === "fraud" ? "bad" : "warn"}">${esc(riskName(r.code, r.label))}</span>`).join("")}</td>
+      <td style="white-space:nowrap">${a.days_left == null ? "–" : `D-${a.days_left} <span class="meta">${esc(a.due_date.slice(5).replace("-", "/"))}</span>`}</td>
+      <td class="n" style="white-space:nowrap" data-tip="${esc(t(`마감까지 ${a.days_left}일 − 확인·은행 ${a.days_needed}일`, `${a.days_left} days to due − ${a.days_needed} to verify and bank`))}">${spare(a)}</td>
       <td class="n"><b>${chf(a.amount_chf)}</b></td>
       <td class="n"><a href="#/c/${a.client_id}/queue/${encodeURIComponent(a.case_id)}" style="white-space:nowrap">${t("검토", "Review")} ${ic("arrow", 14)}</a></td></tr>`).join("")}</table></div>`;
+}
+const URGENT = 3;  // days of spare time or less: start now
+function urgencyPlot(alerts) {
+  const pts = alerts.filter(a => a.slack != null);
+  if (!pts.length) return "";
+  const lo = Math.min(0, ...pts.map(a => a.slack)), hi = Math.max(28, ...pts.map(a => a.slack)), x = v => 100 * (v - lo) / (hi - lo);
+  const lane = fraud => { const seen = {}; return pts.filter(a => a.fraud === fraud).map(a => { const k = seen[a.slack] = (seen[a.slack] || 0) + 1;
+    return `<i class="pt" style="left:${x(a.slack)}%;top:${50 + ((k % 3) - 1) * 28}%;background:${fraud ? C.fraud : C.control}"
+      data-tip="${esc(`#${a.rank} ${a.case_id} · ${a.client} · ${a.vendor} · CHF ${chf(a.amount_chf)} · ${t("여유", "spare")} ${a.slack}${t("일", "d")}`)}"></i>`; }).join(""); };
+  const zone = `<div class="zone" style="width:${x(URGENT)}%"></div>`;
+  return `<div class="uplot">
+    <div></div><div class="ax" style="height:14px"><span style="left:${x(URGENT) / 2}%;color:var(--t-crit);font-weight:700">${t("지금 바로", "Act now")}</span></div>
+    <div class="lb"><span class="dot" style="background:${C.fraud}"></span> ${t("사기 의심", "Fraud risk")}</div><div class="lane">${zone}${lane(true)}</div>
+    <div class="lb"><span class="dot" style="background:${C.control}"></span> ${t("통제·한도", "Control")}</div><div class="lane">${zone}${lane(false)}</div>
+    <div></div><div class="ax">${[0, 7, 14, 21, 28].filter(v => v >= lo && v <= hi).map(v => `<span style="left:${x(v)}%">${v}${t("일", "d")}</span>`).join("")}</div>
+    <div></div><div class="meta">${t("가로: 마감 전 여유(일), 왼쪽일수록 급함 · 점 하나 = 대기 1건, 올려 보면 내용", "Across: days to spare, more urgent to the left · one dot per waiting invoice, hover for details")}</div></div>`;
 }
 function heatTable(o) {
   const codes = Object.keys(o.risk_totals);
@@ -573,6 +609,36 @@ async function ledgerPage() {
     ${more(t("읽는 법", "How to read it"), `<p>${t("장부는 사무소 키", "The ledger opens with the firm key")} (<code>${short(l.firm_did)}</code>)${t("와 장부 키로 시작하고, 이어서 고객사 위임장 원본, 에이전트마다 발급된 사원증과 배지가 기록돼요. 신원 감사는 장부만 보고 '실행된 모든 에이전트 행동이 사무소가 발급했고 그 시점에 정지되지 않은 에이전트의 것인가'를 확인해요:",
       " and the ledger key, then every client mandate in full and each agent's entity card and badge as issued. The identity audit checks from the ledger alone that every executed agent action came from an agent the firm issued and had not revoked:")} ${esc(Object.values(l.audit.agents_issued).join(", "))}.</p>`)}
     ${more(t("기록 목록", "Entries"), ledgerTable(l.entries))}</div>`;
+}
+async function analyticsPage() {
+  const a = await api("/api/analytics");
+  const types = Object.entries(a.caught), sum = k => types.reduce((s, [, c]) => s + c[k], 0);
+  const hatch = "repeating-linear-gradient(45deg, var(--st-crit) 0 2px, transparent 2px 6px)";
+  const total = sum("code") + sum("review") + sum("missed");
+  $("main").innerHTML = `${pageHead(t("위험 분석", "Risk analytics"), t(`사기·통제 위험을 누가 잡았는지, 고객사를 가로지르는 신호. 탐지 성과는 테스트 청구서 ${a.n_test}건(정답 라벨 있음) 기준, 나머지는 장부 기준.`, `Who caught which risk, and signals across clients. Detection uses the ${a.n_test} labelled test invoices; the rest comes from the ledger.`))}
+  <div class="kpis">${kpi("ban", t("자동 지급하면 안 되는 건", "Must not be paid automatically"), total)}
+    ${kpi("key", t("코드 검사가 잡음", "Caught by code checks"), sum("code"), {meta: t("위임장·계좌·한도·중복·승격된 교훈", "mandate, account, limits, duplicates, promoted lessons")})}
+    ${kpi("cpu", t("Apertus 검토가 잡음", "Caught by Apertus review"), sum("review"), {meta: t("재촉·비밀 요구 등 내용", "pressure, secrecy and other content")})}
+    ${kpi("alert", t("놓침 (잘못 지급)", "Missed (paid wrongly)"), sum("missed"), {tone: "crit", cls: "bad"})}</div>
+  <div class="card"><h2>${t("위험 유형별로 누가 잡았나", "Who caught each risk type")}</h2><p class="sub">${t("운영 구성(교훈 승격 포함 ✱) 기준. 빗금 = 놓쳐서 지급된 건.", "Production configuration (lessons promoted ✱). Hatched = paid although it should not have been.")}</p>
+    ${legend([[t("코드 검사", "code checks"), C.control], [t("Apertus 검토", "Apertus review"), C.fraud], [t("놓침", "missed"), hatch]])}
+    ${stacked(types.sort((x, y) => (y[1].code + y[1].review + y[1].missed) - (x[1].code + x[1].review + x[1].missed)).map(([k, c]) => ({label: riskName(k), parts: [
+      {v: c.code, color: C.control, name: t("코드 검사", "code checks")}, {v: c.review, color: C.fraud, name: t("Apertus 검토", "Apertus review")},
+      {v: c.missed, color: hatch, name: t("놓침", "missed")}], value: c.missed ? `<span class="bad">${t(`놓침 ${c.missed}`, `${c.missed} missed`)}</span> / ${c.code + c.review + c.missed}` : `${c.code + c.review} / ${c.code + c.review}`})))}
+    ${more(t("표로 보기", "As a table"), `<table><tr><th>${t("유형", "Type")}</th><th class="n">${t("코드 검사", "Code")}</th><th class="n">Apertus</th><th class="n">${t("놓침", "Missed")}</th></tr>
+      ${types.map(([k, c]) => `<tr><td>${esc(riskName(k))}</td><td class="n">${c.code}</td><td class="n">${c.review}</td><td class="n ${c.missed ? "bad" : ""}">${c.missed}</td></tr>`).join("")}</table>`)}</div>
+  <div class="grid2">
+    <div class="card"><h2>${t("고객사 간 계좌 재사용", "Account reuse across clients")}</h2><p class="sub">${t("같은 IBAN이 다른 거래처나 다른 고객사 청구서에 나오면 사기 조직 신호예요.", "The same IBAN on invoices from different suppliers or for different clients is a fraud-ring signal.")}</p>
+      <div class="kpis" style="grid-template-columns:1fr 1fr;margin-bottom:12px">${kpi("file", t("확인한 계좌", "Accounts checked"), a.ibans_seen)}${kpi(a.iban_reuse.length ? "alert" : "check", t("재사용", "Reused"), a.iban_reuse.length, {tone: a.iban_reuse.length ? "crit" : "good"})}</div>
+      ${a.iban_reuse.length ? `<table><tr><th>IBAN</th><th>${t("거래처", "Suppliers")}</th><th>${t("고객사", "Clients")}</th><th>${t("건", "Cases")}</th></tr>${a.iban_reuse.map(r => `<tr><td><code>${esc(r.iban)}</code></td><td>${esc(r.vendors.join(", "))}</td><td>${esc(r.clients.join(", "))}</td><td>${esc(r.cases.join(", "))}</td></tr>`).join("")}</table>`
+        : `<p class="meta">${t("이번 데이터에서는 재사용된 계좌가 없어요. 합성 데이터라 사기 계좌가 건마다 달라요.", "No account is reused in this data; the synthetic fraud cases each use a different account.")}</p>`}</div>
+    <div class="card"><h2>${t("거래처별 금액 이상치", "Unusual amounts per supplier")}</h2><p class="sub">${t(`그 고객사에서 같은 거래처의 중앙값보다 ${a.outlier_ratio}배 이상 큰 청구서.`, `Invoices at least ${a.outlier_ratio}× the supplier's median for that client.`)}</p>
+      ${a.outliers.length ? scaled(a.outliers.map(o => ({label: `${o.case_id} · ${o.vendor}`, v: o.ratio, value: `${o.ratio}× · ${decName(o.decision)}`, color: o.decision === "pay" ? C.paid : o.decision === "escalate" ? C.escalated : C.rejected})), Math.max(...a.outliers.map(o => o.ratio)))
+        + legend(decisionLegend()) : `<p class="meta">${t("없음", "none")}</p>`}
+      ${a.outliers.some(o => o.decision === "pay") ? `<p class="meta">${ic("alert", 13)} ${t("자동 지급된 이상치는 한도 안이라 규칙상 정상이지만, 담당 관리자가 한 번 볼 만해요.", "Outliers that were paid automatically were within the limits, but are worth a look by the client manager.")}</p>` : ""}
+      ${more(t("표로 보기", "As a table"), `<table><tr><th>${t("건", "Case")}</th><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th class="n">${t("중앙값", "Median")}</th><th class="n">${t("배수", "Ratio")}</th><th>${t("결정", "Decision")}</th></tr>
+        ${a.outliers.map(o => `<tr><td>${esc(o.case_id)}</td><td>${esc(o.client_id)}</td><td>${esc(o.vendor)}</td><td class="n">${chf(o.amount_chf)}</td><td class="n">${chf(o.median_chf)}</td><td class="n">${o.ratio}</td><td>${dec(o.decision)}</td></tr>`).join("")}</table>`)}</div>
+  </div>`;
 }
 async function evaluation() {
   const s = await api("/api/evaluation"); const m = s.metrics;

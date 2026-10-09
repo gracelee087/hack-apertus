@@ -168,7 +168,8 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
         elif h["decision"] == "escalate":
             queue.append({"case_id": c["case_id"], "client_id": m["client_id"], "client": m["name"],
                           "vendor": f.get("vendor_name"), "amount_chf": f.get("total_chf"),
-                          "iban": payload["iban"], "checks": [x["code"] for x in h.get("findings", [])],
+                          "iban": payload["iban"], "due_date": f.get("due_date"),
+                          "checks": [x["code"] for x in h.get("findings", [])],
                           "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"})
     pay_dir = out / "payments"
     shutil.rmtree(pay_dir, ignore_errors=True)

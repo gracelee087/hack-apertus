@@ -28,3 +28,4 @@ build/
 
 # Regenerated on every run (attack scenarios), large
 results/security_ledger.jsonl
+results/state.json

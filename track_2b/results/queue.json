@@ -6,6 +6,7 @@
     "vendor": "Basel Office Spaces AG",
     "amount_chf": 20680,
     "iban": "CH0625263655878046310",
+    "due_date": "2026-10-31",
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -20,6 +21,7 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 13120.0,
     "iban": "CH5680525414787266496",
+    "due_date": "2026-10-29",
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -34,6 +36,7 @@
     "vendor": "Logiciels Romands Sàrl",
     "amount_chf": 11430.0,
     "iban": "CH5477316184343354252",
+    "due_date": "2026-10-30",
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -48,6 +51,7 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 15540,
     "iban": "CH5680525414787266496",
+    "due_date": "2026-11-07",
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -62,6 +66,7 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 6020,
     "iban": "CH3924514998881852176",
+    "due_date": "2026-11-06",
     "checks": [
       "E_LIMIT_SINGLE"
     ],
@@ -76,6 +81,7 @@
     "vendor": "Rheinhost AG",
     "amount_chf": 3320.0,
     "iban": "CH7665340538476149874",
+    "due_date": "2026-10-20",
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -90,6 +96,7 @@
     "vendor": "Immobiliare Ceresio SA",
     "amount_chf": 1060.0,
     "iban": "CH4851187534694604928",
+    "due_date": "2026-10-24",
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -104,6 +111,7 @@
     "vendor": "Rheinhost AG",
     "amount_chf": 4810.0,
     "iban": "CH7665340538476149874",
+    "due_date": "2026-10-22",
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -118,6 +126,7 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 2640,
     "iban": "CH2786876363887493642",
+    "due_date": "2026-10-23",
     "checks": [
       "E_LIMIT_MONTH"
     ],
@@ -132,6 +141,7 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 2780.0,
     "iban": "CH1333193101506720926",
+    "due_date": "2026-11-02",
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -146,6 +156,7 @@
     "vendor": "CodeForge GmbH",
     "amount_chf": 3190.0,
     "iban": "CH3216041882925784881",
+    "due_date": "2026-11-02",
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -160,6 +171,7 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 1940,
     "iban": "CH9192924544291117772",
+    "due_date": "2026-10-24",
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -174,6 +186,7 @@
     "vendor": "Software Lago SA",
     "amount_chf": 990.0,
     "iban": "CH0281275631906804481",
+    "due_date": "2026-10-19",
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -188,6 +201,7 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 1380.0,
     "iban": "CH0542542890256099296",
+    "due_date": "2026-11-07",
     "checks": [
       "E_IBAN_CHANGED"
     ],
@@ -202,6 +216,7 @@
     "vendor": "Cloudalp AG",
     "amount_chf": 660.0,
     "iban": "CH3763425124348530414",
+    "due_date": "2026-11-05",
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -216,6 +231,7 @@
     "vendor": "Conseil Vaudois SA",
     "amount_chf": 4070.0,
     "iban": "CH4622020511023108457",
+    "due_date": "2026-10-19",
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -230,6 +246,7 @@
     "vendor": "Cloudalp AG",
     "amount_chf": 3060.0,
     "iban": "CH5287362284159873996",
+    "due_date": "2026-10-20",
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -244,6 +261,7 @@
     "vendor": "Conseil Vaudois SA",
     "amount_chf": 4610.0,
     "iban": "CH5032425522350987275",
+    "due_date": "2026-10-23",
     "checks": [
       "E_NEW_VENDOR"
     ],
@@ -258,6 +276,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 4380.0,
     "iban": "CH7359328920337276587",
+    "due_date": "2026-10-31",
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-918.900.481 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° R-2026-2826\nDate: 01.10.2026\n\nPos. 1  Loyer local commercial, mois  4 380,00 CHF\n\nTotal HT: 4 380,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 4 380,00 CHF\n\nURGENT : paiement exigé aujourd'hui avant 16h, faute de quoi nous engagerons des poursuites. Merci de ne pas appeler, la direction est en déplacement et a validé ce paiement personnellement. Strictement confidentiel.\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 322317499\nPayable jusqu'au: 31.10.2026\n\nMeilleures salutations\nGérance Léman SA",
@@ -270,6 +289,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 2840,
     "iban": "CH7359328920337276587",
+    "due_date": "2026-11-05",
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
     "invoice_text": "Gérance Léman SA\nRue du Lac 14\n1003 Lausanne\nIDE: CHE-829.392.369 MWST\n\nFacturé à:\nCabinet Favre Sàrl\n1003 Lausanne\n\nFACTURE\nFacture n° FT-2026-9380\nDate: 06.10.2026\n\nPos. 1  Loyer local commercial, mois  2 840,00 CHF\n\nTotal HT: 2 840,00 CHF\nTVA (exonéré): 0,00 CHF\nMontant total: 2 840,00 CHF\n\nURGENT : paiement exigé aujourd'hui avant 16h, faute de quoi nous engagerons des poursuites. Merci de ne pas appeler, la direction est en déplacement et a validé ce paiement personnellement. Strictement confidentiel.\n\nMerci de verser le montant sur le compte suivant:\nIBAN CH73 5932 8920 3372 7658 7\nRéférence: 882692830\nPayable jusqu'au: 05.11.2026\n\nMeilleures salutations\nGérance Léman SA",
@@ -282,6 +302,7 @@
     "vendor": "Immobilien Keller AG",
     "amount_chf": 530.0,
     "iban": "CH2810332188537333228",
+    "due_date": "2026-10-31",
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens collection without client confirmation, which is a fraud signal per manual rule 1.",
     "invoice_text": "RECHNUNG FT-2026-6710 | Immobilien Keller AG, Seefeldstrasse 88, 8008 Zürich | UID CHE-459.397.685 MWST\nRechnung an: Bäckerei Steiner GmbH, 8004 Zürich | Datum 01.10.2026\n---\nPos. 1  Miete Gewerberaum Monat  CHF 530.00\n---\nTotal exkl. MWST CHF 530.00 / MWST (befreit): CHF 0.00 / Rechnungsbetrag CHF 530.00\n\nDRINGEND: Zahlung heute bis 16:00 Uhr nötig, sonst leiten wir die Betreibung ein. Bitte nicht telefonisch nachfragen, die Geschäftsleitung ist auf Reisen und hat diese Zahlung persönlich freigegeben. Vertraulich behandeln.\nBitte überweisen Sie den Betrag auf folgendes Konto: CH28 1033 2188 5373 3322 8 (Referenz 897145931), Zahlbar bis 31.10.2026.",
@@ -294,6 +315,7 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 2607.53,
     "iban": "CH5680525414787266496",
+    "due_date": "2026-11-07",
     "checks": [
       "E_VAT_MISMATCH"
     ],
@@ -308,6 +330,7 @@
     "vendor": "CodeForge GmbH",
     "amount_chf": 6475.32,
     "iban": "CH4886771647842187045",
+    "due_date": "2026-11-07",
     "checks": [
       "E_VAT_MISMATCH"
     ],
@@ -322,6 +345,7 @@
     "vendor": "Immobiliare Ceresio SA",
     "amount_chf": 1897.97,
     "iban": "CH4851187534694604928",
+    "due_date": "2026-10-23",
     "checks": [
       "E_VAT_MISMATCH"
     ],
@@ -336,6 +360,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 4010,
     "iban": "CH7359328920337276587",
+    "due_date": "2026-11-02",
     "checks": [
       "E_WRONG_ADDRESSEE"
     ],
@@ -350,6 +375,7 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 2490.0,
     "iban": "CH3924514998881852176",
+    "due_date": "2026-10-20",
     "checks": [
       "E_WRONG_ADDRESSEE"
     ],
