@@ -4,6 +4,7 @@ Client status and risk signals are computed from the signed ledger, so the dashb
 what the agents did and what the gate let through.
 """
 import json
+import secrets
 import threading
 from collections import Counter
 from datetime import datetime
@@ -13,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from . import badge, credential, decide, identity, lessons, llm, pain001
+from . import badge, credential, decide, gate, identity, lessons, llm, pain001
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256
 from .datagen import TODAY
 from .desk import ACTIONS, Desk, seat_of
@@ -112,7 +113,9 @@ def client_view(s, d, cid, entries=None):
     """Status, money and risk signals for one client, computed from the ledger."""
     m = mandate(s, cid)
     entries = [e for e in (entries if entries is not None else LEDGER.entries) if e.get("client_id") == cid]
-    decided = [e for e in entries if e.get("action") == "payment.decide" and e.get("gate") == "OK"]
+    voided = {e.get("case_id") for e in entries if e.get("action") == "payment.voided"}
+    decided = [e for e in entries if e.get("action") == "payment.decide" and e.get("gate") == "OK"
+               and e.get("case_id") not in voided]
     auto = [e for e in decided if not e.get("grant_ref")]
     paid = [e for e in decided if e.get("decision") == "pay"]
     risks = Counter(c for e in auto for c in risk_codes(e))
@@ -329,33 +332,61 @@ def revoke_mandate(cid: str):
         return {"ok": True}
 
 
+def prior_payments(cid) -> list:
+    """This month's payments for one client, read from the ledger: the reference run and everything since."""
+    entries = [e for e in LEDGER.entries if e.get("client_id") == cid]
+    voided = {e.get("case_id") for e in entries if e.get("action") == "payment.voided"}
+    return [{"vendor": e.get("vendor") or "", "invoice_no": str(e.get("invoice_no") or ""),
+             "amount_chf": e.get("amount_chf") or 0} for e in entries
+            if e.get("action") == "payment.decide" and e.get("gate") == "OK" and e.get("decision") == "pay"
+            and e.get("case_id") not in voided]
+
+
 @app.post("/api/clients/{cid}/process")
 def process(cid: str, inv: Text):
     with lock:
         s = state()
         m = mandate(s, cid)
         manual = manual_text(s, seat_of(cid))
+        case = {"case_id": f"LIVE-{secrets.token_hex(3).upper()}", "invoice_text": inv.invoice_text,
+                "prior_payments": prior_payments(cid)}
     sup = load_json(DATA / "vendors.json").get(cid, [])
-    case = {"case_id": f"LIVE-{len(LEDGER.entries) + 1}", "invoice_text": inv.invoice_text, "prior_payments": []}
-    h = decide.harness(case, m, sup, manual, promoted=True)
+    h = decide.harness(case, m, sup, manual, promoted=True)  # model calls run outside the lock
     f = h["fields"]
-    try:
-        amount = round(float(f.get("total_chf")), 2)
-    except (TypeError, ValueError):
-        amount = None
+    amount = badge._num(f.get("total_chf"))
     with lock:
         s = state()
+        m = mandate(s, cid)
         d = desk_of(s)
-        res = d.request(cid, "payment.decide",
-                        {"case_id": case["case_id"], "decision": h["decision"], "vendor": f.get("vendor_name"),
-                         "iban": normalize_iban(f.get("vendor_iban")), "amount_chf": amount,
-                         "executes_payment": h["decision"] == "pay"},
-                        case_id=case["case_id"], decision=h["decision"], vendor=f.get("vendor_name"),
-                        amount_chf=amount, reason=h.get("reason", ""), checks=[x["code"] for x in h["findings"]],
-                        manual_sha256=lessons.fingerprint(manual), model=llm.model_name())
+        if h["decision"] == "pay":  # other payments may have been made while Apertus was reading: check again
+            verdict, findings = badge.check(m, sup, prior_payments(cid), f)
+            if verdict != "pass":
+                h = {**h, "decision": verdict, "findings": findings, "reason": "; ".join(x["msg"] for x in findings)}
+        item = {"case_id": case["case_id"], "client_id": cid, "client": m["name"], "vendor": f.get("vendor_name"),
+                "amount_chf": None if amount is None else round(amount, 2), "iban": normalize_iban(f.get("vendor_iban")),
+                "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
+                "checks": [x["code"] for x in h["findings"]], "reason": h.get("reason", ""),
+                "invoice_text": inv.invoice_text, "status": "open"}
+        log = dict(reason=h.get("reason", ""), checks=item["checks"], manual_sha256=lessons.fingerprint(manual),
+                   model=llm.model_name())
+        if h["decision"] == "pay":
+            res = _pay(s, d, m, item, "live", {}, **log)
+            queued = not res["ok"]  # whatever the agent could not carry out waits for a human
+            if queued:
+                item["reason"] = f"not executed ({res['gate']}); " + item["reason"]
+        else:
+            res = d.request(cid, "payment.decide",
+                            {"case_id": item["case_id"], "decision": h["decision"], "vendor": item["vendor"],
+                             "iban": item["iban"], "amount_chf": item["amount_chf"], "executes_payment": False},
+                            case_id=item["case_id"], decision=h["decision"], vendor=item["vendor"], iban=item["iban"],
+                            amount_chf=item["amount_chf"], invoice_no=item["invoice_no"], **log)
+            queued = h["decision"] == "escalate"
+        if queued:
+            _write(RESULTS / "queue.json", queue_items() + [item])
         save(s, d)
     seat = seat_of(cid)
-    return {**h, "gate": res["gate"], "executed": res["ok"], "agent_did": d.agent_did(seat),
+    return {**h, "case_id": case["case_id"], "gate": res["gate"], "executed": res["ok"] and h["decision"] == "pay",
+            "recorded": res["ok"], "queued": queued, "file": res.get("file"), "agent_did": d.agent_did(seat),
             "generation": d.generations.get(seat, 0)}
 
 
@@ -395,17 +426,13 @@ def review(case_id: str, r: Review):
         m = mandate(s, cid)
         d = desk_of(s)
         if r.action == "approve":
-            ref = d.grant(cid, case_id, float(item["amount_chf"] or 0), r.note)
-            res = d.request(cid, "payment.decide",
-                            {"case_id": case_id, "decision": "pay", "vendor": item["vendor"], "iban": item["iban"],
-                             "amount_chf": float(item["amount_chf"] or 0), "executes_payment": True, "grant_ref": ref},
-                            case_id=case_id, decision="pay", vendor=item["vendor"], amount_chf=item["amount_chf"],
-                            grant_ref=ref, reason=f"approved by human: {r.note}")
-            if not res["ok"]:
+            amount = badge._num(item["amount_chf"])
+            ref = d.grant(cid, case_id, amount or 0, item["iban"], r.note)
+            res = _pay(s, d, m, {**item, "amount_chf": amount}, "approved", {"grant_ref": ref}, grant_ref=ref,
+                       reason=f"approved by human: {r.note}")
+            if not res["ok"]:  # the item stays open
                 save(s, d)
-                raise HTTPException(409, f"gate refused the payment: {res['gate']}")
-            s["approved"].setdefault(cid, []).append(item)
-            _write_approved_file(s, m, d)
+                raise HTTPException(409, f"payment not made: {res['gate']}")
         else:
             LEDGER.append(actor=identity.owner_of(cid), action="consent.denied", client_id=cid, case_id=case_id,
                           amount_chf=item.get("amount_chf"), note=r.note)
@@ -418,17 +445,43 @@ def review(case_id: str, r: Review):
         return {"ok": True}
 
 
-def _write_approved_file(s, m, d):
-    pays = [{"end_to_end_id": f"{i['case_id']}-A", "creditor": i["vendor"] or "", "iban": i["iban"],
-             "amount_chf": float(i["amount_chf"]), "reference": i["case_id"]} for i in s["approved"][m["client_id"]]]
-    xml = pain001.build(m, pays, f"{m['client_id']}-{TODAY:%Y%m%d}-A", datetime.now(), TODAY.isoformat())
-    name = f"{m['client_id']}_pain001_approved.xml"
-    res = d.request(m["client_id"], "payment.file", {"file_sha256": sha256(xml), "transactions": len(pays)},
-                    file=f"payments/{name}", transactions=len(pays), validation_errors=pain001.validate(xml))
-    if res["ok"]:
-        path = RESULTS / "payments" / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(xml, encoding="utf-8")
+FILE_SUFFIX = {"approved": "A", "live": "L"}  # payments after the reference run: approved by a human / paid live
+
+
+def _pay(s, d, m, item, kind, extra, **log):
+    """Decide and file one payment as one step: the decision only stands if its payment file is issued."""
+    cid, sfx = m["client_id"], FILE_SUFFIX[kind]
+    items = s.setdefault(kind, {}).get(cid, []) + [item]
+    amount = item["amount_chf"]
+    xml = None
+    if gate._positive(amount):  # otherwise the gate refuses the request below
+        pays = [{"end_to_end_id": f"{i['case_id']}-{sfx}", "creditor": i["vendor"] or "", "iban": i["iban"],
+                 "amount_chf": float(i["amount_chf"]), "reference": i["case_id"]} for i in items]
+        xml = pain001.build(m, pays, f"{cid}-{TODAY:%Y%m%d}-{sfx}", datetime.now(), TODAY.isoformat())
+        errors = pain001.validate(xml)
+        if errors:
+            LEDGER.append(actor="system", action="payment.file.blocked", client_id=cid, case_id=item["case_id"],
+                          validation_errors=errors)
+            return {"ok": False, "gate": "FILE_INVALID"}
+    res = d.request(cid, "payment.decide",
+                    {"case_id": item["case_id"], "decision": "pay", "vendor": item["vendor"], "iban": item["iban"],
+                     "amount_chf": amount, "executes_payment": True, **extra},
+                    case_id=item["case_id"], decision="pay", vendor=item["vendor"], iban=item["iban"],
+                    amount_chf=amount, invoice_no=item.get("invoice_no"), **log)
+    if not res["ok"]:
+        return res
+    name = f"{cid}_pain001_{kind}.xml"
+    filed = d.request(cid, "payment.file", {"file_sha256": sha256(xml), "transactions": len(items)},
+                      file=f"payments/{name}", transactions=len(items), case_id=item["case_id"])
+    if not filed["ok"]:
+        LEDGER.append(actor="system", action="payment.voided", client_id=cid, case_id=item["case_id"],
+                      note=f"payment file refused by the gate ({filed['gate']}); the decision does not stand")
+        return filed
+    s[kind].setdefault(cid, []).append(item)
+    path = RESULTS / "payments" / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(xml, encoding="utf-8")
+    return {**res, "file": name}
 
 
 # --- evaluation, ledger, files -----------------------------------------------------------------

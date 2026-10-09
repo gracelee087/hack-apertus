@@ -1,4 +1,5 @@
 """Hard checks ("badge"): what the mandate allows, enforced in code, not by the model."""
+import math
 import re
 import unicodedata
 from datetime import date
@@ -46,9 +47,10 @@ def promoted_checks(mandate: dict, fields: dict) -> list:
 
 def _num(x):
     try:
-        return float(x)
+        v = float(x)
     except (TypeError, ValueError):
         return None
+    return v if math.isfinite(v) else None
 
 
 def check(mandate: dict, suppliers: list, prior: list, fields: dict, today: date = date(2026, 10, 9)):
@@ -70,6 +72,8 @@ def check(mandate: dict, suppliers: list, prior: list, fields: dict, today: date
     vendor = fields.get("vendor_name")
     if not iban or total is None or not vendor:
         add("escalate", "EXTRACTION_INCOMPLETE", "could not read supplier, IBAN or total")
+    elif total <= 0:
+        add("escalate", "EXTRACTION_INCOMPLETE", f"total CHF {total:.2f} is not a positive amount")
 
     known = next((s for s in suppliers if same_name(s["name"], vendor)), None) \
         or next((s for s in suppliers if iban and s["iban"] == iban), None)

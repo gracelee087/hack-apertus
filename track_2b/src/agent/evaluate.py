@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from . import badge, decide, identity, lessons, llm, pain001, prompts, risk, security
+from . import badge, datagen, decide, identity, lessons, llm, pain001, prompts, risk, security
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256, write_jsonl
 from .datagen import TODAY
 from .desk import Desk
@@ -156,8 +156,8 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                    "executes_payment": h["decision"] == "pay"}
         res = desk.request(m["client_id"], "payment.decide", payload, case_id=c["case_id"], decision=h["decision"],
                            vendor=f.get("vendor_name"), iban=payload["iban"], amount_chf=payload["amount_chf"],
-                           reason=h.get("reason", ""), checks=[x["code"] for x in h.get("findings", [])],
-                           manual_sha256=lesson_info["manual_gen1_sha256"], model=llm.model_name())
+                           invoice_no=f.get("invoice_no"), reason=h.get("reason", ""),
+                           checks=[x["code"] for x in h.get("findings", [])], manual_sha256=lesson_info["manual_gen1_sha256"], model=llm.model_name())
         gate_codes[res["gate"]] += 1
         if not res["ok"]:
             continue
@@ -168,7 +168,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
         elif h["decision"] == "escalate":
             queue.append({"case_id": c["case_id"], "client_id": m["client_id"], "client": m["name"],
                           "vendor": f.get("vendor_name"), "amount_chf": f.get("total_chf"),
-                          "iban": payload["iban"], "due_date": f.get("due_date"),
+                          "iban": payload["iban"], "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
                           "checks": [x["code"] for x in h.get("findings", [])],
                           "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"})
     pay_dir = out / "payments"
@@ -180,6 +180,9 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                             datetime(TODAY.year, TODAY.month, TODAY.day, 9, 0), TODAY.isoformat())
         info = {"transactions": len(pays), "total_chf": round(sum(p["amount_chf"] for p in pays), 2),
                 "validation_errors": pain001.validate(xml)}
+        if info["validation_errors"]:  # a file that fails validation is never issued
+            led.append(actor="system", action="payment.file.blocked", client_id=cid, **info)
+            continue
         res = desk.request(cid, "payment.file", {"file_sha256": sha256(xml), **info},
                            file=f"payments/{cid}_pain001.xml", transactions=info["transactions"],
                            total_chf=info["total_chf"])
@@ -278,6 +281,39 @@ Each attack is tried once per paid invoice of the reference run.
 |---|---|---|---|
 {security.table_rows(attacks)}
 """
+
+
+def holdout():
+    """The fresh holdout set (data/holdout.jsonl), run once after the design was frozen: the same five systems
+    with the lessons of the train split, and the risk model exactly as fitted by `eval`. Nothing is tuned here."""
+    mandates, suppliers, cases = load()
+    held = read_jsonl(DATA / "holdout.jsonl")
+    if not (RESULTS / "risk_model.json").exists():
+        raise SystemExit("run `python -m agent eval` first (the holdout uses its risk model)")
+    print(f"LLM mode: {llm.mode()} | model: {llm.model_name()} | holdout {len(held)}", flush=True)
+    manual1, _ = learn_lessons([c for c in cases if c["split"] == "train"], mandates, suppliers)
+    preds = pmap(lambda c: evaluate_case(c, mandates, suppliers, manual1), held)
+    write_jsonl(RESULTS / "holdout_predictions.jsonl", preds)
+    metrics = {s: score(preds, s) for s in SYSTEMS}
+    r = risk.score_holdout(preds, {c["case_id"]: c for c in held}, PRODUCTION)
+    report = {"model": llm.model_name(), "llm_mode": llm.mode(), "seed": datagen.HOLDOUT_SEED, "n": len(held),
+              "metrics": metrics, "extraction": extraction_scores(preds), "risk": r}
+    (RESULTS / "holdout.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    rows = "\n".join(f"| {name} | {m['accuracy']:.3f} | {m['wrong_payments']} of {sum(p['label'] != 'pay' for p in preds)} "
+                     f"| {m['wrong_payment_chf']:,.2f} | {m['missed_payment_rate']:.3f} | {m['model_failures']} |"
+                     for name, m in metrics.items())
+    md = f"""# Holdout: {len(held)} fresh invoices (seed {datagen.HOLDOUT_SEED}), run once
+
+| System | Accuracy | Wrong payments | Wrongly paid CHF | Missed-payment rate | Model failures |
+|---|---|---|---|---|---|
+{rows}
+
+Risk score (frozen): fraud ROC AUC {r['A_logistic']['roc_auc']} (unsupervised {r['A_unsupervised']['roc_auc']}), \
+must-not-autopay ROC AUC {r['B_logistic']['roc_auc']}. Missed by production: {json.dumps(r['beyond_rules']['missed_by_production'])}
+"""
+    (RESULTS / "holdout.md").write_text(md, encoding="utf-8")
+    print(md, flush=True)
+    return report
 
 
 def run():

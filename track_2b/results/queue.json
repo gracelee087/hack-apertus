@@ -6,6 +6,7 @@
     "vendor": "Basel Office Spaces AG",
     "amount_chf": 20680,
     "iban": "CH0625263655878046310",
+    "invoice_no": "INV-2026-6199",
     "due_date": "2026-10-31",
     "checks": [
       "E_LIMIT_SINGLE"
@@ -21,6 +22,7 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 13120.0,
     "iban": "CH5680525414787266496",
+    "invoice_no": "R-2026-5491",
     "due_date": "2026-10-29",
     "checks": [
       "E_LIMIT_SINGLE"
@@ -36,6 +38,7 @@
     "vendor": "Logiciels Romands Sàrl",
     "amount_chf": 11430.0,
     "iban": "CH5477316184343354252",
+    "invoice_no": "INV-2026-3788",
     "due_date": "2026-10-30",
     "checks": [
       "E_LIMIT_SINGLE"
@@ -51,6 +54,7 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 15540,
     "iban": "CH5680525414787266496",
+    "invoice_no": "R-2026-2138",
     "due_date": "2026-11-07",
     "checks": [
       "E_LIMIT_SINGLE"
@@ -66,6 +70,7 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 6020,
     "iban": "CH3924514998881852176",
+    "invoice_no": "R-2026-8269",
     "due_date": "2026-11-06",
     "checks": [
       "E_LIMIT_SINGLE"
@@ -81,6 +86,7 @@
     "vendor": "Rheinhost AG",
     "amount_chf": 3320.0,
     "iban": "CH7665340538476149874",
+    "invoice_no": "R-2026-3217",
     "due_date": "2026-10-20",
     "checks": [
       "E_LIMIT_MONTH"
@@ -96,6 +102,7 @@
     "vendor": "Immobiliare Ceresio SA",
     "amount_chf": 1060.0,
     "iban": "CH4851187534694604928",
+    "invoice_no": "F-2026-5361",
     "due_date": "2026-10-24",
     "checks": [
       "E_LIMIT_MONTH"
@@ -111,6 +118,7 @@
     "vendor": "Rheinhost AG",
     "amount_chf": 4810.0,
     "iban": "CH7665340538476149874",
+    "invoice_no": "R-2026-2967",
     "due_date": "2026-10-22",
     "checks": [
       "E_LIMIT_MONTH"
@@ -126,6 +134,7 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 2640,
     "iban": "CH2786876363887493642",
+    "invoice_no": "R-2026-8141",
     "due_date": "2026-10-23",
     "checks": [
       "E_LIMIT_MONTH"
@@ -141,6 +150,7 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 2780.0,
     "iban": "CH1333193101506720926",
+    "invoice_no": "F-2026-2781",
     "due_date": "2026-11-02",
     "checks": [
       "E_IBAN_CHANGED"
@@ -156,6 +166,7 @@
     "vendor": "CodeForge GmbH",
     "amount_chf": 3190.0,
     "iban": "CH3216041882925784881",
+    "invoice_no": "R-2026-6891",
     "due_date": "2026-11-02",
     "checks": [
       "E_IBAN_CHANGED"
@@ -171,6 +182,7 @@
     "vendor": "Stadtwerk Limmattal AG",
     "amount_chf": 1940,
     "iban": "CH9192924544291117772",
+    "invoice_no": "FT-2026-1647",
     "due_date": "2026-10-24",
     "checks": [
       "E_IBAN_CHANGED"
@@ -186,6 +198,7 @@
     "vendor": "Software Lago SA",
     "amount_chf": 990.0,
     "iban": "CH0281275631906804481",
+    "invoice_no": "FT-2026-2790",
     "due_date": "2026-10-19",
     "checks": [
       "E_IBAN_CHANGED"
@@ -201,6 +214,7 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 1380.0,
     "iban": "CH0542542890256099296",
+    "invoice_no": "FT-2026-2448",
     "due_date": "2026-11-07",
     "checks": [
       "E_IBAN_CHANGED"
@@ -216,6 +230,7 @@
     "vendor": "Cloudalp AG",
     "amount_chf": 660.0,
     "iban": "CH3763425124348530414",
+    "invoice_no": "R-2026-9081",
     "due_date": "2026-11-05",
     "checks": [
       "E_NEW_VENDOR"
@@ -231,6 +246,7 @@
     "vendor": "Conseil Vaudois SA",
     "amount_chf": 4070.0,
     "iban": "CH4622020511023108457",
+    "invoice_no": "INV-2026-5906",
     "due_date": "2026-10-19",
     "checks": [
       "E_NEW_VENDOR"
@@ -246,6 +262,7 @@
     "vendor": "Cloudalp AG",
     "amount_chf": 3060.0,
     "iban": "CH5287362284159873996",
+    "invoice_no": "F-2026-2945",
     "due_date": "2026-10-20",
     "checks": [
       "E_NEW_VENDOR"
@@ -261,6 +278,7 @@
     "vendor": "Conseil Vaudois SA",
     "amount_chf": 4610.0,
     "iban": "CH5032425522350987275",
+    "invoice_no": "F-2026-8693",
     "due_date": "2026-10-23",
     "checks": [
       "E_NEW_VENDOR"
@@ -276,6 +294,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 4380.0,
     "iban": "CH7359328920337276587",
+    "invoice_no": "R-2026-2826",
     "due_date": "2026-10-31",
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
@@ -289,6 +308,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 2840,
     "iban": "CH7359328920337276587",
+    "invoice_no": "FT-2026-9380",
     "due_date": "2026-11-05",
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens legal action without client confirmation, violating manual rule L3.",
@@ -302,6 +322,7 @@
     "vendor": "Immobilien Keller AG",
     "amount_chf": 530.0,
     "iban": "CH2810332188537333228",
+    "invoice_no": "FT-2026-6710",
     "due_date": "2026-10-31",
     "checks": [],
     "reason": "Invoice demands same-day payment and threatens collection without client confirmation, which is a fraud signal per manual rule 1.",
@@ -315,6 +336,7 @@
     "vendor": "Télécom Riviera SA",
     "amount_chf": 2607.53,
     "iban": "CH5680525414787266496",
+    "invoice_no": "FT-2026-2184",
     "due_date": "2026-11-07",
     "checks": [
       "E_VAT_MISMATCH"
@@ -330,6 +352,7 @@
     "vendor": "CodeForge GmbH",
     "amount_chf": 6475.32,
     "iban": "CH4886771647842187045",
+    "invoice_no": "R-2026-3793",
     "due_date": "2026-11-07",
     "checks": [
       "E_VAT_MISMATCH"
@@ -345,6 +368,7 @@
     "vendor": "Immobiliare Ceresio SA",
     "amount_chf": 1897.97,
     "iban": "CH4851187534694604928",
+    "invoice_no": "FT-2026-9759",
     "due_date": "2026-10-23",
     "checks": [
       "E_VAT_MISMATCH"
@@ -360,6 +384,7 @@
     "vendor": "Gérance Léman SA",
     "amount_chf": 4010,
     "iban": "CH7359328920337276587",
+    "invoice_no": "R-2026-2411",
     "due_date": "2026-11-02",
     "checks": [
       "E_WRONG_ADDRESSEE"
@@ -375,6 +400,7 @@
     "vendor": "Versicherung Alpenschutz AG",
     "amount_chf": 2490.0,
     "iban": "CH3924514998881852176",
+    "invoice_no": "INV-2026-6777",
     "due_date": "2026-10-20",
     "checks": [
       "E_WRONG_ADDRESSEE"

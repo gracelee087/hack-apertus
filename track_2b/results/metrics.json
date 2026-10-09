@@ -304,6 +304,38 @@
       "codes": {
         "G5_MANDATE_REVOKED": 35
       }
+    },
+    "human grant used a second time": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G4_GRANT_INVALID": 35
+      }
+    },
+    "human grant of another client": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G4_GRANT_INVALID": 35
+      }
+    },
+    "amount above the client's mandate limit (badge cap set too high)": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G5_ABOVE_MANDATE_LIMIT": 35
+      }
+    },
+    "negative, zero or NaN amount": {
+      "attempts": 35,
+      "accepted": 0,
+      "blocked": 35,
+      "codes": {
+        "G4_PAYMENT_INCOMPLETE": 35
+      }
     }
   }
 }

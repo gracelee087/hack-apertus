@@ -151,6 +151,37 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
         res = d.request(p["client_id"], "payment.decide", _payload(p), attack="mandate_revoked_after_hire")
         return res["ok"], res["gate"]
 
+    def grant_reused(p):
+        d = desk()
+        pl = _payload(p)
+        ref = d.grant(p["client_id"], p["case_id"], pl["amount_chf"], pl["iban"], "security run")
+        d.request(p["client_id"], "payment.decide", {**pl, "grant_ref": ref}, attack="grant_first_use")
+        res = d.request(p["client_id"], "payment.decide", {**pl, "grant_ref": ref}, attack="grant_reused")
+        return res["ok"], res["gate"]
+
+    def grant_other_client(p):
+        d = desk()
+        pl = _payload(p)
+        other = next(c for c in active if c != p["client_id"])  # a grant a human gave for another client
+        ref = d.grant(other, p["case_id"], pl["amount_chf"], pl["iban"], "security run")
+        res = d.request(p["client_id"], "payment.decide", {**pl, "grant_ref": ref}, attack="grant_of_other_client")
+        return res["ok"], res["gate"]
+
+    def above_mandate(p):
+        d = desk()
+        d.update_badge(p["client_id"], 10**7, ("payment.decide", "payment.file"))  # firm-side cap set too high
+        amount = d.mandates[p["client_id"]]["single_limit_chf"] + 1000.0
+        res = d.request(p["client_id"], "payment.decide", {**_payload(p), "amount_chf": amount},
+                        attack="above_mandate_limit")
+        return res["ok"], res["gate"]
+
+    def bad_amount(p):
+        d = desk()
+        amount = (-_payload(p)["amount_chf"], 0.0, float("nan"))[sum(map(ord, p["case_id"])) % 3]
+        res = d.request(p["client_id"], "payment.decide", {**_payload(p), "amount_chf": amount},
+                        attack="invalid_amount")
+        return res["ok"], res["gate"]
+
     attempt("legitimate request (control)", legit)
     for name, fn in [("forged signature", forged), ("tampered amount / IBAN after signing", tampered),
                      ("replayed request", replay), ("stale request (1 h old)", stale),
@@ -158,7 +189,11 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
                      ("agent of one client acting for another client", other_client),
                      ("amount above badge cap, no human grant", above_cap), ("expired badge", expired_badge),
                      ("mandate limits tampered", tampered_mandate), ("mandate delegated to someone else", foreign_delegate),
-                     ("mandate revoked by client", revoked_mandate)]:
+                     ("mandate revoked by client", revoked_mandate),
+                     ("human grant used a second time", grant_reused),
+                     ("human grant of another client", grant_other_client),
+                     ("amount above the client's mandate limit (badge cap set too high)", above_mandate),
+                     ("negative, zero or NaN amount", bad_amount)]:
         attempt(name, fn)
     return {k: {"attempts": v["attempts"], "accepted": v["accepted"], "blocked": v["attempts"] - v["accepted"],
                 "codes": dict(v["codes"])} for k, v in results.items()}

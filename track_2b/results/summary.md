@@ -72,6 +72,10 @@ Each attack is tried once per paid invoice of the reference run.
 | mandate limits tampered | 35 | 35 | G5_MANDATE_INVALID |
 | mandate delegated to someone else | 35 | 35 | G5_MANDATE_INVALID |
 | mandate revoked by client | 35 | 35 | G5_MANDATE_REVOKED |
+| human grant used a second time | 35 | 35 | G4_GRANT_INVALID |
+| human grant of another client | 35 | 35 | G4_GRANT_INVALID |
+| amount above the client's mandate limit (badge cap set too high) | 35 | 35 | G5_ABOVE_MANDATE_LIMIT |
+| negative, zero or NaN amount | 35 | 35 | G4_PAYMENT_INCOMPLETE |
 
 ## Risk score (data-science layer, 3000 synthetic past payments, ranks only)
 

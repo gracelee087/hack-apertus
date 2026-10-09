@@ -84,7 +84,8 @@ def _desk(tmp_path, open_books=False):
 
 def test_gate_accepts_legit_and_blocks_replay(tmp_path):
     d = _desk(tmp_path)
-    payload = {"case_id": "T1", "amount_chf": 100.0, "executes_payment": True, "client_id": "C01"}
+    payload = {"case_id": "T1", "amount_chf": 100.0, "iban": "CH9300762011623852957", "executes_payment": True,
+               "client_id": "C01"}
     st = identity.stamp(d.agent_key(seat_of("C01")), "payment.decide", "C01", payload, d.clock())
     assert d.submit(st, payload)["gate"] == "OK"
     assert d.submit(st, payload)["gate"] == "G2_REPLAY"
@@ -101,12 +102,14 @@ def test_agents_are_isolated_per_client(tmp_path):
 
 def test_kill_switch_grant_and_settings(tmp_path):
     d = _desk(tmp_path)
-    big = {"case_id": "T2", "amount_chf": 25000.0, "executes_payment": True}
+    big = {"case_id": "T2", "amount_chf": 25000.0, "iban": "CH9300762011623852957", "executes_payment": True}
     assert d.request("C05", "payment.decide", big)["gate"] == "G4_ABOVE_BADGE_CAP_NO_GRANT"
-    ref = d.grant("C05", "T2", 25000.0, "checked with client")
+    ref = d.grant("C05", "T2", 25000.0, big["iban"], "checked with client")
     assert d.request("C05", "payment.decide", {**big, "grant_ref": ref})["gate"] == "OK"
     d.update_badge("C05", 30000, ["payment.decide"])  # firm raises the cap, removes file creation
-    assert d.request("C05", "payment.decide", {**big, "case_id": "T4"})["gate"] == "OK"
+    # a higher badge cap cannot lift the client's own limit (C05: CHF 10,000)
+    assert d.request("C05", "payment.decide", {**big, "case_id": "T4"})["gate"] == "G5_ABOVE_MANDATE_LIMIT"
+    assert d.request("C05", "payment.decide", {**big, "case_id": "T4", "amount_chf": 9000.0})["gate"] == "OK"
     assert d.request("C05", "payment.file", {"x": 1})["gate"] == "G4_ACTION_NOT_ALLOWED"
     d.kill("C01", "test")
     assert d.request("C01", "payment.decide", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "G3_AGENT_REVOKED"
@@ -114,6 +117,72 @@ def test_kill_switch_grant_and_settings(tmp_path):
     d.hire("C01", manual_sha256="x")
     assert d.generations[seat_of("C01")] == 2
     assert d.request("C01", "payment.decide", {"case_id": "T3", "amount_chf": 1.0})["gate"] == "OK"
+
+
+def test_grant_is_bound_to_client_case_iban_and_used_once(tmp_path):
+    d = _desk(tmp_path)
+    pay = {"case_id": "T7", "amount_chf": 25000.0, "iban": "CH9300762011623852957", "executes_payment": True}
+    other = d.grant("C02", "T7", 25000.0, pay["iban"])  # same case and amount, but another client's grant
+    assert d.request("C05", "payment.decide", {**pay, "grant_ref": other})["gate"] == "G4_GRANT_INVALID"
+    ref = d.grant("C05", "T7", 25000.0, "CH5604835012345678009")  # approved for another account
+    assert d.request("C05", "payment.decide", {**pay, "grant_ref": ref})["gate"] == "G4_GRANT_INVALID"
+    ref = d.grant("C05", "T7", 25000.0, pay["iban"])
+    assert d.request("C05", "payment.decide", {**pay, "grant_ref": ref})["gate"] == "OK"
+    assert d.request("C05", "payment.decide", {**pay, "grant_ref": ref})["gate"] == "G4_GRANT_INVALID"  # used up
+
+
+def test_payment_needs_a_positive_amount():
+    assert badge._num("nan") is None and badge._num("inf") is None and badge._num("12.5") == 12.5
+    case = next(c for c in CASES if c["reason_code"] == "OK")
+    for total in (0, -50):
+        verdict, findings = badge.check(BY_ID[case["client_id"]], VENDORS[case["client_id"]], case["prior_payments"],
+                                        {**gold_fields(case), "total_chf": total})
+        assert verdict == "escalate" and "EXTRACTION_INCOMPLETE" in [f["code"] for f in findings]
+
+
+def test_gate_refuses_invalid_amounts(tmp_path):
+    d = _desk(tmp_path)
+    for amount in (-100.0, 0.0, float("nan"), None, True):
+        pay = {"case_id": "T8", "amount_chf": amount, "iban": "CH9300762011623852957", "executes_payment": True}
+        assert d.request("C01", "payment.decide", pay)["gate"] == "G4_PAYMENT_INCOMPLETE", amount
+
+
+def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypatch):
+    from agent import app
+    monkeypatch.setattr(app, "RESULTS", tmp_path)
+    monkeypatch.setattr(app, "STATE", tmp_path / "state.json")
+    monkeypatch.setattr(app, "LEDGER", Ledger(tmp_path / "ledger.jsonl"))
+    d = Desk(app.LEDGER, copy.deepcopy(BY_ID))
+    d.hire("C01", manual_sha256="x")
+    (tmp_path / "desk.json").write_text(__import__("json").dumps(d.dump()), encoding="utf-8")
+    v = VENDORS["C01"][0]
+    fields = {"vendor_name": v["name"], "vendor_iban": v["iban"], "invoice_no": "R-1", "total_chf": 400.0,
+              "addressee": BY_ID["C01"]["name"], "category": v["category"]}
+    monkeypatch.setattr(app.decide, "harness", lambda case, *a, **k: {  # Apertus read the invoice and found no issue
+        "fields": dict(fields), "badge": "pass", "findings": [], "decision": "pay", "reason": "ok"})
+
+    first = app.process("C01", app.Text(invoice_text="x"))
+    assert first["executed"] and first["file"] == "C01_pain001_live.xml"
+    assert pain001.validate((tmp_path / "payments" / first["file"]).read_text(encoding="utf-8")) == []
+    again = app.process("C01", app.Text(invoice_text="x"))  # the same invoice: this month's payments come from the ledger
+    assert again["decision"] == "reject" and not again["executed"] and "R_DUPLICATE" in [f["code"] for f in again["findings"]]
+
+    fields["invoice_no"] = "R-2"
+    s = app.state()
+    d = app.desk_of(s)
+    d.update_badge("C01", 10000, ["payment.decide"])  # no payment.file: the decision cannot stand without its file
+    app.save(s, d)
+    held = app.process("C01", app.Text(invoice_text="x"))
+    assert not held["executed"] and held["queued"] and held["gate"] == "G4_ACTION_NOT_ALLOWED"
+    assert len(app.prior_payments("C01")) == 1  # the voided decision does not count as paid
+
+    s = app.state()
+    d = app.desk_of(s)
+    d.update_badge("C01", 10000, ["payment.decide", "payment.file"])
+    app.save(s, d)
+    assert app.review(held["case_id"], app.Review(action="approve", note="checked"))["ok"]
+    assert (tmp_path / "payments" / "C01_pain001_approved.xml").exists()
+    assert [i["status"] for i in app.queue_items()] == ["approved"]
 
 
 def test_identity_is_recorded_from_issuance(tmp_path):

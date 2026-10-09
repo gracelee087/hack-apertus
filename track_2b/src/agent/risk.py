@@ -340,6 +340,41 @@ def run(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
     return out
 
 
+def score_holdout(preds, cases_by_id, production="harness_gen1_promoted") -> dict:
+    """Score invoices the model never saw with the final models of run(), unchanged (same data, same l2)."""
+    saved = json.loads((RESULTS / "risk_model.json").read_text(encoding="utf-8"))
+    history = ensure_history()
+    mandates = {m["client_id"]: m for m in load_json(DATA / "mandates.json")}
+    vendors = load_json(DATA / "vendors.json")
+    baseline = amount_baseline(history)
+    X = [features(r, mandates[r["client_id"]], vendors[r["client_id"]], baseline) for r in history]
+    Xall, stats = standardize(X)
+    wA = fit_logistic(Xall, [h["is_fraud"] for h in history], saved["model_A"]["l2"])
+    wB = fit_logistic(Xall, [h["must_not_autopay"] for h in history], saved["model_B"]["l2"])
+    assert [round(c, 4) for c in wA[1:]] == list(saved["model_A"]["coefficients"].values()), "risk model changed"
+    rows, yA, yB, passed, missed = [], [], [], [], []
+    for p in preds:
+        m = mandates[p["client_id"]]
+        rows.append(features(test_row(cases_by_id[p["case_id"]], p["fields"], m), m, vendors[p["client_id"]], baseline))
+        yA.append(int(p["reason_code"] in FRAUD_CODES))
+        yB.append(int(p["label"] != "pay"))
+        passed.append(p["badge_only"]["decision"] == "pay")
+        missed.append(p["label"] != "pay" and p[production]["decision"] == "pay")
+    sA, sB = predict(wA, standardize(rows, stats)[0]), predict(wB, standardize(rows, stats)[0])
+    sU = anomaly_scores(X, rows)
+    sub = [i for i, ok in enumerate(passed) if ok]
+    rank = sorted(sub, key=lambda i: -sA[i])
+    return {"A_logistic": report(yA, sA, 0.5), "A_unsupervised": report(yA, sU), "B_logistic": report(yB, sB, 0.5),
+            "confusion_A": [confusion(yA, sA, t) for t in (0.2, 0.5, 0.8)],
+            "beyond_rules": {"invoices_rules_let_through": len(sub), "fraud_among_them": sum(yA[i] for i in sub),
+                             "roc_auc": roc_auc([yA[i] for i in sub], [sA[i] for i in sub]) if 0 < sum(yA[i] for i in sub) < len(sub) else None,
+                             "missed_by_production": [{"case_id": preds[i]["case_id"], "reason_code": preds[i]["reason_code"],
+                                                       "risk_score": round(100 * sA[i], 1),
+                                                       "rank_among_passed": rank.index(i) + 1 if i in sub else None}
+                                                      for i, mm in enumerate(missed) if mm]},
+            "scores": {p["case_id"]: round(100 * sA[i], 1) for i, p in enumerate(preds)}}
+
+
 def roc_points(y, s, keep=60):
     """(false positive rate, true positive rate) at every score threshold, thinned for drawing."""
     P, N = sum(y), len(y) - sum(y)

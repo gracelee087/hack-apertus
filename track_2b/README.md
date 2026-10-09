@@ -14,22 +14,39 @@ English — while a **harness** keeps it inside what each client actually delega
    rule, and the next manual generation is fingerprinted in the ledger. No weights change.
 5. **Agent identity and gate**: each client gets its own agent seat; every agent generation has its
    own Ed25519 key and DID, a firm-signed ID card (display name, duty, and the named client manager who assigns its role and manages it) and a badge for that one client; clients sign their mandates. Every agent action is a signed, single-use request that
-   a gate checks (signature, replay, identity, badge, mandate) before it takes effect. Kill switch,
-   replacement by the next generation, and human grants for amounts above the badge cap.
-6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client for its bank, an approval queue
-   for everything the agent may not pay alone, and a hash-chained, signed audit ledger.
+   a gate checks (signature, replay, identity, badge, mandate incl. its single-payment limit) before it
+   takes effect. Kill switch, replacement by the next generation, and human grants, each bound to one
+   client, case, IBAN and amount and used up by the payment it allows.
+6. **Outputs**: one ISO 20022 `pain.001.001.09` file per client, an approval queue for everything
+   the agent may not pay alone, and a hash-chained, signed audit ledger. A payment decision stands only
+   if its payment file is issued; a file that fails validation is never issued.
 
 The reviewer app opens on a client portfolio dashboard (status and risk signals per client) with a
 page per client (decisions, approvals, agent settings, lessons, payment files, ledger).
 
 Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 45 invoices it
 must not pay (CHF 138,781); with the harness 7 (CHF 26,771), and 2 (CHF 9,290) with two lessons
-promoted to hard checks, with no legitimate payment missed. Twelve attack types on the agent's
-identity and authority: 420 / 420 blocked, 35 / 35 legitimate requests accepted.
-A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) ranks the
-approval queue without changing any decision: ROC AUC 0.970 for fraud on the 78 test invoices
-(unsupervised baseline 0.878), and it ranks 2nd the pressure-fraud invoice the rules and Apertus missed.
+promoted to hard checks, with no legitimate payment missed (the 2 come from lessons promoted after
+looking at the training split; see the report). Sixteen attack types on the agent's identity and
+authority: 560 / 560 blocked, 35 / 35 legitimate requests accepted.
+A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) gives every
+invoice a fraud probability, shown next to the approval queue; it changes no decision and does not set
+the queue order (fraud signal first, then days to spare before the due date, then amount). ROC AUC 0.970
+for fraud on the 78 test invoices (unsupervised baseline 0.878); among the 43 invoices the rules let
+through, it scores the pressure-fraud invoice the rules and Apertus missed 2nd highest.
 See `results/summary.md` and `technical_report.md`.
+
+**Fresh holdout, run once.** Because the promoted lessons and one risk-model fix were made after seeing
+test results, we drew 42 new invoices from the same generator with another seed (2027), fixed the design,
+and ran everything once (Apertus responses recorded live on 2026-10-09): Apertus alone paid 14 of 25
+invoices it must not pay (CHF 42,076); the production harness 0 of 25, with all 17 legitimate invoices
+paid; the frozen risk score reached fraud ROC AUC 0.984. Same generator, so this guards against tuning on
+the test set, not against new kinds of invoices; 42 cases is small. `results/holdout.md`.
+
+Payment files: our own check is structural (counts, control sum, IBAN checksums, positive amounts); an
+external review validated the reference files against the official SIX pain.001.001.09 schema. Bank-specific
+acceptance rules were not tested. **This is a demo:** the reviewer app has no login or roles, so anyone who
+can reach port 8000 can approve, change settings or use the kill switch. Run it only on a trusted machine.
 
 ## Run
 
@@ -37,6 +54,10 @@ See `results/summary.md` and `technical_report.md`.
 make run          # builds the image, runs the evaluation, serves the reviewer app on http://localhost:8000
 make eval         # evaluation only: prints the results table and exits
 ```
+
+The holdout: `docker run --rm -v "$PWD/results:/app/results" track2b-payment-agent python -m agent holdout`
+(after `eval`; replays the recorded responses). CI re-runs `eval` and `holdout` without a key on every push
+and fails if `metrics.json`, `risk_model.json` or `holdout.json` differ from the committed files.
 
 No API key is needed: without `LLM_API_KEY` the run **replays the recorded Apertus responses**
 in `data/cache/apertus_responses.jsonl` and reproduces our numbers. To call Apertus live, copy

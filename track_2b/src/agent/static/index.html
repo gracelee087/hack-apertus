@@ -204,15 +204,21 @@ const GATE_KO = {OK: "통과", G1_SIGNATURE_INVALID: "서명 위조", G1_PAYLOAD
   G2_STALE: "오래된 요청", G3_NO_VALID_ENTITY_CARD: "등록되지 않은 에이전트", G3_AGENT_REVOKED: "정지된 에이전트",
   G3_NO_AGENT_FOR_CLIENT: "담당 에이전트 없음", G4_NO_VALID_BADGE: "배지 없음", G4_BADGE_EXPIRED: "배지 만료",
   G4_ACTION_NOT_ALLOWED: "허용되지 않은 행동", G4_CLIENT_NOT_COVERED: "담당 고객사 아님", G4_ABOVE_BADGE_CAP_NO_GRANT: "상한 초과 (사람 승인 없음)",
-  G5_MANDATE_INVALID: "위임장 무효", G5_MANDATE_REVOKED: "위임 취소됨", G5_MANDATE_EXPIRED: "위임 만료"};
+  G4_GRANT_INVALID: "사람 승인이 이 건과 맞지 않거나 이미 사용됨", G4_PAYMENT_INCOMPLETE: "금액·계좌가 올바르지 않은 지급",
+  G5_MANDATE_INVALID: "위임장 무효", G5_MANDATE_REVOKED: "위임 취소됨", G5_MANDATE_EXPIRED: "위임 만료",
+  G5_ABOVE_MANDATE_LIMIT: "고객 위임 한도 초과 (사람 승인 없음)", FILE_INVALID: "지급 파일 검증 실패"};
 const ACTION_KO = {"ledger.opened": "장부 개설", "mandate.registered": "위임장 등록", "identity.issued": "사원증 발급", "delegation.issued": "배지 발급",
   "policy.changed": "매뉴얼 지정", "manual.published": "매뉴얼 발행", "payment.decide": "지급 판단", "payment.file": "지급 파일 생성",
-  "request.rejected": "요청 거부", "agent.revoked": "에이전트 정지", "consent.granted": "사람 승인", "consent.denied": "사람 거절", "mandate.revoked": "위임 취소"};
+  "request.rejected": "요청 거부", "agent.revoked": "에이전트 정지", "consent.granted": "사람 승인", "consent.denied": "사람 거절", "mandate.revoked": "위임 취소",
+  "payment.voided": "지급 무효 (파일 미발행)", "payment.file.blocked": "지급 파일 차단 (검증 실패)"};
 const ATTACK_KO = {"legitimate request (control)": "정상 요청 (대조군)", "forged signature": "서명 위조", "tampered amount / IBAN after signing": "서명 후 금액·IBAN 변조",
   "replayed request": "재탕 요청", "stale request (1 h old)": "오래된 요청 (1시간 전)", "unknown agent key": "모르는 에이전트 키",
   "revoked agent (v1 after kill switch)": "정지된 에이전트 (긴급 정지 후 v1)", "agent of one client acting for another client": "다른 고객사 일을 하려는 에이전트",
   "amount above badge cap, no human grant": "상한 초과 금액 (사람 승인 없음)", "expired badge": "만료된 배지", "mandate limits tampered": "위임장 한도 변조",
-  "mandate delegated to someone else": "다른 곳에 위임된 위임장", "mandate revoked by client": "고객이 취소한 위임장"};
+  "mandate delegated to someone else": "다른 곳에 위임된 위임장", "mandate revoked by client": "고객이 취소한 위임장",
+  "human grant used a second time": "사람 승인을 두 번째로 사용", "human grant of another client": "다른 고객사의 사람 승인을 사용",
+  "amount above the client's mandate limit (badge cap set too high)": "고객 위임 한도 초과 금액 (배지 상한을 높게 설정해도)",
+  "negative, zero or NaN amount": "음수·0·NaN 금액"};
 const EXTRACT_KO = {iban: "IBAN", total_chf: "합계 금액", invoice_no: "청구서 번호", vendor: "거래처", addressee: "수신인", parsed: "올바른 JSON"};
 const EXTRACT_EN = {iban: "IBAN", total_chf: "total amount", invoice_no: "invoice number", vendor: "supplier", addressee: "addressee", parsed: "valid JSON"};
 const CAT_KO = {ingredients: "원재료", materials: "자재", utilities: "공과금", rent: "임대료", software: "소프트웨어", cloud: "클라우드", telecom: "통신", insurance: "보험", consulting: "자문"};
@@ -517,6 +523,8 @@ async function processInvoice(cid) {
     $("pstatus").textContent = "";
     $("presult").innerHTML = `<h3>${t("결정", "Decision")}: ${dec(h.decision)}</h3><p>${esc(h.reason)}</p>
       <p>${t("서명한 에이전트", "Signed by agent")} v${h.generation} <code>${short(h.agent_did)}</code> · ${t("문지기", "gate")}: ${h.executed ? `<span class="ok">${esc(gateName(h.gate))} — ${t("기록됨", "recorded")}</span>` : `<span class="bad">${esc(gateName(h.gate))} — ${t("실행 안 됨", "not executed")}</span>`}</p>
+      ${h.file ? `<p class="ok">${t(`지급 파일 ${h.file}에 추가됐어요`, `added to payment file ${h.file}`)}</p>` : ""}
+      ${h.queued ? `<p class="warn">${t(`사람 확인 대기열에 올렸어요 (${h.case_id})`, `sent to the approval queue (${h.case_id})`)}</p>` : ""}
       ${more(t("검사 결과", "Checks"), h.findings.length ? `<table><tr><th>${t("검사", "Check")}</th><th>${t("내용", "Detail")}</th></tr>${h.findings.map(f => `<tr><td class="${f.severity === "reject" ? "bad" : "warn"}">${esc(riskName(f.code))}</td><td>${esc(f.msg)}</td></tr>`).join("")}</table>` : `<p class="ok">${t("모든 하드 체크 통과", "all hard checks passed")}</p>`, true)}
       ${more(t("Apertus가 읽은 필드", "Fields read by Apertus"), `<pre>${esc(JSON.stringify(h.fields, null, 2))}</pre>`)}`;
   } catch (e) { $("pstatus").textContent = e.message; }

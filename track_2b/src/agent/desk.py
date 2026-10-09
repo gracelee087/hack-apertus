@@ -10,6 +10,7 @@ import secrets
 from datetime import datetime, timezone
 
 from . import credential, gate, identity
+from .common import normalize_iban
 
 ACTIONS = ("payment.decide", "payment.file")
 DEFAULT_CAP = 10000.0
@@ -114,11 +115,13 @@ class Desk:
                            generation=self.generations[seat], agent_did=self.agent_did(seat), note=reason)
 
     # --- human approval -------------------------------------------------------------------
-    def grant(self, client_id: str, case_id: str, amount_chf: float, note: str = "") -> str:
+    def grant(self, client_id: str, case_id: str, amount_chf: float, iban: str, note: str = "") -> str:
+        """A human approves one payment: this client, this case, this IBAN, this amount, once."""
         ref = f"G-{secrets.token_hex(4)}"
-        self.grants[ref] = {"case_id": case_id, "amount_chf": float(amount_chf), "note": note}
+        self.grants[ref] = {"client_id": client_id, "case_id": case_id, "iban": normalize_iban(iban),
+                            "amount_chf": float(amount_chf), "note": note, "used": False}
         self.ledger.append(actor=identity.owner_of(client_id), action="consent.granted", client_id=client_id,
-                           case_id=case_id, grant_ref=ref, amount_chf=amount_chf, note=note)
+                           case_id=case_id, grant_ref=ref, iban=normalize_iban(iban), amount_chf=amount_chf, note=note)
         return ref
 
     # --- agent requests -------------------------------------------------------------------

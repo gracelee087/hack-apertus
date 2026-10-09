@@ -132,6 +132,15 @@ PLAN = {  # reason_code -> count
     "E_PRESSURE": 6, "E_VAT_MISMATCH": 6, "E_WRONG_ADDRESSEE": 4,
 }
 LABEL = {"OK": "pay", "R": "reject", "E": "escalate"}
+# a second, fresh test set drawn once from the same generator with another seed (fixed before it was run):
+# the same mandates and suppliers, about a third of PLAN, never used to tune anything
+HOLDOUT_SEED = 2027
+HOLDOUT_PLAN = {
+    "OK": 17,
+    "R_REVOKED": 2, "R_SCOPE": 3, "R_IBAN_INVALID": 2, "R_DUPLICATE": 2,
+    "E_LIMIT_SINGLE": 3, "E_LIMIT_MONTH": 2, "E_IBAN_CHANGED": 3, "E_NEW_VENDOR": 2,
+    "E_PRESSURE": 2, "E_VAT_MISMATCH": 2, "E_WRONG_ADDRESSEE": 2,
+}
 
 
 def fmt_amount(x: float, lang: str) -> str:
@@ -171,7 +180,8 @@ def render(v, client, addressee, lines, net, vat, total, iban, inv_no, ref, inv_
             f"{t['pay']}: {format_iban(iban)} ({t['ref']} {ref}), {t['due']} {fmt_date(due, lang)}.")
 
 
-def build():
+def build(case_seed=None, plan=PLAN, prefix="T"):
+    """Mandates and suppliers always come from SEED; with case_seed, the invoices come from their own seed."""
     rng = random.Random(SEED)
 
     def rand_iban():
@@ -193,9 +203,11 @@ def build():
                for cid, vs in KNOWN_VENDORS.items()}
 
     active = [c for c in by_id if not by_id[c]["revoked"]]
+    if case_seed is not None:
+        rng = random.Random(case_seed)
     cases = []
     n = 0
-    for code, count in PLAN.items():
+    for code, count in plan.items():
         for k in range(count):
             n += 1
             cid = "C04" if code == "R_REVOKED" else rng.choice(
@@ -282,13 +294,17 @@ def build():
             text = render(v, m, addressee, lines, net, vat, total, iban, inv_no, ref, inv_date, due, lang, notes, rng)
             label = LABEL["OK"] if code == "OK" else LABEL[code[0]]
             cases.append(dict(
-                case_id=f"T{n:03d}", client_id=cid, lang=lang, invoice_text=text, prior_payments=prior,
+                case_id=f"{prefix}{n:03d}", client_id=cid, lang=lang, invoice_text=text, prior_payments=prior,
                 label=label, reason_code=code,
                 gold=dict(vendor=v[0], iban=iban, total_chf=total, net_chf=net, vat_chf=vat,
                           invoice_no=inv_no, addressee=addressee["name"], category=category),
                 reviewer_note=reviewer_note(code, v[0], inv_no, total, net, vat, iban, addressee["name"], m["name"], category),
             ))
 
+    if case_seed is not None:
+        for c in cases:
+            c["split"] = "holdout"
+        return mandates, vendors, cases
     # stratified split: ~1/3 train (used only to collect reviewer feedback for lessons)
     rng.shuffle(cases)
     seen = {}
@@ -328,7 +344,10 @@ def main():
     (DATA / "mandates.json").write_text(json.dumps(mandates, ensure_ascii=False, indent=2), encoding="utf-8")
     (DATA / "vendors.json").write_text(json.dumps(vendors, ensure_ascii=False, indent=2), encoding="utf-8")
     write_jsonl(DATA / "cases.jsonl", cases)
-    print(f"wrote {len(mandates)} mandates, {sum(map(len, vendors.values()))} vendors, {len(cases)} cases")
+    holdout = build(HOLDOUT_SEED, HOLDOUT_PLAN, "H")[2]
+    write_jsonl(DATA / "holdout.jsonl", holdout)
+    print(f"wrote {len(mandates)} mandates, {sum(map(len, vendors.values()))} vendors, {len(cases)} cases, "
+          f"{len(holdout)} holdout cases")
 
 
 if __name__ == "__main__":

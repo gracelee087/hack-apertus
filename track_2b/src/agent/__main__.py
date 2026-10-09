@@ -1,4 +1,4 @@
-"""CLI: python -m agent [gen|eval|serve|all]"""
+"""CLI: python -m agent [gen|eval|holdout|serve|all]"""
 import os
 import sys
 
@@ -13,6 +13,9 @@ def main(argv):
     if cmd in ("eval", "all"):
         from . import evaluate
         evaluate.run()
+    if cmd == "holdout":
+        from . import evaluate
+        evaluate.holdout()
     if cmd in ("serve", "all"):
         import uvicorn
         if not (RESULTS / "metrics.json").exists():

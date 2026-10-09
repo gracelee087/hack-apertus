@@ -13,15 +13,15 @@ which delegated a different scope and limit. Generic AI tools in this market (e.
 read invoices; they do not *execute* payments within a provable delegation. We built an agent that
 does: Apertus reads multilingual invoices, a harness enforces each client's signed mandate in code,
 Apertus reviews the remaining content against a firm manual that improves from human overrules,
-and the output is a bank-ready ISO 20022 pain.001 file per client plus a signed ledger of who
+and the output is an ISO 20022 pain.001.001.09 payment file per client plus a signed ledger of who
 did what for whom. *Who* is provable: the agent has its own key and DID, a firm-signed ID card and
 badge, and every request it makes is signed and checked by a gate against the client's signed
 mandate before anything takes effect. On 78 synthetic test invoices in four languages, Apertus 8B alone paid
 **33 of 45** invoices it should not have paid (CHF 138,781); with the harness, **7 of 45**
 (CHF 26,771), and 2 of 45 (CHF 9,290) once two learned lessons were promoted to hard checks,
-while still paying all 33 legitimate invoices. Twelve kinds of attack on the agent's identity and
-authority (forged or replayed requests, revoked agent, tampered mandate, …) were blocked in 420 of
-420 attempts, with 35 of 35 legitimate requests accepted.
+while still paying all 33 legitimate invoices. Sixteen kinds of attack on the agent's identity and
+authority (forged or replayed requests, revoked agent, tampered mandate, reused human grant, …) were
+blocked in 560 of 560 attempts, with 35 of 35 legitimate requests accepted.
 
 ## 2. Architecture
 
@@ -84,21 +84,28 @@ stamp, ledger, lessons); the code here is new.
 
 The **gate** runs five checks on each request before it takes effect: G1 signature and payload
 hash, G2 nonce never seen and request fresh, G3 firm-issued entity card and agent not revoked,
-G4 badge covers this action, client, date and amount (above the badge cap only with a human grant
-for that exact case), G5 the client's mandate is validly signed, names our firm and is in force.
+G4 badge covers this action, client, date and amount (a payment needs a positive, finite amount, a case
+and an IBAN; above the badge cap only with a human grant for this client, case, IBAN and amount, and a
+grant is used up by the payment it allows), G5 the client's mandate is validly signed, names our firm,
+is in force, and the amount is within its single-payment limit unless a human granted this payment
+(a higher badge cap set by the firm cannot lift the client's own limit).
 Each client has its own agent seat, so one client's agent cannot act for another (G4) and client
 data never mixes. The **kill switch** revokes one seat's current generation without touching the
 others; **replacing** it hires v2 with a new key and DID, while the seat's lessons carry over: lessons
 learned on a client bind that client's seat and are shown to the other seats for reference only;
 the lessons from the training review are firm-wide. Human approvals become grants with a reference in the ledger.
+A payment decision and its payment file are one step: if the gate refuses the file, the decision is
+voided in the ledger and the invoice waits for a human; a file that fails validation is never issued.
+For invoices processed in the web app, this month's payments (for the duplicate and monthly-limit
+checks) are read from the ledger, and the hard checks run again under a lock just before paying.
 The ledger starts at issuance: it opens with the firm and ledger DIDs, then every client mandate
 in full with the client's signature, then each agent generation's entity card and badge in full
 (`identity.issued`, `delegation.issued`) and its manual fingerprint (`policy.changed`). An auditor
 can therefore check from the ledger alone that every executed agent action was taken by an agent
 the firm had issued and not yet revoked (`audit_identities`; reference run: 78 of 78).
 
-This maps onto obligations a Swiss fiduciary and its clients care about: FINMA Guidance 08/2024
-asks for an inventory, documentation, monitoring and that responsibility stays with people
+The design follows control principles referenced in FINMA Guidance 08/2024 and the EU AI Act; this is
+not a compliance assessment. FINMA Guidance 08/2024 asks for an inventory, documentation, monitoring and that responsibility stays with people
 (entity card names the client manager who manages the agent and the accountable head of payments; their approvals, rejections and kill-switch use are ledger entries under their name); EU AI Act Art. 12 (logging) and Art. 14
 (human oversight, ability to stop: queue, grants, kill switch) if the firm serves EU clients.
 
@@ -196,11 +203,34 @@ no model calls):
 | replayed request · stale request (1 h) | 35 / 35 · 35 / 35 | G2 |
 | unknown agent key · revoked agent v1 after kill switch | 35 / 35 · 35 / 35 | G3 |
 | agent of one client acting for another · above cap without grant · expired badge | 35 / 35 each | G4 |
+| human grant used a second time · human grant of another client · negative, zero or NaN amount | 35 / 35 each | G4 |
 | mandate limits tampered · mandate naming another delegate · mandate revoked | 35 / 35 each | G5 |
+| amount above the client's mandate limit, badge cap set too high | 35 / 35 | G5 |
 
 In the reference run the gate accepted all 78 agent decisions for active clients' invoices plus the
 4 payment files, and refused the 4 decisions for the client whose mandate was already revoked
 (no agent is hired for a client that has revoked its mandate). The ledger's chain and signatures verify.
+
+**Fresh holdout.** Two parts of the design were changed after seeing test results: the two promoted
+lessons (last row of the table) and one fix in the risk score's amount feature. To check that the numbers
+are not an artefact of that, we drew a second test set once, after freezing the design: 42 new invoices
+from the same generator with another seed (2027; same case types in the same proportions, no shared
+invoice text), run through all five systems with the lessons of the train split and the risk model exactly
+as fitted (`python -m agent holdout`, 131 Apertus calls recorded live on 2026-10-09):
+
+| System | Accuracy | Wrong payments (of 25) | Wrongly paid CHF | Missed payments (of 17) |
+|---|---|---|---|---|
+| Apertus alone | 0.571 | 14 | 42,075.89 | 0 |
+| extraction + badge | 0.857 | 6 | 10,885.89 | 0 |
+| harness, manual gen 0 | 0.857 | 6 | 10,885.89 | 0 |
+| harness, manual gen 1 | 0.905 | 4 | 7,215.89 | 0 |
+| harness, gen 1 + promoted lessons (production) | 1.000 | 0 | 0.00 | 0 |
+
+The frozen risk score: fraud ROC AUC 0.984 (unsupervised baseline 0.838), must-not-autopay 0.984; at 0.5,
+10 of 13 fraud cases flagged with 1 false alarm. Field extraction was correct for all 42 invoices. The
+holdout comes from the same generator, so it shows we did not tune on the test set; it does not show that
+the system handles invoice types it has never seen, and with 42 cases (2 per rare type) a single case
+moves the rates a lot.
 
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
 all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/test_core.py`).
@@ -216,8 +246,12 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
   HSM, the agent key only in memory. Client DIDs are "registered at onboarding" by a demo rule.
   The ledger is signed but not anchored externally. The attack scenarios are ones we designed; they
   show the checks work, not that no other attack exists.
-- pain.001 files are checked structurally (counts, control sum, IBAN checksums); the official
-  XSD and the Swiss SPS rules were not validated offline.
+- pain.001 files are checked structurally (counts, control sum, IBAN checksums, positive amounts). An
+  external review validated the four reference files against the official SIX pain.001.001.09 schema;
+  the banks' own acceptance rules were not tested.
+- The reviewer app is a demo without authentication or roles: anyone who can reach it can approve,
+  change agent settings or use the kill switch. The ledger records who acted by role (the client manager),
+  not by a verified login. The monthly limit is checked by the badge at decision time, not again by the gate.
 - Lessons are learned from 42 training cases with simulated reviewer notes; the case types in
   train and test are the same, so this shows the mechanism, not generalisation to new fraud patterns.
 - The baseline sees the whole policy in one prompt; a stronger prompted baseline (e.g. multi-step)
@@ -227,7 +261,9 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
 
 `make run` from `track_2b/` (or the repo root) on a clean checkout: builds the image, replays the
 recorded Apertus responses (no key needed), writes `results/`, prints the table above and serves the
-reviewer app on port 8000. `make eval` prints and exits. Data generation is deterministic (seed 2026);
+reviewer app on port 8000. `make eval` prints and exits. `python -m agent holdout` (after `eval`) replays
+the holdout. GitHub Actions runs the tests, builds the image and re-runs `eval` and `holdout` without a key
+on every push; it fails if `metrics.json`, `risk_model.json` or `holdout.json` differ from the committed files. Data generation is deterministic (seed 2026);
 Apertus was called with temperature 0. Hardware: any machine with Docker; no GPU needed for replay.
 Commit: ⟨pending⟩.
 

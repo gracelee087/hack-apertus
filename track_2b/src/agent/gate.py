@@ -4,13 +4,24 @@ G1 proof     - the stamp is signed by the agent DID it names, over exactly this 
 G2 replay    - the nonce was never seen and the stamp is fresh
 G3 identity  - the agent holds a firm-signed entity card and is not on the revocation list
 G4 badge     - the firm-signed badge covers this agent, action, client, date and amount
-               (an amount above the badge cap needs a human grant for this exact case)
-G5 mandate   - the client-signed mandate delegates to our firm, is in force and not revoked
+               (a payment needs a positive amount, case and IBAN; above the badge cap it needs a human grant
+               for this client, case, IBAN and amount, and a grant is used up by the payment it allows)
+G5 mandate   - the client-signed mandate delegates to our firm, is in force and not revoked, and the amount is
+               within its single-payment limit unless a human granted this payment
 """
+import math
 from datetime import datetime
 
 from . import credential, identity
-from .common import canonical, sha256
+from .common import canonical, normalize_iban, sha256
+
+
+def _positive(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) and x > 0
+
+
+def _grant_ok(grant, payload, client_id) -> bool:
+    return bool(grant) and not grant.get("used") and grant.get("client_id") == client_id         and grant.get("case_id") == payload.get("case_id")         and normalize_iban(grant.get("iban")) == normalize_iban(payload.get("iban"))         and _positive(payload.get("amount_chf")) and abs(grant["amount_chf"] - payload["amount_chf"]) < 0.01
 
 
 def check(stamp: dict, payload: dict, card: dict, badge: dict, mandate: dict, revoked_agents: set,
@@ -44,11 +55,13 @@ def check(stamp: dict, payload: dict, card: dict, badge: dict, mandate: dict, re
         return False, "G4_ACTION_NOT_ALLOWED"
     if stamp["client_id"] not in badge["clients"] or payload.get("client_id") != stamp["client_id"]:
         return False, "G4_CLIENT_NOT_COVERED"
-    amount = payload.get("amount_chf") or 0
-    if payload.get("executes_payment") and amount > badge["max_single_chf"]:
-        grant = grants.get(payload.get("grant_ref"))
-        if not (grant and grant["case_id"] == payload.get("case_id") and abs(grant["amount_chf"] - amount) < 0.01):
-            return False, "G4_ABOVE_BADGE_CAP_NO_GRANT"
+    pays, ref = payload.get("executes_payment"), payload.get("grant_ref")
+    if pays and not (_positive(payload.get("amount_chf")) and payload.get("case_id") and payload.get("iban")):
+        return False, "G4_PAYMENT_INCOMPLETE"
+    if ref is not None and not _grant_ok(grants.get(ref), payload, stamp["client_id"]):
+        return False, "G4_GRANT_INVALID"
+    if pays and ref is None and payload["amount_chf"] > badge["max_single_chf"]:
+        return False, "G4_ABOVE_BADGE_CAP_NO_GRANT"
     # G5 mandate
     if not (mandate and mandate["client_id"] == stamp["client_id"] and credential.verify(mandate)):
         return False, "G5_MANDATE_INVALID"
@@ -56,6 +69,10 @@ def check(stamp: dict, payload: dict, card: dict, badge: dict, mandate: dict, re
         return False, "G5_MANDATE_REVOKED"
     if not mandate["valid_from"] <= today <= mandate["valid_until"]:
         return False, "G5_MANDATE_EXPIRED"
+    if pays and ref is None and payload["amount_chf"] > mandate["single_limit_chf"]:
+        return False, "G5_ABOVE_MANDATE_LIMIT"
 
     seen_nonces.add(stamp["nonce"])
+    if ref is not None:
+        grants[ref]["used"] = True
     return True, "OK"
