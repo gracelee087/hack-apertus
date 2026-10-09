@@ -165,11 +165,12 @@ details.more > div > table tr:last-child > td { border-bottom:0; }
 .qitem > summary .chev { transition:transform .15s; color:var(--mute); } .qitem[open] > summary .chev { transform:rotate(90deg); }
 .qitem > summary > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .qitem > div { padding:4px 20px 16px; }
+.dwrap { container-type:inline-size; } @container (max-width:400px) { .donut { grid-template-columns:1fr !important; justify-items:center; } .donut .dlist { width:100%; } }
 .donut { display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; align-items:center; }
 .donut svg path { stroke:var(--card); stroke-width:2px; } .donut svg path:hover { opacity:.8; }
 .donut .c1 { font-size:22px; font-weight:700; fill:var(--ink); } .donut .c2 { font-size:10.5px; fill:var(--mute); }
 .dlist { list-style:none; margin:0; padding:0; font-size:12.5px; } .dlist li { display:grid; grid-template-columns:10px minmax(0,1fr) 22px 36px; gap:8px; align-items:center; padding:3px 0; }
-.dlist li span:nth-child(2) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink2); }
+.dlist li span:nth-child(2) { overflow-wrap:anywhere; color:var(--ink2); }
 .dlist .dt { width:10px; height:10px; border-radius:2px; } .dlist .n { text-align:right; font-variant-numeric:tabular-nums; } .dlist .pc { color:var(--mute); }
 .dlist .sep { border-top:1px solid var(--line); margin-top:4px; padding-top:7px; }
 .dash .side .bars { grid-template-columns:minmax(0,1.2fr) minmax(70px,1fr) 22px; } .dash .side .bars .lb { max-width:none; }
@@ -178,7 +179,9 @@ details.more > div > table tr:last-child > td { border-bottom:0; }
 .board.tight { grid-template-columns:minmax(140px,1.4fr) 140px 70px minmax(0,1fr) minmax(0,1fr); font-size:12.5px; margin:10px -20px 0; }
 .board.tight > div, .board.tight > div:nth-child(6n+1), .board.tight > div:nth-child(6n) { padding:6px 10px; }
 .board.tight > div:nth-child(5n+1) { padding-left:20px; } .board.tight > div:nth-child(5n) { padding-right:20px; }
-table.agents td, table.agents th { white-space:nowrap; padding:8px 10px; } table.agents td:first-child { max-width:240px; overflow:hidden; text-overflow:ellipsis; }
+.sheetbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:18px 0 8px; } .sheetbar input { flex:1; min-width:180px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); }
+.sheet { max-height:560px; overflow:auto; border:1px solid var(--line); border-radius:8px; } .sheet td, .sheet th { white-space:nowrap; padding:6px 10px; font-size:12.5px; } .sheet th[data-col] { cursor:pointer; } .sheet th[data-col]:hover { color:var(--ink); }
+table.agents td, table.agents th { white-space:nowrap; padding:8px 8px; } table.agents td:first-child { max-width:240px; overflow:hidden; text-overflow:ellipsis; }
 .qmini { table-layout:fixed; width:100%; font-size:12.5px; } .qmini td, .qmini th { padding:6px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .qmini .sig { margin:0; } .uplot.small .lane { height:30px; } .uplot.small { margin-bottom:6px; }
 .mini { display:flex; gap:2px; height:12px; flex:1; min-width:60px; }
@@ -442,6 +445,7 @@ async function sidebar(active) {
     <a href="#/analytics" class="${active === "analytics" ? "on" : ""}">${ic("shield")}<span class="nm">${t("위험 분석", "Risk analytics")}</span></a>
     <a href="#/datascience" class="${active === "datascience" ? "on" : ""}">${ic("cpu")}<span class="nm">${t("위험 모델 (데이터과학)", "Risk model (data science)")}</span></a>
     <a href="#/ledger" class="${active === "ledger" ? "on" : ""}">${ic("book")}<span class="nm">${t("장부", "Ledger")}</span></a>
+    <a href="#/database" class="${active === "database" ? "on" : ""}">${ic("file")}<span class="nm">${t("데이터베이스", "Database")}</span></a>
     <div class="foot">${ic("cpu", 13)} ${esc(OV.model)}<br>
       <span class="dot" style="background:var(--st-good)"></span> ${t("정상", "clear")} &nbsp;<span class="dot" style="background:var(--st-warn)"></span> ${t("확인 필요", "attention")}<br>
       <span class="dot" style="background:var(--st-crit)"></span> ${t("에이전트 정지", "agent off")} &nbsp;<span class="dot" style="background:var(--mute)"></span> ${t("위임 취소", "no mandate")}</div>`;
@@ -461,7 +465,8 @@ async function route() {
   await sidebar(h[0] === "c" ? h[1] : h[0] || "overview");
   FOCUS = h[0] === "c" ? decodeURIComponent(h[3] || "") || null : null;
   const cl = h[0] === "c" && OV.clients.find(c => c.client_id === h[1]);
-  topbar(h[0] === "c" ? [[t("고객사", "Clients"), "#/"], [cl ? cl.name : h[1], `#/c/${h[1]}`], [(ctabs().find(x => x[0] === (h[2] || "overview")) || ["", ""])[1]]]
+  topbar(h[0] === "c" ? [[t("고객사", "Clients"), "#/"], [cl ? cl.name : h[1], `#/c/${h[1]}`], [(ctabs().find(x => x[0] === (TAB_ALIAS[h[2]] || h[2] || "todo")) || ctabs()[0])[1]]]
+    : h[0] === "database" ? [[t("사무소", "Firm")], [t("데이터베이스", "Database")]]
     : h[0] === "evaluation" ? [[t("사무소", "Firm")], [t("에이전트 평가", "Agent evaluation")]]
     : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("장부", "Ledger")]]
     : h[0] === "analytics" ? [[t("사무소", "Firm")], [t("위험 분석", "Risk analytics")]]
@@ -471,6 +476,7 @@ async function route() {
   if (h[0] === "ledger") return ledgerPage();
   if (h[0] === "analytics") return analyticsPage();
   if (h[0] === "datascience") return dataSciencePage();
+  if (h[0] === "database") return databasePage();
   return dashboard();
 }
 window.addEventListener("hashchange", route);
@@ -506,9 +512,9 @@ function donut(rows) {  // rows: [{label, v, kind}], grouped by kind so each col
     const d = `M ${pt(a0, R)} A ${R} ${R} 0 ${big} 1 ${pt(a1, R)} L ${pt(a1, r0)} A ${r0} ${r0} 0 ${big} 0 ${pt(a0, r0)} Z`; a0 = a1;
     return `<path d="${d}" fill="${C[r.kind]}" data-tip="${esc(`${r.label}: ${r.v} (${Math.round(100 * r.v / total)}%) · ${kindName(r.kind)}`)}"></path>`; }).join("");
   const byKind = k => rows.filter(r => r.kind === k).reduce((s, r) => s + r.v, 0);
-  return `<div class="donut"><svg viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="${esc(rows.map(r => `${r.label} ${r.v}`).join(", "))}">${arcs}
+  return `<div class="dwrap"><div class="donut"><svg viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="${esc(rows.map(r => `${r.label} ${r.v}`).join(", "))}">${arcs}
       <text x="75" y="76" text-anchor="middle" class="c1">${total}</text><text x="75" y="92" text-anchor="middle" class="c2">${t("신호", "signals")}</text></svg>
-    <ul class="dlist">${rows.map((r, i) => `<li class="${i && r.kind !== rows[i - 1].kind ? "sep" : ""}" data-tip="${esc(kindName(r.kind))}"><span class="dt" style="background:${C[r.kind]}"></span><span title="${esc(r.label)}">${esc(r.label)}</span><span class="n"><b>${r.v}</b></span><span class="n pc">${Math.round(100 * r.v / total)}%</span></li>`).join("")}</ul></div>
+    <ul class="dlist">${rows.map((r, i) => `<li class="${i && r.kind !== rows[i - 1].kind ? "sep" : ""}" data-tip="${esc(kindName(r.kind))}"><span class="dt" style="background:${C[r.kind]}"></span><span title="${esc(r.label)}">${esc(r.label)}</span><span class="n"><b>${r.v}</b></span><span class="n pc">${Math.round(100 * r.v / total)}%</span></li>`).join("")}</ul></div></div>
     <p class="meta" style="margin:10px 0 0">${t(`사기 신호 ${byKind("fraud")} · 통제·한도 ${byKind("control")}`, `fraud signals ${byKind("fraud")} · control and limits ${byKind("control")}`)}</p>`;
 }
 function queueMini(rows) {  // the top of the work queue: one line per invoice
@@ -837,6 +843,86 @@ function ledgerTable(rows) {
 }
 
 // ---------------------------------------------------------------- firm pages
+async function databasePage() {  // the files the system is built and tested on, and the rules it enforces
+  const d = await api("/api/database");
+  const cell = (label, value, cls = "", sub = "") => `<div><small>${label}</small><b class="${cls}">${value}</b>${sub ? `<span>${sub}</span>` : ""}</div>`;
+  const kb = n => n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.round(n / 1e3)} KB`;
+  const total = d.files.reduce((s, f) => s + f.bytes, 0), byType = {}, bySplit = {};
+  d.cases.forEach(c => { byType[c.type] = (byType[c.type] || 0) + 1; bySplit[c.split] = (bySplit[c.split] || 0) + 1; });
+  const LAYER = {"hard check": t("하드 체크 (코드)", "hard check (code)"), "promoted lesson": t("승격된 교훈 (코드)", "promoted lesson (code)"),
+    "content review": t("내용 검토 (Apertus)", "content review (Apertus)"), "second look": t("한 번 더 보기 (위험 점수)", "second look (risk score)"), gate: t("문지기", "gate")};
+  const EFFECT = {reject: [t("거절", "reject"), "bad"], "to a human": [t("사람에게", "to a human"), "warn"], refused: [t("요청 거부", "refused"), "bad"]};
+  const W = {
+    files: {title: t("데이터 파일", "Data files"), icon: "file", render: () => `<p class="sub">${t("모두 합성(가상) 데이터예요. 실제 회사·사람·계좌는 없어요. 라이선스 CDLA-Permissive-2.0.", "All synthetic and fictional: no real companies, people or accounts. Licence CDLA-Permissive-2.0.")}</p>
+      <table><tr><th>${t("파일", "File")}</th><th>${t("내용", "What it is")}</th><th class="n">${t("행", "Rows")}</th><th class="n">${t("크기", "Size")}</th><th></th></tr>
+      ${d.files.map(f => `<tr><td><code>${esc(f.path)}</code></td><td>${esc(f.what)}</td><td class="n">${f.rows.toLocaleString()}</td><td class="n">${kb(f.bytes)}</td><td class="n"><a href="#" data-sheet="${esc(f.name)}">${t("열기", "open")}</a></td></tr>`).join("")}</table>
+      <div id="sheet"></div>`},
+    rules: {title: t("시스템이 지키는 규칙", "Rules the system enforces"), icon: "shield", render: () => `<p class="sub">${esc(d.concept)}</p>
+      <table><tr><th>${t("층", "Layer")}</th><th>${t("코드", "Code")}</th><th>${t("결과", "Effect")}</th><th>${t("어디서", "Where")}</th></tr>
+      ${d.rules.map(r => `<tr><td>${esc(LAYER[r.layer] || r.layer)}</td><td><code>${esc(r.code)}</code></td><td><span class="${(EFFECT[r.effect] || ["", ""])[1]}">${esc((EFFECT[r.effect] || [r.effect])[0])}</span></td><td class="mute">${esc(r.where)}</td></tr>`).join("")}</table>`},
+    mandates: {title: t(`고객 위임장 (${d.mandates.length})`, `Client mandates (${d.mandates.length})`), render: () => `<table><tr><th>${t("고객사", "Client")}</th><th>${t("맡긴 지출", "Delegated")}</th><th class="n">${t("건당 / 월", "Single / month")}</th><th>${t("기간", "Valid")}</th><th>${t("서명", "Signature")}</th></tr>
+      ${d.mandates.map(m => `<tr><td><a href="#/c/${m.client_id}">${esc(m.name)}</a> <span class="meta">${esc(m.city)}</span></td><td>${esc(m.allowed_categories.map(x => LANG === "ko" ? (CAT_KO[x] || x) : x).join(", "))}</td>
+        <td class="n">${chf0(m.single_limit_chf)} / ${chf0(m.monthly_limit_chf)}</td><td>${m.revoked ? `<span class="bad">${t("취소됨", "revoked")}</span>` : `${esc(m.valid_from)} – ${esc(m.valid_until)}`}</td><td class="${m.signature_ok ? "ok" : "bad"}">${m.signature_ok ? "✓" : "✗"}</td></tr>`).join("")}</table>`},
+    invoices: {title: t(`청구서 (${d.cases.length})`, `Invoices (${d.cases.length})`), render: () => `<p class="sub">${t(`학습 ${bySplit.train || 0} · 테스트 ${bySplit.test || 0} · 새 평가셋 ${bySplit.holdout || 0}. 유형별 건수:`, `train ${bySplit.train || 0} · test ${bySplit.test || 0} · holdout ${bySplit.holdout || 0}. By case type:`)}</p>
+      ${bars(Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({label: k === "OK" ? t("정상 청구서", "legitimate") : riskName(k), v, color: k === "OK" ? C.paid : k.startsWith("R_") ? C.rejected : C.escalated})))}`},
+    invoiceTable: {title: t("청구서 목록", "Invoice list"), render: () => `<div style="max-height:420px;overflow:auto"><table><tr><th>${t("건", "Case")}</th><th>${t("분할", "Split")}</th><th>${t("고객사", "Client")}</th><th>${t("언어", "Lang")}</th><th>${t("거래처", "Supplier")}</th><th>${t("유형", "Type")}</th><th>${t("정답", "Label")}</th><th class="n">CHF</th></tr>
+      ${d.cases.map(c => `<tr><td><code>${esc(c.case_id)}</code></td><td>${esc(c.split)}</td><td>${esc(c.client_id)}</td><td>${esc(c.lang)}</td><td>${esc(c.vendor)}</td><td>${esc(c.type)}</td><td>${dec(c.label)}</td><td class="n">${chf(c.total_chf)}</td></tr>`).join("")}</table></div>`},
+    history: {title: t(`과거 지급 (${d.history.rows.toLocaleString()})`, `Past payments (${d.history.rows.toLocaleString()})`), render: () => `<p class="sub">${t("위험 점수 모델의 학습 데이터. 종류별 건수:", "Training data for the risk score, by kind:")}</p>
+      ${bars(Object.entries(d.history.kinds).map(([k, v]) => ({label: {legit: t("정상", "legitimate"), fraud: t("사기", "fraud"), control: t("통제 위반", "control")}[k] || k, v, color: k === "fraud" ? C.fraud : k === "control" ? C.control : C.paid})))}
+      <p class="meta"><a href="#/datascience">${t("패턴·특성·모델은 위험 모델 화면에서", "Patterns, features and the model on the risk model page")} ${ic("arrow", 13)}</a></p>`},
+    historySample: {title: t("과거 지급 샘플 12행", "Past payments, first 12 rows"), render: () => { const cols = Object.keys(d.history.sample[0] || {});
+      return `<div style="overflow-x:auto"><table><tr>${cols.map(k => `<th>${esc(k)}</th>`).join("")}</tr>${d.history.sample.map(r => `<tr>${cols.map(k => `<td>${esc(String(r[k]))}</td>`).join("")}</tr>`).join("")}</table></div>`; }},
+    vendors: {title: t(`거래처 (${d.vendors.length})`, `Suppliers (${d.vendors.length})`), render: () => `<table><tr><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("지출 유형", "Category")}</th><th>${t("언어", "Lang")}</th><th>IBAN</th></tr>
+      ${d.vendors.map(v => `<tr><td>${esc(v.client_id)}</td><td>${esc(v.name)}</td><td>${esc(LANG === "ko" ? (CAT_KO[v.category] || v.category) : v.category)}</td><td>${esc(v.lang)}</td><td><code>${esc(v.iban)}</code></td></tr>`).join("")}</table>`},
+    apertus: {title: t(`Apertus 응답 기록 (${d.cache.calls})`, `Recorded Apertus responses (${d.cache.calls})`), render: () => `<p class="sub">${t(`모델 ${d.cache.model} · 응답 시간 중앙값 ${d.cache.latency_median_s}초. 키 없이도 같은 결과를 재현하는 데 써요.`, `Model ${d.cache.model} · median latency ${d.cache.latency_median_s} s. Lets anyone without a key replay the same run.`)}</p>
+      ${bars(Object.entries(d.cache.by_step).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({label: {extract: t("필드 추출", "field extraction"), review: t("내용 검토", "content review"), baseline: t("단독 판단 (비교용)", "alone (baseline)"), distill: t("교훈 정리", "lesson distilling")}[k] || k, v, color: C.control})))}`},
+    lessons: {title: t(`사무소 공통 교훈 (${d.lessons.length})`, `Firm-wide lessons (${d.lessons.length})`), render: () => `<p class="sub">${t("학습 분할에서 사람이 고친 사례로 Apertus가 정리한 규칙. 모든 에이전트의 매뉴얼에 들어가요.", "Rules Apertus distilled from the cases a human overruled in the train split; in every agent's manual.")}</p><ol>${d.lessons.map(x => `<li>${esc(x)}</li>`).join("")}</ol>`},
+  };
+  $("main").innerHTML = `${pageHead(t("데이터베이스", "Database"), t("이 시스템을 만들고 시험한 데이터와, 시스템이 지키는 규칙. 데이터는 모두 data/ 폴더의 파일이에요.", "The data this system was built and tested on, and the rules it enforces. All data are files under data/."))}
+  <div class="strip">
+    ${cell(t("파일", "Files"), d.files.length, "", kb(total))}
+    ${cell(t("위임장", "Mandates"), d.mandates.length, "", t(`취소 ${d.mandates.filter(m => m.revoked).length}`, `${d.mandates.filter(m => m.revoked).length} revoked`))}
+    ${cell(t("거래처", "Suppliers"), d.vendors.length)}
+    ${cell(t("청구서", "Invoices"), d.cases.length, "", t(`테스트 ${bySplit.test || 0} · 새 평가셋 ${bySplit.holdout || 0}`, `test ${bySplit.test || 0} · holdout ${bySplit.holdout || 0}`))}
+    ${cell(t("과거 지급", "Past payments"), d.history.rows.toLocaleString(), "", t("위험 모델 학습", "trains the risk score"))}
+    ${cell(t("Apertus 응답", "Apertus responses"), d.cache.calls, "", t("기록됨", "recorded"))}
+    ${cell(t("규칙", "Rules"), d.rules.length, "", t("코드·검토·점수·문지기", "code, review, score, gate"))}
+  </div>
+  ${board("database", W, [["files", "l"]])}`;
+  renderBoard();
+  if (!$("main").dataset.sheets) $("main").dataset.sheets = "1", $("main").addEventListener("click", e => { const a = e.target.closest("[data-sheet]"); if (!a) return;
+    e.preventDefault(); SHEET = {name: a.dataset.sheet, q: "", sort: "", desc: false, rows: [], total: 0}; loadSheet(); });
+}
+let SHEET = null;
+async function loadSheet(more = false) {  // a data file as a spreadsheet: search and sort run over every row on the server
+  const s = SHEET, p = new URLSearchParams({offset: more ? s.rows.length : 0, limit: 200, q: s.q, sort: s.sort, desc: s.desc});
+  const r = await api(`/api/data/${encodeURIComponent(s.name)}?${p}`);
+  if (SHEET !== s) return;
+  s.columns = r.columns; s.total = r.total; s.rows = more ? s.rows.concat(r.rows) : r.rows;
+  drawSheet();
+}
+function drawSheet() {
+  const s = SHEET, el = document.getElementById("sheet"); if (!el) return;
+  const cell = v => { if (v == null) return `<span class="mute">–</span>`; const x = typeof v === "string" ? v : String(v);
+    return x.length > 80 ? `<span title="${esc(x)}">${esc(x.slice(0, 80))}…</span>` : esc(x); };
+  const keepFocus = document.activeElement && document.activeElement.id === "sheetq";
+  el.innerHTML = `<div class="sheetbar"><b><code>${esc(s.name)}</code></b>
+      <input id="sheetq" type="search" placeholder="${t("모든 열에서 찾기", "Search all columns")}" value="${esc(s.q)}">
+      <span class="meta">${t(`${s.total.toLocaleString()}행 중 ${s.rows.length.toLocaleString()}행 표시`, `showing ${s.rows.length.toLocaleString()} of ${s.total.toLocaleString()} rows`)}</span>
+      <a href="/files/data/${esc(s.name)}" class="meta">${t("원본 내려받기", "download original")}</a>
+      <button class="btn" id="sheetx">${t("닫기", "Close")}</button></div>
+    <div class="sheet"><table><tr><th class="n">#</th>${s.columns.map(c => `<th data-col="${esc(c)}" title="${t("눌러서 정렬", "click to sort")}">${esc(c)}${s.sort === c ? (s.desc ? " ▼" : " ▲") : ""}</th>`).join("")}</tr>
+      ${s.rows.map((r, i) => `<tr><td class="n mute">${i + 1}</td>${s.columns.map(c => `<td class="${typeof r[c] === "number" ? "n" : ""}">${cell(r[c])}</td>`).join("")}</tr>`).join("")}</table></div>
+    ${s.rows.length < s.total ? `<p><button class="btn" id="sheetmore">${t("200행 더 보기", "Show 200 more")}</button></p>` : ""}`;
+  el.querySelectorAll("th[data-col]").forEach(th => th.onclick = () => {
+    s.desc = s.sort === th.dataset.col ? !s.desc : false; s.sort = th.dataset.col; loadSheet(); });
+  const q = el.querySelector("#sheetq"); let tm;
+  q.oninput = () => { clearTimeout(tm); tm = setTimeout(() => { s.q = q.value; loadSheet(); }, 250); };
+  if (keepFocus) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  el.querySelector("#sheetx").onclick = () => { SHEET = null; el.innerHTML = ""; };
+  const m = el.querySelector("#sheetmore"); if (m) m.onclick = () => loadSheet(true);
+  if (!keepFocus) el.scrollIntoView({behavior: "smooth", block: "start"});
+}
 async function ledgerPage() {
   const l = await api("/api/ledger");
   $("main").innerHTML = `${pageHead(t("장부", "Ledger"), `${t("덧붙이기만 하는 기록. 해시 체인으로 묶고 장부 키로 서명해요", "Append-only, hash-chained and signed with the ledger key")} <code>${short(l.ledger_did)}</code>`)}
@@ -848,6 +934,71 @@ async function ledgerPage() {
       " and the ledger key, then every client mandate in full and each agent's entity card and badge as issued. The identity audit checks from the ledger alone that every executed agent action came from an agent the firm issued and had not revoked:")} ${esc(Object.values(l.audit.agents_issued).join(", "))}.</p>`)}
     ${more(t("기록 목록", "Entries"), ledgerTable(l.entries))}</div>`;
 }
+// ---------------------------------------------------------------- data science page
+const DS_COL = [  // the 16 columns of data/history/payments.jsonl
+  ["row_id", "행 번호", "row id"], ["client_id", "고객사", "client"], ["vendor", "거래처 이름", "supplier name"], ["iban", "청구서의 계좌", "account on the invoice"],
+  ["category", "지출 종류", "expense type"], ["urgency_terms", "재촉·비밀 단어 수", "pressure / secrecy words"], ["days_to_due", "지급 기한까지 일수", "days to due date"],
+  ["addressee_ok", "수신인이 고객사인가", "addressed to the client"], ["duplicate", "이미 낸 청구서 번호인가", "invoice number already paid"],
+  ["vat_ok", "순액+부가세=합계인가", "net + VAT = total"], ["month_spent", "이번 달 이미 지급한 금액", "paid this month so far"],
+  ["kind", "정상 / 통제 위반 / 사기 (생성 정보)", "legit / control / fraud (generator)"], ["pattern", "사기·위반 수법 (생성 정보)", "pattern (generator)"],
+  ["total_chf", "청구 금액", "invoice total"], ["is_fraud", "정답 A: 사기 (2% 뒤집힘)", "label A: fraud (2% flipped)"], ["must_not_autopay", "정답 B: 자동 지급 불가", "label B: must not autopay"]];
+const FEAT_HOW = {amount_z: ["log(금액)을 그 고객사·거래처 과거 금액의 중앙값과 MAD로 로버스트 z 변환, −5~10으로 자름. 이력 5건 미만이면 0", "robust z of log(amount) vs the client-supplier median and MAD; clipped to −5..10; 0 with fewer than 5 past payments"],
+  iban_changed: ["등록된 거래처인데 계좌가 등록 계좌와 다르고 형식은 유효", "known supplier, valid IBAN that differs from the account on file"],
+  iban_invalid: ["IBAN 검증 숫자(mod 97) 실패", "IBAN checksum (mod 97) fails"], new_vendor: ["고객사 거래처 목록에 없음(이름 유사도 0.85 기준)", "not in the client's supplier list (name similarity 0.85)"],
+  round_amount: ["500 이상이고 100으로 나누어떨어짐", "≥ 500 and divisible by 100"], vat_mismatch: ["|순액+부가세−합계| > 0.05", "|net + VAT − total| > 0.05"],
+  wrong_addressee: ["수신인이 고객사 이름과 다름(악센트·주소 무시)", "addressee is not the client (accents and address ignored)"],
+  urgency_terms: ["청구서 원문에서 4개 언어 사전 21개 단어 등장 횟수, 최대 5", "occurrences of 21 words in four languages in the invoice text, capped at 5"],
+  short_due: ["지급 기한이 10일 미만", "due in fewer than 10 days"], duplicate: ["같은 거래처의 같은 청구서 번호를 이번 달 이미 지급", "same supplier and invoice number already paid this month"],
+  over_single_limit: ["금액 > 위임장 건당 한도", "amount above the mandate's single limit"], out_of_scope: ["지출 종류가 위임 범위 밖", "expense type outside the mandate"],
+  month_load: ["(이번 달 지급 + 이 금액) ÷ 월 한도, 최대 2", "(paid this month + this amount) ÷ monthly limit, capped at 2"]};
+const PAT = {"legit:normal": ["정상", "legit"], "fraud:iban_swap": ["사기 · 계좌 바꿔치기", "fraud · bank-detail swap"], "fraud:pressure": ["사기 · 재촉·비밀", "fraud · pressure"],
+  "fraud:fake_vendor": ["사기 · 가짜 거래처", "fraud · fake supplier"], "fraud:inflated": ["사기 · 금액 부풀리기", "fraud · inflated amount"], "fraud:vat_mismatch": ["사기 · 금액 불일치", "fraud · amounts do not add up"],
+  "fraud:invalid_iban": ["사기 · 잘못된 IBAN", "fraud · invalid IBAN"], "fraud:wrong_addressee": ["사기 · 다른 회사 앞", "fraud · wrong addressee"], "fraud:duplicate": ["사기 · 중복", "fraud · duplicate"],
+  "control:month": ["통제 · 월 한도", "control · monthly limit"], "control:new_vendor": ["통제 · 새 거래처", "control · new supplier"], "control:scope": ["통제 · 범위 밖", "control · out of scope"], "control:limit": ["통제 · 건당 한도", "control · single limit"]};
+const MODELS = () => [["A_logistic", t("사기 · 지도 (로지스틱 회귀)", "fraud · supervised (logistic)"), C.control, ""], ["A_unsupervised", t("사기 · 비지도 기준선", "fraud · unsupervised baseline"), C.fraud, ""],
+  ["B_logistic", t("자동 지급 불가 · 지도 (비교)", "must not autopay · supervised (comparison)"), "var(--ink2)", "5 4"]];
+function lineChart(series, o) {  // series: [{name, color, dash, pts:[[x,y]...]}], axes 0..1
+  const W = 420, H = 300, L = 46, R = 12, T = 12, B = 40, x = v => L + v * (W - L - R), y = v => T + (1 - v) * (H - T - B);
+  const ticks = [0, .25, .5, .75, 1];
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:520px;height:auto" role="img" aria-label="${esc(o.title)}">
+    ${ticks.map(v => `<line x1="${x(0)}" x2="${x(1)}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--mute)">${v}</text>
+      <text x="${x(v)}" y="${H - B + 16}" text-anchor="middle" font-size="11" fill="var(--mute)">${v}</text>`).join("")}
+    <line x1="${x(0)}" x2="${x(0)}" y1="${y(0)}" y2="${y(1)}" stroke="var(--axis)"/><line x1="${x(0)}" x2="${x(1)}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>
+    ${o.diagonal ? `<line x1="${x(0)}" y1="${y(0)}" x2="${x(1)}" y2="${y(1)}" stroke="var(--axis)" stroke-dasharray="2 4"/>` : ""}
+    ${o.base != null ? `<line x1="${x(0)}" y1="${y(o.base)}" x2="${x(1)}" y2="${y(o.base)}" stroke="var(--axis)" stroke-dasharray="2 4"/>` : ""}
+    ${series.map(s => `<path d="${s.pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("")}" fill="none" stroke="${s.color}" stroke-width="2" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`).join("")}
+    ${series.map(s => s.pts.map(p => `<circle cx="${x(p[0]).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="6" fill="transparent" data-tip="${esc(`${s.name} · ${o.xl} ${p[0]} · ${o.yl} ${p[1]}`)}"/>`).join("")).join("")}
+    <text x="${(x(0) + x(1)) / 2}" y="${H - 6}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${esc(o.xl)}</text>
+    <text transform="translate(12 ${(y(0) + y(1)) / 2}) rotate(-90)" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${esc(o.yl)}</text></svg>`;
+}
+const lineLegend = () => `<div class="legend">${MODELS().map(([, n, c, d]) => `<span><svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="${c}" stroke-width="2" ${d ? `stroke-dasharray="${d}"` : ""}/></svg>${esc(n)}</span>`).join("")}</div>`;
+function curveChart(cv, kind, title) {
+  const s = MODELS().map(([k, n, c, d]) => ({name: n, color: c, dash: d, pts: cv[k][kind]}));
+  return kind === "roc" ? lineChart(s, {title, diagonal: true, xl: t("거짓 양성률 (FPR)", "false positive rate"), yl: t("참 양성률 (TPR, 재현율)", "true positive rate (recall)")})
+    : lineChart(s, {title, xl: t("재현율", "recall"), yl: t("정밀도", "precision")});
+}
+function confusionGrid(c, title) {
+  const n = c.tp + c.fp + c.fn + c.tn, cell = (v, lab, good) => `<div class="cm-c" style="background:rgba(var(--heat),${(.08 + .6 * v / n).toFixed(3)})" data-tip="${esc(`${lab}: ${v}`)}">
+    <b>${v}</b><small>${lab}</small><i class="${good ? "ok" : "bad"}">${good ? t("맞음", "correct") : t("틀림", "wrong")}</i></div>`;
+  return `<div class="cm"><div class="cm-t">${esc(title)}</div>
+    <div></div><div class="cm-h">${t("예측: 사기", "predicted fraud")}</div><div class="cm-h">${t("예측: 정상", "predicted legit")}</div>
+    <div class="cm-h cm-v">${t("실제 사기", "actual fraud")}</div>${cell(c.tp, "TP", true)}${cell(c.fn, "FN", false)}
+    <div class="cm-h cm-v">${t("실제 정상", "actual legit")}</div>${cell(c.fp, "FP", false)}${cell(c.tn, "TN", true)}</div>
+    <p class="meta" style="margin-top:8px">${t("정밀도", "precision")} ${c.precision ?? "–"} · ${t("재현율", "recall")} ${c.recall} · F1 ${c.f1} (${t("기준", "threshold")} ${c.threshold})</p>`;
+}
+function histChart(bins) {
+  const W = 420, H = 220, L = 34, B = 34, T = 10, max = Math.max(1, ...bins.flatMap(b => [b.fraud, b.legit]));
+  const bw = (W - L - 10) / bins.length, y = v => T + (1 - v / max) * (H - T - B);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:520px;height:auto" role="img" aria-label="score histogram">
+    <line x1="${L}" x2="${W - 10}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>
+    ${bins.map((b, i) => { const x0 = L + i * bw, w = (bw - 6) / 2;
+      return `<rect x="${x0 + 2}" y="${y(b.legit)}" width="${w}" height="${y(0) - y(b.legit)}" rx="2" fill="var(--mute)" data-tip="${esc(`${b.from.toFixed(1)}–${b.to.toFixed(1)} · ${t("정상", "legit")} ${b.legit}`)}"/>
+        <rect x="${x0 + 4 + w}" y="${y(b.fraud)}" width="${w}" height="${y(0) - y(b.fraud)}" rx="2" fill="${C.fraud}" data-tip="${esc(`${b.from.toFixed(1)}–${b.to.toFixed(1)} · ${t("사기", "fraud")} ${b.fraud}`)}"/>
+        <text x="${x0 + bw / 2}" y="${H - B + 14}" text-anchor="middle" font-size="10.5" fill="var(--mute)">${b.from.toFixed(1)}</text>`; }).join("")}
+    <text x="${(L + W) / 2}" y="${H - 4}" text-anchor="middle" font-size="11.5" fill="var(--ink2)">${t("사기 확률 (모델 점수 ÷ 100)", "fraud probability (score ÷ 100)")}</text>
+    <text x="${L - 6}" y="${y(max) + 4}" text-anchor="end" font-size="11" fill="var(--mute)">${max}</text><text x="${L - 6}" y="${y(0) + 4}" text-anchor="end" font-size="11" fill="var(--mute)">0</text></svg>`;
+}
+const step = (n, title) => `<span class="stepno">${n}</span> ${title}`;
 async function dataSciencePage() {
   const r = await api("/api/datascience"), P = r.pipeline;
   if (!P) { $("main").innerHTML = `<div class="card">${t("위험 모델 결과가 아직 없어요. 평가를 먼저 돌려 주세요.", "No risk model results yet; run the evaluation first.")}</div>`; return; }
@@ -1079,7 +1230,7 @@ function agentList(rows) {  // one agent per client: which version, whether it m
       <th class="n">${t("테스트 정답", "Test correct")}</th><th class="n">${t("잘못 지급", "Wrong paid")}</th><th class="n">${t("놓친 정상", "Missed")}</th><th class="n">${t("이달 지급·보류·거절", "Paid·held·rej.")}</th></tr>
     ${rows.map(r => `<tr><td title="${esc(`${r.client} · ${r.owner}`)}"><a href="#/c/${r.client_id}">${esc(r.client)}</a></td>
       <td data-tip="${esc(r.generation ? `${r.seat}.v${r.generation} · ${r.did} · ${t("매뉴얼", "manual")} sha256 ${r.manual_sha256.slice(0, 16)}… · ${r.model}` : "")}">${r.generation
-        ? `<a href="#/c/${r.client_id}/agent"><b>${t("에이전트", "agent")} v${r.generation}</b></a> <span class="meta">· ${t("매뉴얼", "manual")} gen ${r.manual_generation} <code>${r.manual_sha256.slice(0, 6)}</code>${r.earlier_versions ? ` · ${t(`이전 ${r.earlier_versions}개 정지`, `${r.earlier_versions} retired`)}` : ""}</span>`
+        ? `<a href="#/c/${r.client_id}/agent"><b>v${r.generation}</b></a> <span class="meta">· ${t("매뉴얼", "manual")} ${r.manual_generation}${r.earlier_versions ? ` · ${t(`이전 ${r.earlier_versions}`, `${r.earlier_versions} retired`)}` : ""}</span>`
         : `<span class="mute">${t("배치 안 됨", "not deployed")}</span>`}</td>
       <td>${st(r)}</td><td class="n">${r.cap ? chf0(r.cap) : "–"}</td>
       <td>${r.self_test == null ? `<span class="mute">–</span>` : r.self_test ? `<span class="ok" data-tip="${esc(t("정상 요청 통과, 위조·재탕 거부", "own request passed, forged and replayed refused"))}">${ic("check", 13)} ${t("통과", "ok")}</span>` : `<span class="bad">${ic("ban", 13)} ${t("실패", "failed")}</span>`}</td>
@@ -1091,7 +1242,7 @@ function agentList(rows) {  // one agent per client: which version, whether it m
 function holdoutCard(h, sys, nm) {
   const nonpay = h.risk.B_logistic.positives;  // invoices that must not be paid automatically
   const r = h.risk.A_logistic, missed = sys.filter(k => h.metrics[k].missed_payment_rate > 0).length;
-  return `<p class="sub">${t(`설계를 고정한 뒤 같은 생성기에서 다른 시드(${h.seed})로 뽑은 청구서. 테스트 결과에 맞춘 게 아닌지 확인하는 용도예요. 잘못 지급, ${nonpay}건 중.`, `Drawn once from the same generator with another seed (${h.seed}) after the design was frozen, to check we did not tune on the test set. Wrong payments, of ${nonpay}.`)}</p>
+  return `<p class="sub">${t(`승격 교훈까지의 설계를 고정한 뒤 같은 생성기에서 다른 시드(${h.seed})로 뽑은 청구서. 테스트 결과에 맞춘 게 아닌지 확인하는 용도예요. 한 번 더 보기는 그 뒤에 추가했어요. 잘못 지급, ${nonpay}건 중.`, `Drawn once from the same generator with another seed (${h.seed}) after freezing the design up to the promoted lessons, to check we did not tune on the test set; the second look came later. Wrong payments, of ${nonpay}.`)}</p>
     ${scaled(sys.map(k => ({label: nm(k), v: h.metrics[k].wrong_payments, value: `${h.metrics[k].wrong_payments} / ${nonpay}`})), nonpay, {color: C.rejected})}
     <p class="meta">${t(`위험 점수(고정된 모델) 사기 ROC AUC ${r.roc_auc} · 정상 지급을 놓친 시스템 ${missed}개 · 같은 생성기라 처음 보는 유형에 대한 증거는 아니에요.`, `Risk score (frozen model): fraud ROC AUC ${r.roc_auc} · systems that missed a legitimate payment: ${missed} · same generator, so not evidence for unseen invoice types.`)}</p>`;
 }

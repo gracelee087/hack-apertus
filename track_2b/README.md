@@ -30,7 +30,8 @@ Results (78 synthetic test invoices, Apertus v1.5 8B): Apertus alone paid 33 of 
 must not pay (CHF 138,781); with the harness 7 (CHF 26,771), 2 (CHF 9,290) with two lessons
 promoted to hard checks, and **1 (CHF 4,640)** with a risk-score second look, with no legitimate payment
 missed (the last two steps were added after seeing test results; see the report). Sixteen attack types on
-the agent's identity and authority: 544 / 544 blocked, 34 / 34 legitimate requests accepted.
+the agent's identity and authority, each replayed for the 34 paid invoices: 544 / 544 blocked,
+34 / 34 legitimate requests accepted (attacks we wrote, not a security audit).
 A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) gives every
 invoice a fraud probability. An invoice the harness would pay goes to a human instead when its score is
 50 or more (second look); the score does not set the queue order (fraud signal first, then days to spare
@@ -40,11 +41,12 @@ holds it, and it held no legitimate invoice on the test set or the holdout.
 See `results/summary.md` and `technical_report.md`.
 
 **Fresh holdout, run once.** Because the promoted lessons and one risk-model fix were made after seeing
-test results, we drew 42 new invoices from the same generator with another seed (2027), fixed the design,
+test results, we fixed that design, drew 42 new invoices from the same generator with another seed (2027)
 and ran everything once (Apertus responses recorded live on 2026-10-09): Apertus alone paid 14 of 25
 invoices it must not pay (CHF 42,076); the production harness 0 of 25, with all 17 legitimate invoices
 paid; the frozen risk score reached fraud ROC AUC 0.984. Same generator, so this guards against tuning on
-the test set, not against new kinds of invoices; 42 cases is small. `results/holdout.md`.
+the test set, not against new kinds of invoices; 42 cases is small. The second look was added after
+this run (on the holdout it changes no decision), so it has no blind evidence yet. `results/holdout.md`.
 
 Payment files: our own check is structural (counts, control sum, IBAN checksums, positive amounts); an
 external review validated the reference files against the official SIX pain.001.001.09 schema. Bank-specific

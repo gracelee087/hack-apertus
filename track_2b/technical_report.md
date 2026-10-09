@@ -22,7 +22,8 @@ mandate before anything takes effect. On 78 synthetic test invoices in four lang
 (CHF 4,640) once a risk score trained on past payments sends high-scoring payments to a human, while
 still paying all 33 legitimate invoices. Sixteen kinds of attack on the agent's identity and
 authority (forged or replayed requests, revoked agent, tampered mandate, reused human grant, …) were
-blocked in 544 of 544 attempts, with 34 of 34 legitimate requests accepted.
+blocked in 544 of 544 attempts (16 scenarios we wrote, each replayed for the 34 paid invoices; not a
+security audit), with 34 of 34 legitimate requests accepted.
 
 ## 2. Architecture
 
@@ -50,7 +51,7 @@ every agent action = request signed with the agent key ──► [Gate: G1 signa
 | Agent identity (Ed25519, did:key, entity card, badge, request stamps) | `src/agent/identity.py` | runtime |
 | Gate (five checks) and desk (hire, kill switch, replace, human grants) | `src/agent/gate.py`, `desk.py` | runtime |
 | Attack scenarios against the gate | `src/agent/security.py` | runtime, no model calls |
-| Risk score: logistic regression on 3,000 synthetic past payments (shown to the reviewer, changes no decision) | `src/agent/risk.py` | build time and runtime, pure Python, no new dependency |
+| Risk score: logistic regression on 3,000 synthetic past payments; a score of 50 or more sends a payment to a human (second look) | `src/agent/risk.py` | build time and runtime, pure Python, no new dependency |
 | Ledger (hash chain + ledger-key signature), payment files | `src/agent/ledger.py`, `pain001.py` | runtime, pure Python |
 | Reviewer web app: client portfolio dashboard (status, risk signals per client), per-client pages (decisions, approvals, agent settings, lessons, files, ledger) | `src/agent/app.py`, `static/index.html` | runtime, FastAPI on port 8000 |
 
@@ -120,7 +121,8 @@ not a compliance assessment. FINMA Guidance 08/2024 asks for an inventory, docum
 - **Model:** Apertus v1.5 8B (`swiss-ai/apertus-v1.5-8b` on the endpoint; weights: `swiss-ai/Apertus-v1.5-8B`)
 - **How it is used:** inference, agent with structured JSON outputs (no fine-tuning)
 - **Where it runs:** Public AI inference API (`https://api.publicai.co/v1`, OpenAI-compatible); temperature 0;
-  307 calls for the full run, latency median 2.9 s / p90 7.2 s, cost well under USD 0.10
+  440 recorded responses (308 for the evaluation run, 130 for the holdout, 2 from trying the live app),
+  latency median 3.0 s / p90 7.4 s, cost well under USD 0.10
   (≈ 0.2 M tokens at USD 0.1 / 0.2 per M input / output tokens)
 - **Four roles:** (1) field extraction from DE/FR/IT/EN invoices; (2) the *baseline*: the full
   decision in one prompt; (3) content review after the hard checks; (4) distilling masked
@@ -171,9 +173,9 @@ Test split: 78 invoices, 33 payable, 45 not payable (28 escalate, 17 reject).
 They caught 3 of 4 sum mismatches and 2 of 2 wrong-addressee invoices, and held back no legitimate
 invoice. The remaining sum mismatch is the invoice whose total the model "corrected" during
 extraction; the other remaining miss is one fraud-pressure invoice the reviewer judged routine.
-The second look (last row) was also added after seeing these results: the risk score (below) gives that
-pressure invoice 99.9, so it goes to a human; no legitimate invoice scored 50 or more, on the test set or
-on the holdout. The last row is the configuration the reviewer app runs and whose ledger and payment files
+The second look (last row) was added after seeing these results and after the holdout below: the risk
+score gives that pressure invoice 99.9, so it goes to a human; no legitimate invoice scored 50 or more, on
+the test set or on the holdout. Its gain on the test set is therefore not a blind result. The last row is the configuration the reviewer app runs and whose ledger and payment files
 are in `results/`.
 
 Correct-decision rate by case type (baseline → harness gen 1): every hard-rule type (revoked,
@@ -203,7 +205,8 @@ amount: on a VAT-mismatch invoice the model reported net + VAT instead of the st
 
 **Agent verification.** Each attack below was replayed once for each of the 34 invoices the
 production configuration paid, each time against a freshly hired agent (`src/agent/security.py`,
-no model calls):
+no model calls). The 544 attempts are 16 scenarios × 34 invoices: they show the gate stops the attacks
+we wrote, not that the system is secure against attacks we did not think of:
 
 | Scenario | Blocked | Caught by |
 |---|---|---|
@@ -248,13 +251,14 @@ random; anchoring them on train-split invoices removed them. That fix was made a
 results, which is one reason for the holdout below. Every step (data, features, split, L2 search, ROC
 and PR curves, confusion matrices, errors) is shown on the app's risk-model page.
 
-**Fresh holdout.** Three parts of the design were changed after seeing test results: the two promoted
-lessons, the risk-score second look (last two rows of the table) and one fix in the risk score's amount
-feature. To check that the numbers
-are not an artefact of that, we drew a second test set once, after freezing the design: 42 new invoices
+**Fresh holdout.** Two parts of the design were changed after seeing test results: the two promoted
+lessons and one fix in the risk score's amount feature. To check that the numbers
+are not an artefact of that, we froze that design and drew a second test set once: 42 new invoices
 from the same generator with another seed (2027; same case types in the same proportions, no shared
 invoice text), run through all five systems with the lessons of the train split and the risk model exactly
-as fitted (`python -m agent holdout`, 131 Apertus calls recorded live on 2026-10-09):
+as fitted (`python -m agent holdout`, 130 Apertus calls recorded live on 2026-10-09). The second look was
+added after this run; its row below is a replay of the same recorded responses, and it changes no decision
+on the holdout, so the holdout is blind evidence for the design up to the promoted lessons only:
 
 | System | Accuracy | Wrong payments (of 25) | Wrongly paid CHF | Missed payments (of 17) |
 |---|---|---|---|---|
@@ -309,8 +313,9 @@ Commit: ⟨pending⟩.
 ## 8. Next steps
 
 Mandates as swiyu verifiable credentials and keys in an HSM; QR-bill and PDF input; a sign-off workflow in the
-app for promoting lessons to hard checks (done by hand here); a fresh, unseen test set to measure the
-promoted checks blind; pilot with one Treuhand office on historical, anonymised
+app for promoting lessons to hard checks (done by hand here); a larger test set drawn once after freezing the final configuration (1,000 new invoices, with
+other invoice layouts, combined errors and unreadable fields), to measure the promoted checks and the
+second look blind; pilot with one Treuhand office on historical, anonymised
 payment runs; integration as a layer on top of existing Swiss ERP/accounting software rather than a replacement.
 
 ## License

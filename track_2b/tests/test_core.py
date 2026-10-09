@@ -202,6 +202,7 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
     assert app.review(held["case_id"], app.Review(action="approve", note="checked"))["ok"]
     assert (tmp_path / "payments" / "C01_pain001_approved.xml").exists()
     assert [i["status"] for i in app.queue_items()] == ["approved"]
+    assert len(app.prior_payments("C01")) == 2  # approved after a refused file: the second decision counts as paid
 
 
 def test_second_look_holds_a_high_risk_payment():
@@ -273,3 +274,20 @@ def test_risk_score_learns_fraud_patterns():
     w = risk.fit_logistic(Xs, y, 1.0)
     assert risk.roc_auc(y, risk.predict(w, Xs)) > 0.85
     assert w[1 + risk.FEATURES.index("iban_changed")] > 0 and w[1 + risk.FEATURES.index("urgency_terms")] > 0
+
+
+def test_reference_run_voids_payments_whose_file_is_not_issued(tmp_path, monkeypatch):
+    from agent import evaluate
+    from agent.common import read_jsonl
+    preds = read_jsonl(Path(__file__).resolve().parents[1] / "results" / "predictions.jsonl")
+    test = [c for c in CASES if c["split"] == "test"]
+    info = {"manual_gen0_sha256": "a", "manual_gen1_sha256": "b", "overruled": 0}
+    monkeypatch.setattr(evaluate.pain001, "validate", lambda xml: ["injected failure"])
+    files, ledger_ok, _, _ = evaluate.write_outputs(test, preds, copy.deepcopy(BY_ID), "manual", info, tmp_path)
+    led = read_jsonl(tmp_path / "ledger.jsonl")
+    paid = {e["case_id"] for e in led if e.get("action") == "payment.decide" and e.get("gate") == "OK" and e.get("decision") == "pay"}
+    voided = {e["case_id"] for e in led if e.get("action") == "payment.voided"}
+    queued = {i["case_id"] for i in __import__("json").loads((tmp_path / "queue.json").read_text(encoding="utf-8"))
+              if "FILE_INVALID" in i["checks"]}
+    assert files == {} and ledger_ok and not list((tmp_path / "payments").iterdir())
+    assert paid and paid == voided == queued  # no file, no payment: every decision is voided and back with a human

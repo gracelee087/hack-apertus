@@ -36,6 +36,7 @@ RISKS = {  # finding code -> (label, kind)
     "E_WRONG_ADDRESSEE": ("Addressed to another company", "fraud"),
     "MODEL_FLAGGED": ("Flagged by Apertus review (e.g. pressure, secrecy)", "fraud"),
     "RISK_SCORE": ("High risk score (second look)", "fraud"),
+    "FILE_INVALID": ("Payment file not issued", "control"),
     "E_NEW_VENDOR": ("New supplier", "control"),
     "E_LIMIT_SINGLE": ("Above single-payment limit", "control"),
     "E_LIMIT_MONTH": ("Monthly limit exceeded", "control"),
@@ -111,13 +112,23 @@ def risk_codes(e) -> list:
     return codes
 
 
+def standing(entries) -> list:
+    """Accepted payment.decide entries, minus those a later payment.voided cancelled (each void cancels the latest one)."""
+    out, last = [], {}
+    for e in entries:
+        if e.get("action") == "payment.decide" and e.get("gate") == "OK":
+            last[e.get("case_id")] = e
+            out.append(e)
+        elif e.get("action") == "payment.voided" and e.get("case_id") in last:
+            out.remove(last.pop(e.get("case_id")))
+    return out
+
+
 def client_view(s, d, cid, entries=None):
     """Status, money and risk signals for one client, computed from the ledger."""
     m = mandate(s, cid)
     entries = [e for e in (entries if entries is not None else LEDGER.entries) if e.get("client_id") == cid]
-    voided = {e.get("case_id") for e in entries if e.get("action") == "payment.voided"}
-    decided = [e for e in entries if e.get("action") == "payment.decide" and e.get("gate") == "OK"
-               and e.get("case_id") not in voided]
+    decided = standing(entries)
     auto = [e for e in decided if not e.get("grant_ref")]
     paid = [e for e in decided if e.get("decision") == "pay"]
     risks = Counter(c for e in auto for c in risk_codes(e))
@@ -331,12 +342,9 @@ def revoke_mandate(cid: str):
 
 def prior_payments(cid) -> list:
     """This month's payments for one client, read from the ledger: the reference run and everything since."""
-    entries = [e for e in LEDGER.entries if e.get("client_id") == cid]
-    voided = {e.get("case_id") for e in entries if e.get("action") == "payment.voided"}
     return [{"vendor": e.get("vendor") or "", "invoice_no": str(e.get("invoice_no") or ""),
-             "amount_chf": e.get("amount_chf") or 0} for e in entries
-            if e.get("action") == "payment.decide" and e.get("gate") == "OK" and e.get("decision") == "pay"
-            and e.get("case_id") not in voided]
+             "amount_chf": e.get("amount_chf") or 0}
+            for e in standing(x for x in LEDGER.entries if x.get("client_id") == cid) if e.get("decision") == "pay"]
 
 
 @app.post("/api/clients/{cid}/process")
@@ -570,6 +578,123 @@ def analytics():
 def datascience():
     """The risk model's full pipeline: data, features, split, search, curves, confusion matrices, errors."""
     return {k: v for k, v in _read(RESULTS / "risk_model.json", {}).items() if k != "scores"}
+
+
+DATA_FILES = {  # published name -> (path under data/, what it is)
+    "mandates.json": ("mandates.json", "Client mandates, signed by each client"),
+    "vendors.json": ("vendors.json", "Known suppliers per client"),
+    "cases.jsonl": ("cases.jsonl", "120 invoices with labels and reviewer notes (42 train, 78 test)"),
+    "holdout.jsonl": ("holdout.jsonl", "42 fresh invoices, run once (seed 2027)"),
+    "payments.jsonl": ("history/payments.jsonl", "3,000 past payments that train the risk score"),
+    "apertus_responses.jsonl": ("cache/apertus_responses.jsonl", "Every Apertus request and response, for keyless replay"),
+}
+RULES = [  # layer, code, what happens, where it is enforced
+    ("hard check", "CREDENTIAL_INVALID", "reject", "badge.py: the client's mandate signature does not verify"),
+    ("hard check", "R_REVOKED", "reject", "badge.py: mandate revoked or not in force"),
+    ("hard check", "R_SCOPE", "reject", "badge.py: expense type outside the mandate"),
+    ("hard check", "R_IBAN_INVALID", "reject", "badge.py: IBAN fails the checksum"),
+    ("hard check", "R_DUPLICATE", "reject", "badge.py: same supplier and invoice number already paid this month"),
+    ("hard check", "E_IBAN_CHANGED", "to a human", "badge.py: IBAN differs from the account on file"),
+    ("hard check", "E_NEW_VENDOR", "to a human", "badge.py: supplier not in the client's list"),
+    ("hard check", "E_LIMIT_SINGLE", "to a human", "badge.py: above the mandate's single-payment limit"),
+    ("hard check", "E_LIMIT_MONTH", "to a human", "badge.py: month total would exceed the mandate"),
+    ("hard check", "EXTRACTION_INCOMPLETE", "to a human", "badge.py: supplier, IBAN or a positive total could not be read"),
+    ("hard check", "CATEGORY_UNCLEAR", "to a human", "badge.py: expense type unclear"),
+    ("promoted lesson", "E_VAT_MISMATCH", "to a human", "badge.promoted_checks: net + VAT != total"),
+    ("promoted lesson", "E_WRONG_ADDRESSEE", "to a human", "badge.promoted_checks: invoice addressed to another company"),
+    ("content review", "MODEL_FLAGGED", "to a human", "decide.review: Apertus reads against the firm manual and lessons"),
+    ("second look", "RISK_SCORE", "to a human", "decide.second_look: risk score >= 50 on an invoice the agent would pay"),
+    ("gate", "G1", "refused", "gate.py: signature and payload hash"),
+    ("gate", "G2", "refused", "gate.py: nonce never seen, request fresh"),
+    ("gate", "G3", "refused", "gate.py: firm-issued entity card, agent not revoked"),
+    ("gate", "G4", "refused", "gate.py: badge covers action, client, date, amount; human grant bound and used once"),
+    ("gate", "G5", "refused", "gate.py: client mandate signed, for this firm, in force, single limit"),
+]
+
+
+def _rows(x) -> int:  # vendors.json is grouped by client
+    return sum(len(v) for v in x.values()) if isinstance(x, dict) else len(x)
+
+
+@app.get("/api/database")
+def database():
+    """The data the system is built and tested on, with the rules it enforces."""
+    s = state()
+    files = []
+    for name, (rel, what) in DATA_FILES.items():
+        path = DATA / rel
+        rows = (_rows(load_json(path)) if path.suffix == ".json" else sum(1 for line in open(path, encoding="utf-8") if line.strip())) \
+            if path.exists() else 0
+        files.append({"name": name, "path": f"data/{rel}", "what": what, "rows": rows,
+                      "bytes": path.stat().st_size if path.exists() else 0})
+    cases = read_jsonl(DATA / "cases.jsonl")
+    held = read_jsonl(DATA / "holdout.jsonl") if (DATA / "holdout.jsonl").exists() else []
+    hist = read_jsonl(DATA / "history" / "payments.jsonl") if (DATA / "history" / "payments.jsonl").exists() else []
+    cache = read_jsonl(DATA / "cache" / "apertus_responses.jsonl") if (DATA / "cache" / "apertus_responses.jsonl").exists() else []
+    lat = sorted(r.get("latency_s") or 0 for r in cache if r.get("latency_s"))
+    vendors = load_json(DATA / "vendors.json")
+    row = lambda c: {"case_id": c["case_id"], "client_id": c["client_id"], "lang": c["lang"], "split": c["split"],
+                     "type": c["reason_code"], "label": c["label"], "total_chf": c["gold"]["total_chf"], "vendor": c["gold"]["vendor"]}
+    return {
+        "files": files,
+        "mandates": [{k: m[k] for k in ("client_id", "name", "city", "lang", "allowed_categories", "single_limit_chf",
+                                        "monthly_limit_chf", "valid_from", "valid_until", "revoked")} | {"signature_ok": credential.verify(m)}
+                     for m in s["mandates"]],
+        "vendors": [{"client_id": cid, "name": v["name"], "category": v["category"], "lang": v["lang"], "iban": v["iban"]}
+                    for cid, vs in vendors.items() for v in vs],
+        "cases": [row(c) for c in cases] + [row(c) for c in held],
+        "history": {"rows": len(hist), "fraud": sum(r["is_fraud"] for r in hist),
+                    "must_not_autopay": sum(r["must_not_autopay"] for r in hist),
+                    "kinds": dict(Counter(r["kind"] for r in hist)),
+                    "patterns": dict(Counter(f"{r['kind']}:{r['pattern'] or 'normal'}" for r in hist).most_common()),
+                    "sample": hist[:12]},
+        "cache": {"calls": len(cache), "model": llm.model_name(),
+                  "by_step": dict(Counter(str(r.get("tag", "")).split(":")[0] or "other" for r in cache)),
+                  "latency_median_s": lat[len(lat) // 2] if lat else None},
+        "rules": [{"layer": a, "code": b, "effect": c, "where": d} for a, b, c, d in RULES],
+        "lessons": [x["rule"] for x in s["lessons"] if x["seat"] == FIRM_WIDE],
+        "concept": "Identity, badge, stamp, gate, ledger and lessons follow the author's earlier Agentic ID (know-your-agent) "
+                   "design; the code here is new.",
+    }
+
+
+def _flat(x, pre="") -> dict:  # nested fields become dotted columns; lists stay as JSON text
+    out = {}
+    for k, v in x.items():
+        if isinstance(v, dict):
+            out |= _flat(v, f"{pre}{k}.")
+        else:
+            out[pre + k] = json.dumps(v, ensure_ascii=False) if isinstance(v, list) else v
+    return out
+
+
+@app.get("/api/data/{name}")
+def data_rows(name: str, offset: int = 0, limit: int = 200, q: str = "", sort: str = "", desc: bool = False):
+    """One data file as a sheet: flattened rows, searched and sorted on the server, a page at a time."""
+    if name not in DATA_FILES or not (DATA / DATA_FILES[name][0]).exists():
+        raise HTTPException(404)
+    path = DATA / DATA_FILES[name][0]
+    if path.suffix == ".json":
+        x = load_json(path)
+        rows = [{"client_id": cid} | v for cid, vs in x.items() for v in vs] if isinstance(x, dict) else x
+    else:
+        rows = read_jsonl(path)
+    rows = [_flat(r) for r in rows]
+    cols = list(dict.fromkeys(k for r in rows for k in r))
+    if q:
+        rows = [r for r in rows if any(q.lower() in str(v).lower() for v in r.values())]
+    if sort in cols:
+        rows.sort(key=lambda r: (r.get(sort) is None, isinstance(r.get(sort), str), r.get(sort) if r.get(sort) is not None else 0),
+                  reverse=desc)
+    limit = max(1, min(limit, 500))
+    return {"name": name, "columns": cols, "total": len(rows), "offset": offset, "rows": rows[offset:offset + limit]}
+
+
+@app.get("/files/data/{name}")
+def data_file(name: str):
+    if name not in DATA_FILES or not (DATA / DATA_FILES[name][0]).exists():
+        raise HTTPException(404)
+    return FileResponse(DATA / DATA_FILES[name][0], filename=name)
 
 
 @app.get("/api/ledger")

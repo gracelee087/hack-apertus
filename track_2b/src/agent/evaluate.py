@@ -150,7 +150,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
     for cid in mandates:  # one click per client; a client that revoked its mandate stops at the first step
         desk.onboard(cid, manual_sha256=lesson_info["manual_gen1_sha256"])
     by_case = {c["case_id"]: c for c in test}
-    payments, queue, gate_codes = defaultdict(list), [], Counter()
+    payments, paid_items, queue, gate_codes = defaultdict(list), defaultdict(list), [], Counter()
     for p in preds:
         c, m, h = by_case[p["case_id"]], mandates[p["client_id"]], p[PRODUCTION]
         f = p["fields"]
@@ -164,17 +164,19 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
         gate_codes[res["gate"]] += 1
         if not res["ok"]:
             continue
+        item = {"case_id": c["case_id"], "client_id": m["client_id"], "client": m["name"],
+                "vendor": f.get("vendor_name"), "amount_chf": f.get("total_chf"),
+                "iban": payload["iban"], "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
+                "risk_score": p.get("risk_score"),
+                "checks": [x["code"] for x in h.get("findings", [])],
+                "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"}
         if h["decision"] == "pay":
+            paid_items[m["client_id"]].append(item)
             payments[m["client_id"]].append({"end_to_end_id": c["case_id"], "creditor": f.get("vendor_name", ""),
                                              "iban": f.get("vendor_iban"), "amount_chf": float(f["total_chf"]),
                                              "reference": f.get("invoice_no", "")})
         elif h["decision"] == "escalate":
-            queue.append({"case_id": c["case_id"], "client_id": m["client_id"], "client": m["name"],
-                          "vendor": f.get("vendor_name"), "amount_chf": f.get("total_chf"),
-                          "iban": payload["iban"], "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
-                          "risk_score": p.get("risk_score"),
-                          "checks": [x["code"] for x in h.get("findings", [])],
-                          "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"})
+            queue.append(item)
     pay_dir = out / "payments"
     shutil.rmtree(pay_dir, ignore_errors=True)
     pay_dir.mkdir(parents=True)
@@ -186,14 +188,21 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                 "validation_errors": pain001.validate(xml)}
         if info["validation_errors"]:  # a file that fails validation is never issued
             led.append(actor="system", action="payment.file.blocked", client_id=cid, **info)
-            continue
-        res = desk.request(cid, "payment.file", {"file_sha256": sha256(xml), **info},
-                           file=f"payments/{cid}_pain001.xml", transactions=info["transactions"],
-                           total_chf=info["total_chf"])
-        gate_codes[res["gate"]] += 1
+            res = {"ok": False, "gate": "FILE_INVALID"}
+        else:
+            res = desk.request(cid, "payment.file", {"file_sha256": sha256(xml), **info},
+                               file=f"payments/{cid}_pain001.xml", transactions=info["transactions"],
+                               total_chf=info["total_chf"])
+            gate_codes[res["gate"]] += 1
         if res["ok"]:
             (pay_dir / f"{cid}_pain001.xml").write_text(xml, encoding="utf-8")
             files[cid] = info
+            continue
+        for item in paid_items[cid]:  # no file, no payment: each decision is voided and goes to a human
+            led.append(actor="system", action="payment.voided", client_id=cid, case_id=item["case_id"],
+                       note=f"payment file not issued ({res['gate']}); the decision does not stand")
+            queue.append(item | {"checks": item["checks"] + ["FILE_INVALID"],
+                                 "reason": "Payment file was not issued; a human must check and approve again."})
     (out / "desk.json").write_text(json.dumps(desk.dump(), ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "queue.json").write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "manual_gen1.md").write_text(manual1 + "\n", encoding="utf-8")
