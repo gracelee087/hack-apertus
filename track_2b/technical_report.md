@@ -18,13 +18,13 @@ did what for whom. *Who* is provable: the agent has its own key and DID, a firm-
 badge, and every request it makes is signed and checked by a gate against the client's signed
 mandate before anything takes effect. On 78 synthetic test invoices in four languages, Apertus 8B alone paid
 **33 of 45** invoices it should not have paid (CHF 138,781); with the harness, **7 of 45**
-(CHF 26,771), and 0 of 45 after three later additions (two lessons promoted to hard checks, a check that
-the IBAN and total are written in the invoice, and a risk-score second look), still paying all 33
-legitimate invoices. Because those additions came after seeing results, we then ran **1,000 new, wider
-invoices once with the design frozen** (four layouts, two problems at once, unreadable fields): Apertus
-alone paid 337 of 600 it should not have (CHF 1.15 M); the production harness **29 (4.8%, 95% CI
-3.4–6.9%; CHF 70,500), all of them invoices with no invoice number**, and held 5.2% of legitimate invoices
-for a human. Sixteen kinds of attack on the agent's identity and authority (forged or replayed requests,
+(CHF 26,771), and 0 of 45 after later additions (two lessons promoted to hard checks, verification that
+what Apertus read is written in the invoice, a risk-score second look), still paying all 33 legitimate
+invoices. Because those additions came after seeing results, we tested on fresh, wider synthetic sets, each
+run once (four layouts, two problems at once, unreadable fields). On 1,000 invoices the then design decided
+to pay 29 of 600 it should not have (4.8%), all invoices with no invoice number, which Apertus had filled in;
+after we made Apertus quote where it read each value (checked in code), a new set of 500 had **0 of 300
+(95% CI 0–1.3%)** against 178 for Apertus alone, with 3.5% of legitimate invoices held for a human. Sixteen kinds of attack on the agent's identity and authority (forged or replayed requests,
 revoked agent, tampered mandate, reused human grant, …) were blocked in 528 of 528 attempts (16 scenarios
 we wrote, each replayed for the 33 paid invoices; not a security audit), with 33 of 33 legitimate requests
 accepted.
@@ -55,8 +55,8 @@ every agent action = request signed with the agent key ──► [Gate: G1 signa
 | Agent identity (Ed25519, did:key, entity card, badge, request stamps) | `src/agent/identity.py` | runtime |
 | Gate (five checks) and desk (hire, kill switch, replace, human grants) | `src/agent/gate.py`, `desk.py` | runtime |
 | Attack scenarios against the gate | `src/agent/security.py` | runtime, no model calls |
-| Grounding check: the IBAN and total read must be written in the invoice | `src/agent/badge.py` | runtime, pure Python |
-| Risk score: logistic regression on 3,000 synthetic past payments; a score of 25 or more sends a payment to a human (second look) | `src/agent/risk.py` | build time and runtime, pure Python, no new dependency |
+| Verification: IBAN and total written in the invoice; Apertus quotes where it read IBAN, invoice number and total (checked in code); same supplier + amount = possible duplicate | `src/agent/badge.py`, `decide.py` | runtime |
+| Risk score: logistic regression on 3,000 synthetic past payments; a score of 95 or more sends a payment to a human (second look) | `src/agent/risk.py` | build time and runtime, pure Python, no new dependency |
 | Ledger (hash chain + ledger-key signature), payment files | `src/agent/ledger.py`, `pain001.py` | runtime, pure Python |
 | Reviewer web app: client portfolio dashboard (status, risk signals per client), per-client pages (decisions, approvals, agent settings, lessons, files, ledger) | `src/agent/app.py`, `static/index.html` | runtime, FastAPI on port 8000 |
 
@@ -133,10 +133,12 @@ not a compliance assessment. FINMA Guidance 08/2024 asks for an inventory, docum
 - **Where it runs:** Public AI inference API (`https://api.publicai.co/v1`, OpenAI-compatible); temperature 0;
   440 recorded responses (308 for the evaluation run, 130 for the holdout, 2 from trying the live app),
   latency median 3.0 s / p90 7.4 s, cost well under USD 0.10
-  (≈ 0.2 M tokens at USD 0.1 / 0.2 per M input / output tokens); plus 4,670 for the 1,500-invoice study
-  (`data/cache/study_responses.jsonl`, about USD 0.40)
-- **Four roles:** (1) field extraction from DE/FR/IT/EN invoices; (2) the *baseline*: the full
-  decision in one prompt; (3) content review after the hard checks; (4) distilling masked
+  (≈ 0.2 M tokens at USD 0.1 / 0.2 per M input / output tokens); the reference cache now holds 501 responses
+  including 56 citation calls; plus 7,158 for the 2,000-invoice study (`data/cache/study_responses.jsonl`,
+  about USD 0.50)
+- **Five roles:** (1) field extraction from DE/FR/IT/EN invoices; (2) the *baseline*: the full
+  decision in one prompt; (3) content review after the hard checks; (4) for payment candidates, quoting
+  where it read the IBAN, invoice number and total, which code then checks; (5) distilling masked
   reviewer notes into manual rules. All prompts are in `src/agent/prompts.py`.
 - Every response is recorded with its exact request (`data/cache/apertus_responses.jsonl`), so judges
   without a key replay the same run. No other model is used, not even as a judge: the labels come
@@ -178,16 +180,16 @@ Test split: 78 invoices, 33 payable, 45 not payable (28 escalate, 17 reject).
 | + review, manual gen 0 | 0.872 | 0.222 (10) | 34,521 | 0.000 |
 | **+ review, manual gen 1 (lessons)** | **0.910** | **0.156 (7)** | **26,771** | **0.000** |
 | + two lessons promoted to hard checks ✱ | 0.974 | 0.044 (2) | 9,290 | 0.000 |
-| + grounding check (IBAN and total written in the invoice) ✱ | 0.987 | 0.022 (1) | 4,650 | 0.000 |
-| **+ risk-score second look (score ≥ 25 → human) ✱** | **1.000** | **0.000 (0)** | **0** | **0.000** |
+| + verification (written in the invoice, quoted, possible duplicate) ✱ | 0.987 | 0.022 (1) | 4,650 | 0.000 |
+| **+ risk-score second look (score ≥ 95 → human) ✱** | **1.000** | **0.000 (0)** | **0** | **0.000** |
 
 ✱ Added *after* we saw the test results above, so it is not a blind result. The two checks
 (net + VAT = total; invoice addressed to the client) are exactly the gen-1 lessons that the
 8B reviewer failed to apply; we wrote them as code, as a human would after signing off a lesson.
 They caught 3 of 4 sum mismatches and 2 of 2 wrong-addressee invoices, and held back no legitimate
 invoice. The remaining sum mismatch (T111) is the invoice whose total the model "corrected" during
-extraction; the grounding check, added after the study's tune set (below), holds it because that total is
-not written on the invoice. The other remaining miss (T110) is a fraud-pressure invoice the reviewer judged
+extraction; verification, added during the study (below), holds it because that total is not written
+on the invoice. The other remaining miss (T110) is a fraud-pressure invoice the reviewer judged
 routine; the risk score gives it 99.9, so the second look sends it to a human. Neither addition held a
 legitimate invoice on the test set or the holdout. None of the three late additions is a blind result here;
 the 1,000-invoice study below is. The last row is the configuration the reviewer app runs and whose ledger
@@ -199,9 +201,9 @@ out-of-scope, invalid IBAN, duplicate, limits, changed IBAN, new supplier) goes 
 legitimate invoices 0.97 → 1.00. Full table: `results/summary.md`.
 
 **Extraction** (Apertus, 78 invoices, 4 languages): IBAN 1.000, invoice no. 1.000, supplier 1.000,
-total 0.987, addressee 0.936, valid JSON 1.000. Before the grounding check one paid invoice carried a wrong
+total 0.987, addressee 0.936, valid JSON 1.000. Before verification one paid invoice carried a wrong
 amount: on a VAT-mismatch invoice the model reported net + VAT instead of the stated total, silently
-"correcting" the very inconsistency it should have flagged. The grounding check now holds it.
+"correcting" the very inconsistency it should have flagged. Verification now holds it.
 
 **What we learned.**
 1. *Apertus alone fails open.* Given the full policy, it still paid 33 of 45 faulty invoices. Its
@@ -240,8 +242,8 @@ In the reference run the gate accepted all 78 agent decisions for active clients
 (no agent is hired for a client that has revoked its mandate). The ledger's chain and signatures verify.
 
 **Risk score (data-science layer).** Every invoice gets a fraud probability. It changes one thing: an
-invoice the harness would pay goes to a human when the score is 25 or more (second look; threshold chosen
-on the study's tune set, below); rejections and
+invoice the harness would pay goes to a human when the score is 95 or more (second look; threshold chosen
+on the study's tune set by a fixed rule, below); rejections and
 holds are never undone by it. The reviewer sees the score next to each held invoice; the queue itself is
 ordered by fraud signal, then days to spare before the due date, then amount. Training data: 3,000 synthetic past payments (`data/history/`,
 seed 7; 75% legitimate, the rest control cases and eight fraud patterns, 15% of fraud made subtle,
@@ -262,7 +264,7 @@ only), then refitted on all 3,000 rows. Compared with an unsupervised baseline
 
 On the 43 test invoices the rules let through, fraud ROC AUC is 0.952; the pressure-fraud invoice that
 the rules and Apertus missed (T110) is scored 2nd highest of them, the amounts-don't-add-up invoice
-(T111) is not caught because Apertus read totals that add up (the grounding check holds it instead).
+(T111) is not caught because Apertus read totals that add up (verification holds it instead).
 The first version raised 4 false alarms on the test set because supplier amounts in the history were
 random; anchoring them on train-split invoices removed them. That fix was made after seeing test
 results, which is one reason for the holdout below. Every step (data, features, split, L2 search, ROC
@@ -273,7 +275,7 @@ lessons and one fix in the risk score's amount feature. To check that the number
 are not an artefact of that, we froze that design and drew a second test set once: 42 new invoices
 from the same generator with another seed (2027; same case types in the same proportions, no shared
 invoice text), run through all five systems with the lessons of the train split and the risk model exactly
-as fitted (`python -m agent holdout`, 130 Apertus calls recorded live on 2026-10-09). The grounding check
+as fitted (`python -m agent holdout`, 130 Apertus calls recorded live on 2026-10-09). Verification
 and the second look were added after this run; their rows below replay the same recorded responses and
 change no decision on the holdout, so the holdout is blind evidence for the design up to the promoted
 lessons only:
@@ -285,8 +287,8 @@ lessons only:
 | harness, manual gen 0 | 0.857 | 6 | 10,885.89 | 0 |
 | harness, manual gen 1 | 0.905 | 4 | 7,215.89 | 0 |
 | harness, gen 1 + promoted lessons | 1.000 | 0 | 0.00 | 0 |
-| + grounding check | 1.000 | 0 | 0.00 | 0 |
-| + risk-score second look at 25 (production) | 1.000 | 0 | 0.00 | 0 |
+| + verification | 1.000 | 0 | 0.00 | 0 |
+| + risk-score second look at 95 (production) | 1.000 | 0 | 0.00 | 0 |
 
 The frozen risk score: fraud ROC AUC 0.984 (unsupervised baseline 0.838), must-not-autopay 0.984; at 0.5,
 10 of 13 fraud cases flagged with 1 false alarm. Field extraction was correct for all 42 invoices. The
@@ -294,40 +296,48 @@ holdout comes from the same generator, so it shows we did not tune on the test s
 the system handles invoice types it has never seen, and with 42 cases (2 per rare type) a single case
 moves the rates a lot.
 
-**Study: 1,000 new invoices, run once.** The 78 test invoices are narrow, so after freezing the design we
-drew two wider sets from the generator with their own seeds (`python -m agent study`, `data/study_*.jsonl`):
-four layouts (two before plus an e-mail and a Swiss QR-bill payment part), the eleven earlier case types,
-four combinations of two problems on one invoice (e.g. changed IBAN + pressure) and three unreadable-field
-types (no invoice number, no IBAN in the text, total illegible); per 100 invoices 40 payable, 45 escalate,
-15 reject. A **tune set of 500** (seed 3031) was used only to choose the second-look threshold, by a rule
-committed before it ran: among 0, 5, …, 100, the fewest wrong payments while holding at most 2% more
-legitimate invoices, ties to the higher threshold. It chose **25**. The tune run also showed that Apertus
-fills gaps: on 16 of 20 illegible totals it computed net + VAT and the invoice was paid. So we added one
-check *after seeing the tune set* (disclosed; prompts unchanged, everything re-scored from the recordings):
-the IBAN and the total Apertus read must be written in the invoice (`badge.grounding`), otherwise a human
-checks it. On the tune set this cut wrong payments from 30 to 14; on the 78 test invoices it holds T111.
-Threshold and check were committed before the **final set of 1,000** (seed 3032) was run once, live
-(3,120 Apertus calls; 4,670 study responses recorded in `data/cache/study_responses.jsonl`):
+**Study: three fresh sets, each run once.** The 78 test invoices are narrow, so we drew wider sets from
+the generator with their own seeds (`python -m agent study`, `data/study_*.jsonl`): four layouts (two before
+plus an e-mail and a Swiss QR-bill payment part), the eleven earlier case types, four combinations of two
+problems on one invoice (e.g. changed IBAN + pressure) and three unreadable-field types (no invoice number,
+no IBAN in the text, total illegible); per 100 invoices 40 payable, 45 escalate, 15 reject. Each step was
+committed before the set it was tested on was run, and each set's results were looked at once:
 
-| System | Accuracy | Wrong payments (of 600) | Wrongly paid CHF | Missed payments (of 400) |
+1. **Tune (500, seed 3031)** chooses the second-look threshold, by a rule committed before it ran: among
+   0, 5, …, 100, the fewest wrong payments while holding at most 2% more legitimate invoices, ties to the
+   higher threshold. It also showed Apertus filling gaps (16 of 20 illegible totals computed from net + VAT
+   and paid), so we added the first verification check: the IBAN and total read must be written in the invoice.
+2. **Final (1,000, seed 3032)**, blind for that design: Apertus alone decided to pay 337 of 600 invoices it
+   should not have (CHF 1,150,174); the production harness **29 (4.8%, 95% CI 3.4–6.9%; CHF 70,500)**, every
+   one an invoice *without an invoice number*: Apertus filled the field with the payment reference (12) or
+   the heading word "RECHNUNG"/"INVOICE" (16), so the completeness check saw a number. Every other
+   non-payable type, combined cases included, was never paid. Legitimate invoices held: 5.2%.
+3. We then made verification general instead of adding a label list: for every payment candidate Apertus
+   **quotes the exact words where it read the IBAN, invoice number and total** (and the payment reference),
+   and code checks that each quote is in the invoice and contains the value, that the invoice number has a
+   digit and is not the reference (`badge.cited`); and the same supplier with the same amount already paid
+   this month counts as a possible duplicate. Re-scored from the recordings, tune and final drop to 0 wrong
+   payments (not blind), and the threshold rule now picks **95** (every threshold from 15 up ties at 0).
+4. **Confirm (500, seed 3033)**, blind for the final design (generated and committed before; its results
+   were never scored before this run):
+
+| System | Accuracy | Wrong payments (of 300) | Wrongly paid CHF | Missed payments (of 200) |
 |---|---|---|---|---|
-| Apertus alone | 0.579 | 337 (56.2%) | 1,150,174 | 0.7% |
-| extraction + badge | 0.764 | 174 | 382,166 | 3.5% |
-| harness, manual gen 1 | 0.802 | 136 | 292,816 | 3.5% |
-| + promoted lessons | 0.873 | 65 | 140,210 | 3.5% |
-| + grounding check | 0.953 | 30 | 71,080 | 3.5% |
-| **+ second look at 25 (production)** | **0.947** | **29 (4.8%, 95% CI 3.4–6.9%)** | **70,500** | **5.2% (CI 3.5–7.9%)** |
+| Apertus alone | 0.576 | 178 (59.3%) | 642,157 | 1.0% |
+| extraction + badge | 0.760 | 89 | 226,007 | 2.5% |
+| harness, manual gen 1 | 0.804 | 67 | 172,827 | 2.5% |
+| + promoted lessons | 0.876 | 31 | 67,960 | 2.5% |
+| + verification (written, quoted, duplicate) | 0.986 | 0 | 0 | 3.5% |
+| **+ second look at 95 (production)** | **0.986** | **0 (95% CI 0–1.3%)** | **0** | **3.5% (CI 1.7–7.1%)** |
 
-As everywhere in this report, a wrong payment is a decision to pay; the study scores decisions only (no
-payment files or ledger are written for it). What it shows. (1) The ladder holds on new invoices: every layer lowers the wrong payments, from 337 to 29. (2) **All 29 remaining wrong payments are invoices without an invoice number** (29 of 40):
-Apertus filled the field with the payment reference (12) or the heading word "RECHNUNG"/"INVOICE" (16), so
-the completeness check saw a number. Every other non-payable type, including all combined cases, was never
-paid. (3) No paid invoice carried a wrong IBAN or amount (14 did before the grounding check). (4) The price
-is 21 legitimate invoices held (5.2%): 14 because the IBAN read was not the one written (mostly in the QR-bill
-and one-line layouts: held 11.4% and 7.5% of their legitimate invoices, e-mail 0%), 7 by the second look.
-(5) The second look adds little here: at 25 it prevented 1 wrong payment and held 7 more legitimate
-invoices; on this set 50 would have prevented the same one with no extra holds. We keep 25, as the rule
-chose. Wrong payments by language: DE 7, FR 7, IT 5, EN 10. One model failure (baseline only).
+What it shows. (1) Each layer lowers the wrong payments, from 178 to 0, on invoices the design never saw.
+(2) The 7 legitimate invoices held are reading errors caught before money moves: 5 IBANs Apertus misread
+(typically dropping the lone last digit of `… 7658 7`), 2 quotes that did not match; most in the one-line
+layout (7.8% held) and none in the e-mail layout. No paid invoice carried a wrong IBAN or amount (5 did
+with the promoted lessons alone). (3) The second look adds nothing here; verification does the work. The
+honest reading is that the final set measured the design before the invoice-number gap was found (4.8%)
+and the confirm set measures it after (0 of 300); both are synthetic and from one generator family.
+In total the study recorded 7,158 Apertus responses (`data/cache/study_responses.jsonl`, about USD 0.50).
 
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
 all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/test_core.py`).
@@ -336,9 +346,12 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
 
 - Synthetic invoices are cleaner than scanned PDFs; we feed text, no OCR. Real invoices (QR-bill,
   scans) would need a document-reading step, and extraction accuracy would drop.
-- 78 test cases are too few for confidence intervals; the 1,000-invoice study has them (Wilson 95%), but all
-  sets come from one generator family. An invoice without an invoice number is the open hole: Apertus
-  fills the field from the payment reference or the heading, and 29 of 40 such invoices were paid.
+- 78 test cases are too few for confidence intervals; the study sets have them (Wilson 95%), but all sets
+  come from one generator family, as text. Real invoices vary far more; the 0 of 300 is evidence for the
+  mechanism, not a rate to expect in production. The verification checks were each added after a set
+  showed the gap they close; only the confirm set tests the final design blind.
+- The 8B model misreads some IBANs (about 6% of extractions in the study); verification holds those
+  invoices rather than paying, which costs reviewer time (3.5–4.3% of legitimate invoices held).
 - Identity uses real Ed25519 signatures and did:key, but the documents are a simple JSON format,
   not W3C Verifiable Credentials or swiyu SD-JWT VCs (swiyu planned launch 2026-12-01). Demo keys are
   derived from fixed seeds for reproducibility; in production the firm and ledger keys belong in an
@@ -362,7 +375,8 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
 recorded Apertus responses (no key needed), writes `results/`, prints the table above and serves the
 reviewer app on port 8000. `make eval` prints and exits. `python -m agent holdout` (after `eval`) replays
 the holdout. `LLM_CACHE_PATH=data/cache/study_responses.jsonl python -m agent study tune` replays the study's
-tune set (`STUDY_FORCE=1 … study final` the final set) into `results/study/`. GitHub Actions runs the tests, builds the image and re-runs `eval` and `holdout` without a key
+tune set (`STUDY_FORCE=1 … study final|confirm` the others) into `results/study/`; the final set's blind
+results before the last change are kept in `results/study/final_blind.json`. GitHub Actions runs the tests, builds the image and re-runs `eval` and `holdout` without a key
 on every push; it fails if `metrics.json`, `risk_model.json` or `holdout.json` differ from the committed files. Data generation is deterministic (seed 2026);
 Apertus was called with temperature 0. Hardware: any machine with Docker; no GPU needed for replay.
 Commit: ⟨pending⟩.
@@ -370,9 +384,9 @@ Commit: ⟨pending⟩.
 ## 8. Next steps
 
 Mandates as swiyu verifiable credentials and keys in an HSM; QR-bill and PDF input; a sign-off workflow in the
-app for promoting lessons to hard checks (done by hand here); an invoice-number check that rejects the
-payment reference and heading words, and reading the QR-bill's account field in code rather than by the
-model (the two gaps the study found), then a new frozen run to measure them; pilot with one Treuhand office on historical, anonymised
+app for promoting lessons to hard checks (done by hand here); structured inputs where they exist
+(QR-bill data, e-invoices) so the model reads less; supplier profiles and per-field confidence to cut the
+held legitimate invoices; pilot with one Treuhand office on historical, anonymised
 payment runs; integration as a layer on top of existing Swiss ERP/accounting software rather than a replacement.
 
 ## License
