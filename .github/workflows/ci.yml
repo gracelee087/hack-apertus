@@ -34,7 +34,8 @@ jobs:
           docker run --rm -v "$PWD/ci-results:/app/results" payagent python -m agent holdout
 
       - name: Metrics, risk model and holdout match the committed reference run
+        # llm_mode says how the run was made (live when recorded, replay here), not what it measured
         run: |
-          diff --strip-trailing-cr results/metrics.json ci-results/metrics.json
-          diff --strip-trailing-cr results/risk_model.json ci-results/risk_model.json
-          diff --strip-trailing-cr results/holdout.json ci-results/holdout.json
+          for f in metrics.json risk_model.json holdout.json; do
+            diff <(jq -S 'del(.llm_mode)' "results/$f") <(jq -S 'del(.llm_mode)' "ci-results/$f") && echo "$f matches"
+          done

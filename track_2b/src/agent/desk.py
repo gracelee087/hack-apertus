@@ -197,7 +197,11 @@ class Desk:
                               self.mandates.get(st.get("client_id")), self.revoked_agents, self.seen_nonces,
                               self.grants, self.clock())
         self.last_stamp[seat_of(str(st.get("client_id")))] = {"stamp": st, "payload": payload}
-        entry = self.ledger.append(actor=st.get("agent"), action=st.get("action") if ok else "request.rejected",
-                                   gate=code, client_id=st.get("client_id"), nonce=st.get("nonce"),
-                                   stamp_proof=str(st.get("proof", ""))[:16], **ledger_fields)
+        # what was signed is what is recorded: payload fields override the caller's, and the signed request
+        # is kept whole so an auditor can re-check it (ledger.audit_identities)
+        signed = {k: v for k, v in payload.items() if k not in ("seq", "ts", "prev", "hash", "sig")}
+        entry = self.ledger.append(**{**ledger_fields, **signed,
+                                      "actor": st.get("agent"), "action": st.get("action") if ok else "request.rejected",
+                                      "gate": code, "client_id": st.get("client_id"), "nonce": st.get("nonce"),
+                                      "request": {"stamp": st, "payload": payload}})
         return {"ok": ok, "gate": code, "ledger_seq": entry["seq"]}

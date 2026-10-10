@@ -60,10 +60,17 @@ def audit_identities(entries: list) -> dict:
             revoked.add(e.get("agent_did"))
         elif "gate" in e and e.get("gate") == "OK":
             actions += 1
+            st, pl = (e.get("request") or {}).get("stamp") or {}, (e.get("request") or {}).get("payload")
             if actor not in issued:
                 problems.append((e["seq"], "action by an agent never issued"))
             elif actor in revoked:
                 problems.append((e["seq"], "action by a revoked agent"))
+            elif not (isinstance(pl, dict) and identity.verify_doc(st, signer_field="agent")
+                      and st.get("agent") == actor and st.get("action") == a and st.get("client_id") == e.get("client_id")
+                      and pl.get("client_id") == e.get("client_id") and st.get("payload_sha256") == sha256(canonical(pl))):
+                problems.append((e["seq"], "action not backed by the agent's signed request"))
+            elif any(e.get(k) != v for k, v in pl.items()):
+                problems.append((e["seq"], "ledger entry differs from the signed request"))
     return {"firm_did": firm, "agents_issued": issued, "agents_revoked": sorted(revoked),
             "agent_actions": actions, "problems": problems, "ok": bool(firm) and not problems}
 

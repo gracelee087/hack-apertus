@@ -32,8 +32,8 @@ Results (78 synthetic test invoices, Apertus v1.5 8B; "paid" means the system de
 must not pay (CHF 138,781); with the harness 7 (CHF 26,771), 2 (CHF 9,290) with two lessons
 promoted to hard checks, 1 with verification of what Apertus read, and **0** with a risk-score second
 look, with no legitimate payment missed (the last three steps were added after seeing
-results; see the report). Sixteen attack types on the agent's identity and authority, each replayed for the
-33 paid invoices: 528 / 528 blocked, 33 / 33 legitimate requests accepted (attacks we wrote, not a security
+results; see the report). Seventeen attack types on the agent's identity and authority, each replayed for the
+33 paid invoices: 561 / 561 blocked, 33 / 33 legitimate requests accepted (attacks we wrote, not a security
 audit).
 A risk score (logistic regression trained on 3,000 synthetic past payments, pure Python) gives every
 invoice a fraud probability. An invoice the harness would pay goes to a human instead when its score is

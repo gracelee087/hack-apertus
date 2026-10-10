@@ -182,6 +182,12 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
                         attack="invalid_amount")
         return res["ok"], res["gate"]
 
+    def pay_without_payment_flag(p):
+        d = desk()
+        res = d.request(p["client_id"], "payment.decide", {**_payload(p), "amount_chf": 9999999.0,
+                                                           "executes_payment": False}, attack="pay_flagged_as_no_payment")
+        return res["ok"], res["gate"]
+
     attempt("legitimate request (control)", legit)
     for name, fn in [("forged signature", forged), ("tampered amount / IBAN after signing", tampered),
                      ("replayed request", replay), ("stale request (1 h old)", stale),
@@ -193,7 +199,8 @@ def run(preds, mandates, out, production="harness_gen1_promoted"):
                      ("human grant used a second time", grant_reused),
                      ("human grant of another client", grant_other_client),
                      ("amount above the client's mandate limit (badge cap set too high)", above_mandate),
-                     ("negative, zero or NaN amount", bad_amount)]:
+                     ("negative, zero or NaN amount", bad_amount),
+                     ("\"pay\" marked as not executing a payment, amount 9,999,999", pay_without_payment_flag)]:
         attempt(name, fn)
     return {k: {"attempts": v["attempts"], "accepted": v["accepted"], "blocked": v["attempts"] - v["accepted"],
                 "codes": dict(v["codes"])} for k, v in results.items()}

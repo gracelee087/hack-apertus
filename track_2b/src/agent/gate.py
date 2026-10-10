@@ -56,6 +56,9 @@ def check(stamp: dict, payload: dict, card: dict, badge: dict, mandate: dict, re
     if stamp["client_id"] not in badge["clients"] or payload.get("client_id") != stamp["client_id"]:
         return False, "G4_CLIENT_NOT_COVERED"
     pays, ref = payload.get("executes_payment"), payload.get("grant_ref")
+    decision = payload.get("decision")
+    if stamp["action"] == "payment.decide" and decision is not None and (pays is True) != (decision == "pay"):
+        return False, "G4_DECISION_INCONSISTENT"  # a "pay" must go through the amount checks below, and only a "pay" pays
     if pays and not (_positive(payload.get("amount_chf")) and payload.get("case_id") and payload.get("iban")):
         return False, "G4_PAYMENT_INCOMPLETE"
     if ref is not None and not _grant_ok(grants.get(ref), payload, stamp["client_id"]):

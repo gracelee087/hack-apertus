@@ -237,6 +237,32 @@ def test_identity_is_recorded_from_issuance(tmp_path):
     assert not audit_identities(d.ledger.entries)["ok"]  # an action recorded after revocation is flagged
 
 
+def test_ledger_records_what_the_agent_signed(tmp_path):
+    d = _desk(tmp_path, open_books=True)
+    pay = {"case_id": "T1", "decision": "pay", "amount_chf": 100.0, "iban": "CH9300762011623852957",
+           "executes_payment": True}
+    assert d.request("C01", "payment.decide", pay, amount_chf=999999.0, iban="CH00")["gate"] == "OK"
+    e = d.ledger.entries[-1]
+    assert e["amount_chf"] == 100.0 and e["iban"] == "CH9300762011623852957"  # the signed values win
+    assert audit_identities(d.ledger.entries)["ok"]
+    did = d.agent_did(seat_of("C01"))
+    d.ledger.append(actor=did, action="payment.decide", gate="OK", client_id="C01", case_id="T2", amount_chf=999999.0)
+    assert not audit_identities(d.ledger.entries)["ok"]  # an agent action without its signed request is flagged
+    d.ledger.entries.pop()
+    body = {k: v for k, v in e.items() if k not in ("seq", "ts", "prev", "hash", "sig")}
+    d.ledger.append(**{**body, "amount_chf": 999999.0})  # signed request kept, recorded amount changed
+    assert not audit_identities(d.ledger.entries)["ok"]
+
+
+def test_gate_refuses_pay_that_skips_the_amount_checks(tmp_path):
+    d = _desk(tmp_path)
+    pay = {"case_id": "T1", "decision": "pay", "amount_chf": 9999999.0, "iban": "CH9300762011623852957"}
+    assert d.request("C01", "payment.decide", {**pay, "executes_payment": False})["gate"] == "G4_DECISION_INCONSISTENT"
+    assert d.request("C01", "payment.decide", {**pay, "decision": "escalate", "executes_payment": True})["gate"] \
+        == "G4_DECISION_INCONSISTENT"
+    assert d.request("C01", "payment.decide", {**pay, "executes_payment": True})["gate"] == "G4_ABOVE_BADGE_CAP_NO_GRANT"
+
+
 def test_ledger_detects_tampering(tmp_path):
     led = Ledger(tmp_path / "l.jsonl")
     for i in range(3):

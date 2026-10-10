@@ -1,6 +1,6 @@
 # Evaluation summary
 
-Model: `swiss-ai/apertus-v1.5-8b` | test cases: 78 | LLM mode: live
+Model: `swiss-ai/apertus-v1.5-8b` | test cases: 78 | LLM mode: replay
 
 | System | What it is | Accuracy | Wrong-payment rate (n) | Wrongly paid CHF | Missed-payment rate | Model failures |
 |---|---|---|---|---|---|---|
@@ -78,6 +78,7 @@ Each attack is tried once per paid invoice of the reference run.
 | human grant of another client | 33 | 33 | G4_GRANT_INVALID |
 | amount above the client's mandate limit (badge cap set too high) | 33 | 33 | G5_ABOVE_MANDATE_LIMIT |
 | negative, zero or NaN amount | 33 | 33 | G4_PAYMENT_INCOMPLETE |
+| "pay" marked as not executing a payment, amount 9,999,999 | 33 | 33 | G4_DECISION_INCONSISTENT |
 
 ## Risk score (data-science layer, 3000 synthetic past payments, ranks only)
 

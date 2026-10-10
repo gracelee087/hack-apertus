@@ -24,12 +24,16 @@ invoices. Because those additions came after seeing results, we tested on fresh,
 run once (four layouts, two problems at once, unreadable fields). On 1,000 invoices the then design decided
 to pay 29 of 600 it should not have (4.8%), all invoices with no invoice number, which Apertus had filled in;
 after we made Apertus quote where it read each value (checked in code), a new set of 500 had **0 of 300
-(95% CI 0–1.3%)** against 178 for Apertus alone, with 3.5% of legitimate invoices held for a human. The gain
-comes from splitting the work: code makes the decision wherever a rule can be written, Apertus reads and
-judges what no rule can, and what Apertus read is checked against its own quotes from the invoice. Sixteen kinds of attack on the agent's identity and authority (forged or replayed requests,
-revoked agent, tampered mandate, reused human grant, …) were blocked in 528 of 528 attempts (16 scenarios
+(95% CI 0–1.3%)** against 178 for Apertus alone, with 3.5% of legitimate invoices held for a human; of those
+500 invoices 193 were paid, 232 went to a human and 75 were rejected. Seventeen kinds of attack on the agent's identity and authority (forged or replayed requests,
+revoked agent, tampered mandate, reused human grant, …) were blocked in 561 of 561 attempts (17 scenarios
 we wrote, each replayed for the 33 paid invoices; not a security audit), with 33 of 33 legitimate requests
 accepted.
+
+In short: Mandate Desk applies each client's signed mandate as the authority of that client's agent.
+Apertus reads and reviews the invoices; the harness checks rules and evidence in code and hands exceptions
+and uncertain payments to a person, who approves, rejects or stops the agent. Every request, its outcome and
+every human intervention is recorded in a signed ledger, together with the request the agent signed.
 
 ## 2. Architecture
 
@@ -170,8 +174,10 @@ missed-payment rate (payable invoices held back), accuracy, and for systems that
 payment file, paid invoices whose file carries a wrong IBAN or amount. Model failures (unreachable
 endpoint, unparsable reply) fail closed (escalate) and are counted.
 
-**Baseline:** Apertus alone, given the *same* information and the *same* written policy and manual
-(mandate, supplier list, this month's payments, invoice). This isolates what the harness adds.
+**Baseline:** Apertus alone, given the *same* information (mandate, supplier list, this month's payments,
+invoice) and the *same* written policy and manual gen 0. The harness rows from "manual gen 1" on also use
+the lessons, so the full gap mixes the split of work with the better manual; the step-by-step rows
+separate them (same manual gen 0: 178 → 88 on the confirm set).
 
 Test split: 78 invoices, 33 payable, 45 not payable (28 escalate, 17 reject).
 
@@ -224,7 +230,7 @@ amount: on a VAT-mismatch invoice the model reported net + VAT instead of the st
 
 **Agent verification.** Each attack below was replayed once for each of the 33 invoices the
 production configuration paid, each time against a freshly hired agent (`src/agent/security.py`,
-no model calls). The 528 attempts are 16 scenarios × 33 invoices: they show the gate stops the attacks
+no model calls). The 561 attempts are 17 scenarios × 33 invoices: they show the gate stops the attacks
 we wrote, not that the system is secure against attacks we did not think of:
 
 | Scenario | Blocked | Caught by |
@@ -238,6 +244,12 @@ we wrote, not that the system is secure against attacks we did not think of:
 | human grant used a second time · human grant of another client · negative, zero or NaN amount | 33 / 33 each | G4 |
 | mandate limits tampered · mandate naming another delegate · mandate revoked | 33 / 33 each | G5 |
 | amount above the client's mandate limit, badge cap set too high | 33 / 33 | G5 |
+| a signed "pay" of CHF 9,999,999 marked as not executing a payment (would skip the amount checks) | 33 / 33 | G4 |
+
+The ledger keeps each request whole (the agent's signed stamp and its payload), and the recorded fields
+are taken from that payload. The identity audit re-verifies, for every executed agent action, the agent's
+signature, that the payload matches its signed hash, and that the entry says what was signed; a request
+signed for CHF 100 can no longer be recorded as CHF 999,999 (`tests/test_core.py`).
 
 In the reference run the gate accepted all 78 agent decisions for active clients' invoices plus the
 4 payment files, and refused the 4 decisions for the client whose mandate was already revoked
@@ -347,17 +359,19 @@ and the confirm set measures it after (0 of 300); both are synthetic and from on
 layer that held it. Code makes every decision except one; Apertus reads every invoice, and the code
 checks act on what it read.
 
-| Layer | Who | Non-payable held (of 300) | Legitimate held (of 200) | What it handles |
+| Layer | Who | Non-payable held (of 300): rejected / to a human | Legitimate held (of 200) | What it handles |
 |---|---|---|---|---|
-| Hard checks (`badge.check`) | code, on fields Apertus extracted | 185 (62%) | 0 | revoked or expired mandate, scope, single/monthly limit, IBAN checksum, IBAN differs from the registered one, new supplier, paid invoice number, missing field |
-| Promoted lessons (`badge.promoted_checks`) | code; the rules were written by Apertus from reviewer notes | 39 (13%) | 0 | VAT does not add up, invoice not addressed to the client |
-| Verification (`badge.grounding`, `badge.cited`) | Apertus quotes, code checks the quotes | 56 (19%) | 7 | no invoice number, total illegible, value not in the invoice, same supplier and amount already paid |
-| Content review (`decide.review`) | Apertus decides (pay or human only) | 20 (7%) | 0 | fraud signals such as pressure wording, against the manual and lessons |
+| Hard checks (`badge.check`) | code, on fields Apertus extracted | 185 (62%): 75 / 110 | 0 | revoked or expired mandate, scope, single/monthly limit, IBAN checksum, IBAN differs from the registered one, new supplier, paid invoice number, missing field |
+| Promoted lessons (`badge.promoted_checks`) | code; the rules were written by Apertus from reviewer notes | 39 (13%): 0 / 39 | 0 | VAT does not add up, invoice not addressed to the client |
+| Verification (`badge.grounding`, `badge.cited`) | Apertus quotes, code checks the quotes | 56 (19%): 0 / 56 | 7 | no invoice number, total illegible, value not in the invoice, same supplier and amount already paid |
+| Content review (`decide.review`) | Apertus decides (pay or human only) | 20 (7%): 0 / 20 | 0 | fraud signals such as pressure wording, against the manual and lessons |
 | Second look (risk score ≥ 95) | logistic regression | 0 | 0 | unusual payment patterns (1 of 600 on the final set) |
 
-Apertus alone, given the same policy, manual, mandate and supplier list in one prompt, paid 178 of these
-300. Splitting the work moved that to 0: Apertus reads, quotes and judges content, and code holds the
-decision wherever a rule can be written. The final set gives the same split (63 / 12 / 18 / 6%).
+Apertus alone (policy, manual gen 0, mandate and supplier list in one prompt) paid 178 of these 300. With
+the work split, none was paid on its own: only clear rule violations (75) are rejected in code, and the
+other 225 go to a person, as do 7 legitimate invoices whose reading could not be verified. Over the 500
+invoices that is 193 paid, 232 to a human, 75 rejected; how accurately and quickly people handle the 232
+was not measured. The final set gives the same split by layer (63 / 12 / 18 / 6%).
 In total the study recorded 7,158 Apertus responses (`data/cache/study_responses.jsonl`, about USD 0.50).
 
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
@@ -371,6 +385,12 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
   come from one generator family, as text. Real invoices vary far more; the 0 of 300 is evidence for the
   mechanism, not a rate to expect in production. The verification checks were each added after a set
   showed the gap they close; only the confirm set tests the final design blind.
+- The quote check proves a value is written in the invoice, not what it means: if Apertus quotes a
+  reference line as the invoice number and returns no payment reference, the check passes. On the confirm
+  set this did not happen; how often it happens elsewhere was not measured.
+- For a registered supplier the expense category comes from the supplier register, not from the invoice,
+  so an unusual item from a known supplier is not caught by the scope check (the content review may still
+  hold it).
 - The 8B model misreads some IBANs (about 6% of extractions in the study); verification holds those
   invoices rather than paying, which costs reviewer time (3.5–4.3% of legitimate invoices held).
 - Identity uses real Ed25519 signatures and did:key, but the documents are a simple JSON format,
@@ -381,7 +401,9 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
   show the checks work, not that no other attack exists.
 - pain.001 files are checked structurally (counts, control sum, IBAN checksums, positive amounts). An
   external review validated the four reference files against the official SIX pain.001.001.09 schema;
-  the banks' own acceptance rules were not tested.
+  the banks' own acceptance rules were not tested. In the web app a client's payment file for the day is
+  rebuilt with every payment so far under the same message ID; a file already sent to the bank is not
+  frozen, so a second upload would repeat earlier payments.
 - The reviewer app is a demo without authentication or roles: anyone who can reach it can approve,
   change agent settings or use the kill switch. The ledger records who acted by role (the client manager),
   not by a verified login. The monthly limit is checked by the badge at decision time, not again by the gate.
