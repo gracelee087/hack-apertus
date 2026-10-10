@@ -33,6 +33,17 @@ every request, outcome and human action ──► signed, hash-chained ledger (w
 
 All under `src/agent/`; everything runs in pure Python except the Apertus calls.
 
+**The reviewer app's three firm-level screens** each answer one question, and they build on each other:
+
+| Screen | What it evaluates | Why it is needed |
+|---|---|---|
+| Risk model (data science) | how the risk score is built and how good it is: 3,000 synthetic past payments, 13 features, split, L2 choice, ROC and PR curves, confusion matrices, errors | the score is one part of the harness; its quality has to be shown before its second look is trusted |
+| Risk analytics | on the 78 labelled test invoices, which layer caught each risk type (code checks, Apertus review, risk score, missed); from the ledger, signals across clients (one IBAN on several suppliers or clients, unusual amounts paid automatically) | shows which part does the work and where the gaps are, and what a client manager should look at |
+| Agent evaluation | the whole system against Apertus alone: wrong payments step by step on the test set, the confirm set and the holdout, attacks blocked, and each client's agent | shows whether the harness as a whole pays fewer invoices it should not |
+
+Read together: the risk model builds one part, risk analytics shows what each part catches, and agent
+evaluation shows the result of all parts at once.
+
 ### Target architecture (mandatory)
 
 **a) On-premise**, with **b) air-gapped** operation possible: a fiduciary holds client bank details, salaries
@@ -262,7 +273,9 @@ code; measuring reviewer accuracy and workload; testing on real, anonymised paym
 
 ## License
 
-Creative Commons Attribution 4.0 (CC-BY-4.0). All HackApertus projects are open-sourced.
+Creative Commons Attribution 4.0 (CC-BY-4.0). All HackApertus projects are open-sourced. Code: Apache-2.0
+(repository `LICENSE`); data: CDLA-Permissive-2.0. Third-party components: Apertus v1.5 8B (Apache-2.0),
+FastAPI (MIT), Uvicorn (BSD-3-Clause), cryptography (Apache-2.0 OR BSD-3-Clause).
 
 ## References
 
