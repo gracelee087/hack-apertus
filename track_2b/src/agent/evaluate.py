@@ -18,7 +18,7 @@ SYSTEMS = {
     "harness_gen0": "Apertus extraction + badge + review with manual gen 0",
     "harness_gen1": "Apertus extraction + badge + review with manual gen 1 (lessons)",
     "harness_gen1_promoted": "as gen 1, plus two lessons promoted to hard checks (sum, addressee); added after test results",
-    "harness_gen1_promoted_grounded": "as above, plus a grounding check (IBAN and total must be written in the invoice); added after the study tune set",
+    "harness_gen1_promoted_grounded": "as above, plus verification: IBAN and total written in the invoice (after the study tune set); Apertus quotes where it read IBAN, invoice number and total, checked in code, and same supplier + amount counts as a possible duplicate (after the study final set)",
     "harness_gen1_promoted_risk": "as above, plus a second look: a high risk score sends a payment to a human; added after test results",
 }
 PRODUCTION = "harness_gen1_promoted_risk"  # the configuration whose ledger, payment files and queue are written

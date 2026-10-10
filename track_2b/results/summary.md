@@ -1,6 +1,6 @@
 # Evaluation summary
 
-Model: `swiss-ai/apertus-v1.5-8b` | test cases: 78 | LLM mode: replay
+Model: `swiss-ai/apertus-v1.5-8b` | test cases: 78 | LLM mode: live
 
 | System | What it is | Accuracy | Wrong-payment rate (n) | Wrongly paid CHF | Missed-payment rate | Model failures |
 |---|---|---|---|---|---|---|
@@ -9,7 +9,7 @@ Model: `swiss-ai/apertus-v1.5-8b` | test cases: 78 | LLM mode: replay
 | harness_gen0 | Apertus extraction + badge + review with manual gen 0 | 0.872 | 0.222 (10) | 34,521.22 | 0.000 | 0 |
 | harness_gen1 | Apertus extraction + badge + review with manual gen 1 (lessons) | 0.910 | 0.156 (7) | 26,771.22 | 0.000 | 0 |
 | harness_gen1_promoted | as gen 1, plus two lessons promoted to hard checks (sum, addressee); added after test results | 0.974 | 0.044 (2) | 9,290.40 | 0.000 | 0 |
-| harness_gen1_promoted_grounded | as above, plus a grounding check (IBAN and total must be written in the invoice); added after the study tune set | 0.987 | 0.022 (1) | 4,650.00 | 0.000 | 0 |
+| harness_gen1_promoted_grounded | as above, plus verification: IBAN and total written in the invoice (after the study tune set); Apertus quotes where it read IBAN, invoice number and total, checked in code, and same supplier + amount counts as a possible duplicate (after the study final set) | 0.987 | 0.022 (1) | 4,650.00 | 0.000 | 0 |
 | harness_gen1_promoted_risk | as above, plus a second look: a high risk score sends a payment to a human; added after test results | 1.000 | 0.000 (0) | 0.00 | 0.000 | 0 |
 
 Wrong-payment rate = share of invoices that must not be paid automatically (escalate or reject) that the system paid.

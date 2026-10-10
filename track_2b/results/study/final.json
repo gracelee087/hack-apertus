@@ -3,7 +3,7 @@
   "n": 1000,
   "seed": 3032,
   "model": "swiss-ai/apertus-v1.5-8b",
-  "llm_mode": "replay",
+  "llm_mode": "live",
   "rule": "(fixed before either set was run): among 0, 5, ..., 100 (100 = second look off), take the\nthreshold with the fewest wrong payments whose extra holds of legitimate invoices stay at or below 2% of the\nlegitimate invoices; on a tie, the higher threshold (fewer holds).",
   "threshold_used": 95,
   "threshold_sweep": [
@@ -18,140 +18,140 @@
       "threshold": 5,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 118,
+      "legit_held": 119,
       "legit": 400
     },
     {
       "threshold": 10,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 54,
+      "legit_held": 56,
       "legit": 400
     },
     {
       "threshold": 15,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 40,
+      "legit_held": 42,
       "legit": 400
     },
     {
       "threshold": 20,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 30,
+      "legit_held": 33,
       "legit": 400
     },
     {
       "threshold": 25,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 21,
+      "legit_held": 24,
       "legit": 400
     },
     {
       "threshold": 30,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 17,
+      "legit_held": 20,
       "legit": 400
     },
     {
       "threshold": 35,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 40,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 45,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 50,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 55,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 60,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 65,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 70,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 75,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 80,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 85,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 90,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 95,
       "wrong_payments": 0,
       "wrong_chf": 0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     },
     {
       "threshold": 100,
       "wrong_payments": 1,
       "wrong_chf": 580.0,
-      "legit_held": 14,
+      "legit_held": 17,
       "legit": 400
     }
   ],
@@ -372,11 +372,11 @@
       ]
     },
     "harness_gen1_promoted_grounded": {
-      "accuracy": 0.982,
+      "accuracy": 0.979,
       "wrong_payment_rate": 0.002,
       "wrong_payments": 1,
       "wrong_payment_chf": 580.0,
-      "missed_payment_rate": 0.035,
+      "missed_payment_rate": 0.043,
       "reject_recall": 0.98,
       "model_failures": 0,
       "paid_with_wrong_details": 0,
@@ -406,63 +406,20 @@
         0.0094
       ],
       "missed_payment_rate_ci95": [
-        0.021,
-        0.0579
+        0.0267,
+        0.067
       ],
       "accuracy_ci95": [
-        0.9717,
-        0.9886
+        0.9681,
+        0.9862
       ]
     },
     "harness_gen1_promoted_risk": {
-      "accuracy": 0.976,
+      "accuracy": 0.98,
       "wrong_payment_rate": 0.0,
       "wrong_payments": 0,
       "wrong_payment_chf": 0,
-      "missed_payment_rate": 0.052,
-      "reject_recall": 0.98,
-      "model_failures": 0,
-      "paid_with_wrong_details": 0,
-      "by_reason_code": {
-        "E_IBAN_CHANGED": 1.0,
-        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
-        "E_LIMIT_MONTH": 1.0,
-        "E_LIMIT_SINGLE": 1.0,
-        "E_NEW_VENDOR": 1.0,
-        "E_NEW_VENDOR+E_PRESSURE": 1.0,
-        "E_NO_IBAN": 1.0,
-        "E_NO_INVOICE_NO": 1.0,
-        "E_PRESSURE": 1.0,
-        "E_TOTAL_UNREADABLE": 1.0,
-        "E_VAT_MISMATCH": 1.0,
-        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
-        "E_WRONG_ADDRESSEE": 1.0,
-        "OK": 0.95,
-        "R_DUPLICATE": 1.0,
-        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
-        "R_IBAN_INVALID": 0.9,
-        "R_REVOKED": 1.0,
-        "R_SCOPE": 1.0
-      },
-      "wrong_payment_rate_ci95": [
-        0,
-        0.0064
-      ],
-      "missed_payment_rate_ci95": [
-        0.0346,
-        0.0789
-      ],
-      "accuracy_ci95": [
-        0.9645,
-        0.9838
-      ]
-    },
-    "production": {
-      "accuracy": 0.983,
-      "wrong_payment_rate": 0.0,
-      "wrong_payments": 0,
-      "wrong_payment_chf": 0,
-      "missed_payment_rate": 0.035,
+      "missed_payment_rate": 0.043,
       "reject_recall": 0.98,
       "model_failures": 0,
       "paid_with_wrong_details": 0,
@@ -492,22 +449,65 @@
         0.0064
       ],
       "missed_payment_rate_ci95": [
-        0.021,
-        0.0579
+        0.0267,
+        0.067
       ],
       "accuracy_ci95": [
-        0.9729,
-        0.9894
+        0.9693,
+        0.987
+      ]
+    },
+    "production": {
+      "accuracy": 0.98,
+      "wrong_payment_rate": 0.0,
+      "wrong_payments": 0,
+      "wrong_payment_chf": 0,
+      "missed_payment_rate": 0.043,
+      "reject_recall": 0.98,
+      "model_failures": 0,
+      "paid_with_wrong_details": 0,
+      "by_reason_code": {
+        "E_IBAN_CHANGED": 1.0,
+        "E_IBAN_CHANGED+E_PRESSURE": 1.0,
+        "E_LIMIT_MONTH": 1.0,
+        "E_LIMIT_SINGLE": 1.0,
+        "E_NEW_VENDOR": 1.0,
+        "E_NEW_VENDOR+E_PRESSURE": 1.0,
+        "E_NO_IBAN": 1.0,
+        "E_NO_INVOICE_NO": 1.0,
+        "E_PRESSURE": 1.0,
+        "E_TOTAL_UNREADABLE": 1.0,
+        "E_VAT_MISMATCH": 1.0,
+        "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
+        "E_WRONG_ADDRESSEE": 1.0,
+        "OK": 0.96,
+        "R_DUPLICATE": 1.0,
+        "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
+        "R_IBAN_INVALID": 0.9,
+        "R_REVOKED": 1.0,
+        "R_SCOPE": 1.0
+      },
+      "wrong_payment_rate_ci95": [
+        0,
+        0.0064
+      ],
+      "missed_payment_rate_ci95": [
+        0.0267,
+        0.067
+      ],
+      "accuracy_ci95": [
+        0.9693,
+        0.987
       ]
     }
   },
   "production_by_layout": {
     "qr": {
-      "accuracy": 0.96,
+      "accuracy": 0.956,
       "wrong_payment_rate": 0.0,
       "wrong_payments": 0,
       "wrong_payment_chf": 0,
-      "missed_payment_rate": 0.08,
+      "missed_payment_rate": 0.091,
       "reject_recall": 0.957,
       "model_failures": 0,
       "paid_with_wrong_details": 0,
@@ -525,7 +525,7 @@
         "E_VAT_MISMATCH": 1.0,
         "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
         "E_WRONG_ADDRESSEE": 1.0,
-        "OK": 0.92,
+        "OK": 0.91,
         "R_DUPLICATE": 1.0,
         "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
         "R_IBAN_INVALID": 0.83,
@@ -535,11 +535,11 @@
       "n": 226
     },
     "block": {
-      "accuracy": 1.0,
+      "accuracy": 0.992,
       "wrong_payment_rate": 0.0,
       "wrong_payments": 0,
       "wrong_payment_chf": 0,
-      "missed_payment_rate": 0.0,
+      "missed_payment_rate": 0.018,
       "reject_recall": 1.0,
       "model_failures": 0,
       "paid_with_wrong_details": 0,
@@ -557,7 +557,7 @@
         "E_VAT_MISMATCH": 1.0,
         "E_VAT_MISMATCH+E_LIMIT_SINGLE": 1.0,
         "E_WRONG_ADDRESSEE": 1.0,
-        "OK": 1.0,
+        "OK": 0.98,
         "R_DUPLICATE": 1.0,
         "R_DUPLICATE+E_IBAN_CHANGED": 1.0,
         "R_IBAN_INVALID": 1.0,

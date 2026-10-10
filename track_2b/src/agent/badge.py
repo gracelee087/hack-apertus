@@ -68,31 +68,48 @@ def amounts_in(text: str) -> set:
     return out
 
 
-INVOICE_NO_LABELS = r"(?:Rechnungs-Nr\.|Facture n°|Fattura n\.|Invoice no\.|RECHNUNG|FACTURE|FATTURA|INVOICE)"
-PAYMENT_REF = r"(?:Referenz|Référence|Riferimento|Reference)\W{0,3}(\d+)"
-
-
-def invoice_no_written(text: str, invoice_no) -> bool:
-    """The invoice number must stand next to an invoice-number label, and be neither the payment reference
-    nor a heading word. Added after the study's final set (technical report, section 5)."""
-    no = str(invoice_no or "").strip()
-    if not no or no.upper() in ("RECHNUNG", "FACTURE", "FATTURA", "INVOICE") or no in re.findall(PAYMENT_REF, text):
-        return False
-    return re.search(INVOICE_NO_LABELS + r"\s*:?\s*" + re.escape(no) + r"\b", text) is not None
-
-
 def grounding(text: str, fields: dict) -> list:
     """Fields the payment depends on must be written in the document: the IBAN as a whole IBAN, the total as
-    an amount, the invoice number as an invoice number. A model that fills a gap (a total from net + VAT, a
-    reference read as an IBAN or as the invoice number) is caught here. IBAN and total: added after the study's
-    tune set; invoice number: added after its final set (technical report, section 5)."""
+    an amount. A model that fills a gap (a total from net + VAT, a reference read as an IBAN) is caught here.
+    Added after the study's tune set (technical report, section 5)."""
     ibans = {normalize_iban(m.group()) for m in re.finditer(r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{1,4}){3,8}\b", text)}
-    iban, total, no = normalize_iban(fields.get("vendor_iban")), _num(fields.get("total_chf")), fields.get("invoice_no")
+    iban, total = normalize_iban(fields.get("vendor_iban")), _num(fields.get("total_chf"))
     missing = ([f"IBAN {iban}"] if iban and iban not in ibans else []) + \
-              ([f"total CHF {total:.2f}"] if total is not None and round(total, 2) not in amounts_in(text) else []) + \
-              ([f"invoice number {no}"] if str(no or "").strip() and not invoice_no_written(text, no) else [])
+              ([f"total CHF {total:.2f}"] if total is not None and round(total, 2) not in amounts_in(text) else [])
     return [{"severity": "escalate", "code": "E_NOT_IN_DOCUMENT",
              "msg": f"not written in the invoice: {', '.join(missing)}"}] if missing else []
+
+
+def _squash(s) -> str:
+    return re.sub(r"\s+", " ", str(s or "")).strip().lower()
+
+
+def cited(text: str, fields: dict, cite: dict) -> list:
+    """Apertus quoted where it read the IBAN, invoice number and total. Each quote must be in the document
+    word for word and contain the value; the invoice number must contain a digit and differ from the
+    payment reference. No label lists: works for any wording. Added after the study's final set."""
+    doc, bad = _squash(text), []
+    checks = (("IBAN", "iban_quote", lambda q: normalize_iban(fields.get("vendor_iban")) in normalize_iban(q)),
+              ("invoice number", "invoice_no_quote", lambda q: _squash(fields.get("invoice_no")) in _squash(q)),
+              ("total", "total_quote", lambda q: _num(fields.get("total_chf")) is not None
+               and round(_num(fields.get("total_chf")), 2) in amounts_in(q)))
+    for name, key, holds in checks:
+        q = cite.get(key)
+        if not q or _squash(q) not in doc or not holds(q):
+            bad.append(name)
+    no, ref = str(fields.get("invoice_no") or "").strip(), str(cite.get("payment_reference") or "").strip()
+    if "invoice number" not in bad and (not re.search(r"\d", no) or (ref and no.upper() == ref.upper())):
+        bad.append("invoice number")
+    return [{"severity": "escalate", "code": "E_NOT_IN_DOCUMENT",
+             "msg": f"not shown in the invoice where Apertus says it read it: {', '.join(bad)}"}] if bad else []
+
+
+def possible_duplicate(prior: list, vendor, total) -> bool:
+    """Same supplier and same amount already paid this month: a duplicate even if the invoice number differs
+    or was misread. Added after the study's final set."""
+    t = _num(total)
+    return t is not None and any(same_name(p["vendor"], vendor) and abs((_num(p["amount_chf"]) or 0) - t) < 0.01
+                                 for p in prior)
 
 
 def already_paid(prior: list, vendor, invoice_no) -> bool:

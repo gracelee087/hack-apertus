@@ -74,6 +74,19 @@ Extracted data: {fields}
 Answer with one JSON object only:
 {{"decision": "pay" | "escalate", "reason": short explanation}}"""
 
+CITE_USER = """Invoice:
+<<<
+{invoice}
+>>>
+
+These values were read from the invoice: IBAN {iban}, invoice number {invoice_no}, total {total}.
+For each one, copy the exact words of the invoice where it is written (a short phrase with its label, character
+for character). If a value is not written on the invoice, use null. Also give the payment reference number if the
+invoice has one, else null.
+Answer with one JSON object only:
+{{"iban_quote": string or null, "invoice_no_quote": string or null, "total_quote": string or null,
+ "payment_reference": string or null}}"""
+
 DISTILL_SYSTEM = ROLE + " You maintain the firm manual. Answer with one JSON object only."
 
 DISTILL_USER = """Human reviewers overruled the payment agent on the cases below. Their notes are anonymised.

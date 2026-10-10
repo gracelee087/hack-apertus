@@ -1,6 +1,6 @@
 {
   "model": "swiss-ai/apertus-v1.5-8b",
-  "llm_mode": "replay",
+  "llm_mode": "live",
   "seed": 2027,
   "n": 42,
   "metrics": {

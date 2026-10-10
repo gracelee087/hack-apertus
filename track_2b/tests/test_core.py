@@ -375,11 +375,26 @@ def test_grounding_holds_values_not_written_in_the_invoice():
     assert h["decision"] == "escalate" and "R_IBAN_INVALID" not in [f["code"] for f in h["findings"]]
 
 
-def test_invoice_number_must_be_written_as_an_invoice_number():
+def test_quotes_must_show_the_values_where_apertus_read_them():
+    import re
     case = next(c for c in CASES if c["reason_code"] == "OK")
     fields, text = gold_fields(case), case["invoice_text"]
-    assert badge.invoice_no_written(text, fields["invoice_no"]) and badge.grounding(text, fields) == []
-    ref = __import__("re").findall(badge.PAYMENT_REF, text)[0]
-    for filled_in in (ref, "INVOICE", "R-2026-0000"):  # the payment reference, a heading word, a made-up number
-        assert not badge.invoice_no_written(text, filled_in)
-        assert [f["code"] for f in badge.grounding(text, fields | {"invoice_no": filled_in})] == ["E_NOT_IN_DOCUMENT"]
+    line = lambda v: next(l for l in text.splitlines() if v in l)
+    ref = re.search(r"(?:Referenz|Référence|Riferimento|Reference)\W{0,3}(\d+)", text).group(1)
+    iban_q = next(l for l in text.splitlines() if re.sub(r"\s", "", l).find(fields["vendor_iban"]) >= 0)
+    good = {"iban_quote": iban_q, "invoice_no_quote": line(fields["invoice_no"]),
+            "total_quote": next(l for l in text.splitlines() if round(fields["total_chf"], 2) in badge.amounts_in(l)),
+            "payment_reference": ref}
+    assert badge.cited(text, fields, good) == []
+    for bad_fields, bad_quotes in (({"invoice_no": ref}, {"invoice_no_quote": line(ref)}),  # the reference read as the number
+                                   ({"invoice_no": "INVOICE"}, {}),                         # a heading word
+                                   ({}, {"total_quote": "Total CHF 1.00"}),                 # a quote not in the invoice
+                                   ({}, {"iban_quote": None})):                             # no quote at all
+        assert [f["code"] for f in badge.cited(text, fields | bad_fields, good | bad_quotes)] == ["E_NOT_IN_DOCUMENT"]
+
+
+def test_same_supplier_and_amount_is_a_possible_duplicate():
+    prior = [{"vendor": "Bäckerei Muster AG", "invoice_no": "R-1", "amount_chf": 410.0}]
+    assert badge.possible_duplicate(prior, "Baeckerei Muster AG", 410.0)
+    assert not badge.possible_duplicate(prior, "Bäckerei Muster AG", 410.5)
+    assert not badge.possible_duplicate(prior, "Other Supplier SA", 410.0)

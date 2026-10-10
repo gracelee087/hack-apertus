@@ -65,6 +65,17 @@ def review(case: dict, mandate: dict, fields: dict, manual: str) -> dict:
         return {"decision": "escalate", "reason": "model failure", "error": f"{type(e).__name__}: {e}"}
 
 
+def cite(case: dict, fields: dict) -> dict:
+    """Ask Apertus where in the invoice it read the values a payment depends on (checked in code)."""
+    user = prompts.CITE_USER.format(invoice=case["invoice_text"], iban=fields.get("vendor_iban"),
+                                    invoice_no=fields.get("invoice_no"), total=fields.get("total_chf"))
+    try:
+        return llm.parse_json(llm.chat([{"role": "system", "content": prompts.ROLE}, {"role": "user", "content": user}],
+                                       max_tokens=200, tag=f"cite:{case['case_id']}"))
+    except Exception as e:  # no quotes: the code check fails closed
+        return {"error": f"{type(e).__name__}: {e}"}
+
+
 SECOND_LOOK = 95.0  # risk score (0-100) from which an invoice the agent would pay goes to a human; chosen on the study's tune set
 
 
@@ -87,12 +98,24 @@ def harness(case: dict, mandate: dict, suppliers: list, manual: str, fields: dic
         findings = findings + badge.promoted_checks(mandate, fields)
         if verdict == "pass" and findings:
             verdict = "escalate"
-    if grounded and (g := badge.grounding(case["invoice_text"], fields)):
-        if "IBAN" in g[0]["msg"]:  # a misread account is a reading problem for a human, not a checksum rejection
+    quotes = None
+    if grounded:
+        g = badge.grounding(case["invoice_text"], fields)
+        if g and "IBAN" in g[0]["msg"]:  # a misread account is a reading problem for a human, not a checksum rejection
             findings = [f for f in findings if f["code"] != "R_IBAN_INVALID"]
-        findings = findings + g
-        verdict = "reject" if any(f["severity"] == "reject" for f in findings) else "escalate"
+        if verdict == "pass" and badge.possible_duplicate(case["prior_payments"], fields.get("vendor_name"),
+                                                           fields.get("total_chf")):
+            g = g + [{"severity": "escalate", "code": "E_POSSIBLE_DUPLICATE",
+                      "msg": "same supplier and amount already paid this month"}]
+        if verdict == "pass" and not g:  # only a payment candidate is worth the extra call
+            quotes = cite(case, fields)
+            g = badge.cited(case["invoice_text"], fields, quotes)
+        if g:
+            findings = findings + g
+            verdict = "reject" if any(f["severity"] == "reject" for f in findings) else "escalate"
     result = {"fields": fields, "badge": verdict, "findings": findings, "badge_only": "pay" if verdict == "pass" else verdict}
+    if quotes is not None:
+        result["quotes"] = quotes
     if verdict != "pass":
         result.update(decision=verdict, reason="; ".join(f["msg"] for f in findings))
     else:
