@@ -23,7 +23,7 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-from . import datagen, evaluate, lessons, llm, risk
+from . import datagen, decide, evaluate, lessons, llm, risk
 from .common import DATA, RESULTS, read_jsonl, write_jsonl
 
 OUT = RESULTS / "study"
@@ -172,9 +172,47 @@ def run(name):
     return result
 
 
+def baseline_gen1(name):
+    """Apertus alone with the same manual gen 1 (lessons) the harness uses, on a set already run, so the full
+    gap can be split into what the lessons add and what the split of work adds. Run after the confirm set."""
+    if not os.environ.get("LLM_CACHE_PATH"):
+        sys.exit("set LLM_CACHE_PATH=data/cache/study_responses.jsonl so the reference recordings stay untouched")
+    preds = read_jsonl(OUT / f"{name}_predictions.jsonl")
+    cases = {c["case_id"]: c for c in read_jsonl(data_path(name))}
+    mandates, suppliers, _ = evaluate.load()
+    manual1 = frozen_manual()
+    print(f"LLM mode: {llm.mode()} | model: {llm.model_name()} | {name}: {len(preds)} invoices, baseline with manual gen 1", flush=True)
+
+    def one(p):
+        c = cases[p["case_id"]]
+        return decide.baseline(c, mandates[c["client_id"]], suppliers.get(c["client_id"], []), manual1, tag="baseline_gen1")
+
+    with ThreadPoolExecutor(max_workers=int(os.environ.get("LLM_CONCURRENCY", "4"))) as ex:
+        out = list(ex.map(one, preds))
+    errors = [o["error"] for o in out if o.get("error")]
+    if any(any(f in e for f in FATAL) for e in errors):
+        sys.exit(f"endpoint error ({errors[0]}); recorded responses are kept, rerun to resume")
+    for p, o in zip(preds, out):
+        p["baseline_gen1"] = o
+    metrics = {s: evaluate.score(preds, s) for s in ("baseline", "baseline_gen1", "production")}
+    metrics["baseline_gen1"]["paid_with_wrong_details"] = None  # no extraction, no payment file
+    nonpay = sum(p["label"] != "pay" for p in preds)
+    for m in metrics.values():
+        m["wrong_payment_rate_ci95"] = wilson(m["wrong_payments"], nonpay)
+    result = {"set": name, "n": len(preds), "model": llm.model_name(), "llm_mode": llm.mode(),
+              "manual_gen1_sha256": lessons.fingerprint(manual1), "metrics": metrics,
+              "decisions": {p["case_id"]: p["baseline_gen1"] for p in preds}}
+    (OUT / f"{name}_baseline_gen1.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    for s, x in metrics.items():
+        print(f"  {s:16} acc {x['accuracy']:.3f}  wrong {x['wrong_payments']:4}  CHF {x['wrong_payment_chf']:>12,.2f}  missed {x['missed_payment_rate']:.3f}")
+    return result
+
+
 def main(argv):
     cmd = argv[0] if argv else ""
     if cmd == "gen":
         generate()
+    elif cmd == "baseline-gen1":
+        baseline_gen1(argv[1] if len(argv) > 1 else "confirm")
     else:
         run(cmd)

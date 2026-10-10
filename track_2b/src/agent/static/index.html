@@ -1157,7 +1157,8 @@ async function evaluation() {
   const NAMES = {baseline: t("Apertus 단독", "Apertus alone"), badge_only: t("+ 배지 (하드 체크)", "+ badge (hard checks)"), harness_gen0: t("+ 리뷰, 매뉴얼 gen0", "+ review, manual gen 0"),
                  harness_gen1: t("+ 리뷰, gen1 (교훈)", "+ review, gen 1 (lessons)"), harness_gen1_promoted: t("+ 교훈을 체크로 승격 ✱", "+ lessons promoted to checks ✱"),
                  harness_gen1_promoted_grounded: t("+ 문서에 적힌 값인지 확인 ✱", "+ grounding check ✱"),
-                 harness_gen1_promoted_risk: t("+ 위험 점수로 한 번 더 보기 ✱", "+ risk-score second look ✱")};
+                 harness_gen1_promoted_risk: t("+ 위험 점수로 한 번 더 보기 ✱", "+ risk-score second look ✱"),
+                 production: t("운영 구성", "production"), baseline_gen1: t("Apertus 단독, 매뉴얼 gen1", "Apertus alone, manual gen 1")};
   const nm = k => NAMES[k] || k, codes = Object.keys(m.metrics.baseline.by_reason_code);
   const last = sys[sys.length - 1];
   const legit = Object.entries(m.attacks || {}).find(([k]) => k.startsWith("legitimate"));
@@ -1165,11 +1166,13 @@ async function evaluation() {
   const at = Object.entries(m.attacks || {}).filter(([k]) => !k.startsWith("legitimate"));
   const blocked = at.reduce((s, [, r]) => s + r.blocked, 0), tried = at.reduce((s, [, r]) => s + r.attempts, 0);
   const ho = s.holdout, hb = ho && ho.metrics.baseline, hl = ho && ho.metrics[last], hn = ho && ho.risk.B_logistic.positives;
+  const cf = s.confirm, cfn = cf && Object.entries(cf.outcome).filter(([k]) => k.startsWith("must_not_pay")).reduce((a, [, v]) => a + v, 0);
   const cell = (label, value, cls = "", sub = "") => `<div><small>${label}</small><b class="${cls}">${value}</b>${sub ? `<span>${sub}</span>` : ""}</div>`;
   const W = {
     agents: {title: t("고객사별 에이전트", "Agents by client"), icon: "cpu", render: () => s.agents ? agentList(s.agents) : ""},
     wrong: {title: t("잘못 지급, 시스템별", "Wrong payments by system"), render: () => `<p class="sub">${t(`보류·거절해야 했는데 지급한 건 (${nonpay}건 중)과 그 금액. 낮을수록 좋아요.`, `Paid although they should have been held or rejected (of ${nonpay}), and the money. Lower is better.`)}</p>
       ${scaled(sys.map(k => ({label: nm(k), v: m.metrics[k].wrong_payments, value: `${m.metrics[k].wrong_payments} / ${nonpay} · CHF ${chf0(m.metrics[k].wrong_payment_chf)}`})), nonpay, {color: C.rejected})}`},
+    confirm: {title: cf ? t(`확인 세트: 처음 보는 청구서 ${cf.n}건, 한 번만 실행`, `Confirm set: ${cf.n} unseen invoices, run once`) : t("확인 세트", "Confirm set"), render: () => cf ? confirmCard(cf, nm) : `<p class="mute">${t("없음", "none")}</p>`},
     holdout: {title: ho ? t(`새 평가셋: 새 청구서 ${ho.n}건, 한 번만 실행`, `Fresh holdout: ${ho.n} new invoices, run once`) : t("새 평가셋", "Fresh holdout"), render: () => ho ? holdoutCard(ho, sys, nm) : `<p class="mute">${t("없음", "none")}</p>`},
     caseType: {title: t("유형별 정답률: Apertus 단독 → 운영", "Correct by case type: Apertus alone → production"), render: () => `${legend([[t("Apertus 단독", "Apertus alone"), C.fraud], [t("운영", "production"), C.control]])}
       <div class="bars">${codes.map(cd => { const a = m.metrics.baseline.by_reason_code[cd], hh = m.metrics[last].by_reason_code[cd],
@@ -1197,10 +1200,11 @@ async function evaluation() {
     ${cell(t("잘못 나간 금액", "Money paid wrongly"), `CHF ${chf0(best.wrong_payment_chf)}`, "warn", t(`단독 CHF ${chf0(base.wrong_payment_chf)}`, `alone CHF ${chf0(base.wrong_payment_chf)}`))}
     ${cell(t("정확도", "Accuracy"), `${base.accuracy.toFixed(2)} → ${best.accuracy.toFixed(2)}`, "good")}
     ${cell(t("놓친 정상 지급", "Legitimate payments missed"), `${Math.round(base.missed_payment_rate * (m.n_test - nonpay))} → ${Math.round(best.missed_payment_rate * (m.n_test - nonpay))}`, best.missed_payment_rate ? "warn" : "good", t(`${m.n_test - nonpay}건 중`, `of ${m.n_test - nonpay}`))}
+    ${cf ? cell(t("확인 세트 잘못 지급", "Confirm set, wrong payments"), `${cf.metrics.baseline.wrong_payments} → ${cf.metrics.production.wrong_payments}`, cf.metrics.production.wrong_payments ? "warn" : "good", t(`${cfn}건 중 · 처음 보는 ${cf.n}건`, `of ${cfn} · ${cf.n} unseen`)) : ""}
     ${ho ? cell(t("새 평가셋 잘못 지급", "Fresh holdout, wrong payments"), `${hb.wrong_payments} → ${hl.wrong_payments}`, hl.wrong_payments ? "warn" : "good", t(`${hn}건 중 · 한 번만 실행`, `of ${hn} · run once`)) : ""}
     ${tried ? cell(t("공격 차단", "Attacks blocked"), `${blocked} / ${tried}`, blocked === tried ? "good" : "crit", t(`시나리오 ${at.length}종`, `${at.length} scenarios`)) : ""}
   </div>
-  ${board("evaluation", W, [["agents", "l"], ["wrong", "w"], ["holdout", "s"], ["caseType", "w"], ["attacks", "s"]])}`;
+  ${board("evaluation", W, [["agents", "l"], ["confirm", "l"], ["wrong", "w"], ["holdout", "s"], ["caseType", "w"], ["attacks", "s"]])}`;
   renderBoard();
 }
 // ---------------------------------------------------------------- boxes the viewer can arrange (saved in this browser only)
@@ -1258,6 +1262,16 @@ function agentList(rows) {  // one agent per client: which version, whether it m
       <td class="n ${r.test.wrong_payments ? "bad" : ""}">${r.test.n ? `${r.test.wrong_payments} / ${r.test.must_not_pay}` : "–"}</td>
       <td class="n ${r.test.missed ? "warn" : ""}">${r.test.n ? r.test.missed : "–"}</td>
       <td class="n" data-tip="${esc(t(`대기 ${r.month.queue_open}건`, `${r.month.queue_open} waiting`))}">${r.month.paid} · ${r.month.escalated} · ${r.month.rejected}</td></tr>`).join("")}</table></div>`;
+}
+function confirmCard(c, nm) {  // the study's confirm set: who would have paid wrongly, and where every invoice went
+  const o = k => c.outcome[k] || 0, bad = o("must_not_pay:pay") + o("must_not_pay:escalate") + o("must_not_pay:reject");
+  const rows = [["baseline", c.metrics.baseline], ...(c.baseline_gen1 ? [["baseline_gen1", c.baseline_gen1]] : []),
+    ...["badge_only", "harness_gen0", "harness_gen1", "harness_gen1_promoted", "harness_gen1_promoted_grounded", "production"].map(k => [k, c.metrics[k]])].filter(([, x]) => x);
+  const ci = c.metrics.production.wrong_payment_rate_ci95;
+  return `<p class="sub">${t(`설계를 고정한 뒤 다른 시드(${c.seed})로 만든 청구서로 한 번만 실행했어요. 자동 지급하면 안 되는 ${bad}건 중 시스템별 잘못 지급:`, `Run once on invoices from another seed (${c.seed}) after the design was fixed. Wrong payments of the ${bad} that must not be paid automatically:`)}</p>
+    ${scaled(rows.map(([k, x]) => ({label: nm(k).replace(" ✱", ""), v: x.wrong_payments, value: `${x.wrong_payments} / ${bad} · CHF ${chf0(x.wrong_payment_chf)}`})), bad, {color: C.rejected})}
+    <p class="meta">${t(`운영 구성의 처리: 자동 지급 ${o("legitimate:pay") + o("must_not_pay:pay")} · 사람에게 ${o("legitimate:escalate") + o("must_not_pay:escalate")} · 거절 ${o("legitimate:reject") + o("must_not_pay:reject")} (정상 청구서 중 사람에게 ${o("legitimate:escalate")}건). 잘못 지급률 95% 신뢰구간 ${(100 * ci[0]).toFixed(1)}–${(100 * ci[1]).toFixed(1)}%. 합성 데이터, 한 생성기 계열이에요.`,
+      `Production: paid automatically ${o("legitimate:pay") + o("must_not_pay:pay")} · to a human ${o("legitimate:escalate") + o("must_not_pay:escalate")} · rejected ${o("legitimate:reject") + o("must_not_pay:reject")} (legitimate sent to a human: ${o("legitimate:escalate")}). Wrong-payment rate 95% CI ${(100 * ci[0]).toFixed(1)}–${(100 * ci[1]).toFixed(1)}%. Synthetic, one generator family.`)}</p>`;
 }
 function holdoutCard(h, sys, nm) {
   const nonpay = h.risk.B_logistic.positives;  // invoices that must not be paid automatically

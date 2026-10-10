@@ -475,13 +475,16 @@ FILE_SUFFIX = {"approved": "A", "live": "L"}  # payments after the reference run
 def _pay(s, d, m, item, kind, extra, **log):
     """Decide and file one payment as one step: the decision only stands if its payment file is issued."""
     cid, sfx = m["client_id"], FILE_SUFFIX[kind]
-    items = s.setdefault(kind, {}).get(cid, []) + [item]
+    # each payment is its own batch with its own message ID; a file once issued is never rewritten, so a file
+    # already sent to the bank is never sent again with later payments added
+    n = len(s.setdefault(kind, {}).get(cid, [])) + 1
+    items = [item]
     amount = item["amount_chf"]
     xml = None
     if gate._positive(amount):  # otherwise the gate refuses the request below
         pays = [{"end_to_end_id": f"{i['case_id']}-{sfx}", "creditor": i["vendor"] or "", "iban": i["iban"],
                  "amount_chf": float(i["amount_chf"]), "reference": i["case_id"]} for i in items]
-        xml = pain001.build(m, pays, f"{cid}-{TODAY:%Y%m%d}-{sfx}", datetime.now(), TODAY.isoformat())
+        xml = pain001.build(m, pays, f"{cid}-{TODAY:%Y%m%d}-{sfx}{n:03d}", datetime.now(), TODAY.isoformat())
         errors = pain001.validate(xml)
         if errors:
             LEDGER.append(actor="system", action="payment.file.blocked", client_id=cid, case_id=item["case_id"],
@@ -494,7 +497,7 @@ def _pay(s, d, m, item, kind, extra, **log):
                     amount_chf=amount, invoice_no=item.get("invoice_no"), business_date=d.clock().date().isoformat(), **log)
     if not res["ok"]:
         return res
-    name = f"{cid}_pain001_{kind}.xml"
+    name = f"{cid}_pain001_{kind}_{n:03d}.xml"
     path = RESULTS / "payments" / name
     tmp = path.with_name(name + ".tmp")
 
@@ -529,8 +532,26 @@ def _pay(s, d, m, item, kind, extra, **log):
 def evaluation():
     s = state()
     return {"metrics": _read(RESULTS / "metrics.json", {}), "holdout": _read(RESULTS / "holdout.json", None),
-            "agents": agents_by_client(s), "manual": manual_text(s, FIRM_WIDE), "llm_mode": llm.mode(),
-            "model": llm.model_name()}
+            "confirm": confirm_study(), "agents": agents_by_client(s), "manual": manual_text(s, FIRM_WIDE),
+            "llm_mode": llm.mode(), "model": llm.model_name()}
+
+
+def confirm_study():
+    """The study's confirm set (500 unseen invoices, run once): wrong payments by system and where each invoice went."""
+    res, path = _read(RESULTS / "study" / "confirm.json", None), RESULTS / "study" / "confirm_predictions.jsonl"
+    if not res or not path.exists():
+        return None
+    outcome = {}
+    for p in read_jsonl(path):
+        k = ("must_not_pay" if p["label"] != "pay" else "legitimate", p["production"]["decision"])
+        outcome[f"{k[0]}:{k[1]}"] = outcome.get(f"{k[0]}:{k[1]}", 0) + 1
+    gen1 = _read(RESULTS / "study" / "confirm_baseline_gen1.json", None)
+    return {"n": res["n"], "seed": res["seed"], "threshold": res.get("threshold_used"),
+            "metrics": {k: {f: v[f] for f in ("accuracy", "wrong_payments", "wrong_payment_chf", "missed_payment_rate",
+                                                "wrong_payment_rate_ci95")} for k, v in res["metrics"].items()},
+            "baseline_gen1": gen1 and {f: gen1["metrics"]["baseline_gen1"][f] for f in
+                                       ("accuracy", "wrong_payments", "wrong_payment_chf", "missed_payment_rate")},
+            "outcome": outcome}
 
 
 def agents_by_client(s) -> list:

@@ -140,7 +140,7 @@ not a compliance assessment. FINMA Guidance 08/2024 asks for an inventory, docum
   440 recorded responses (308 for the evaluation run, 130 for the holdout, 2 from trying the live app),
   latency median 3.0 s / p90 7.4 s, cost well under USD 0.10
   (≈ 0.2 M tokens at USD 0.1 / 0.2 per M input / output tokens); the reference cache now holds 501 responses
-  including 56 citation calls; plus 7,158 for the 2,000-invoice study (`data/cache/study_responses.jsonl`,
+  including 56 citation calls; plus 7,658 for the 2,000-invoice study (`data/cache/study_responses.jsonl`,
   about USD 0.50)
 - **Five roles:** (1) field extraction from DE/FR/IT/EN invoices; (2) the *baseline*: the full
   decision in one prompt; (3) content review after the hard checks; (4) for payment candidates, quoting
@@ -177,7 +177,10 @@ endpoint, unparsable reply) fail closed (escalate) and are counted.
 **Baseline:** Apertus alone, given the *same* information (mandate, supplier list, this month's payments,
 invoice) and the *same* written policy and manual gen 0. The harness rows from "manual gen 1" on also use
 the lessons, so the full gap mixes the split of work with the better manual; the step-by-step rows
-separate them (same manual gen 0: 178 → 88 on the confirm set).
+separate them (same manual gen 0: 178 → 88 on the confirm set). Given manual gen 1 as well, Apertus alone
+still paid 171 of the 300 confirm-set invoices it should not have (vs 178 with gen 0; run after the confirm
+set, `python -m agent study baseline-gen1`, `results/study/confirm_baseline_gen1.json`): the lessons barely
+help on their own; the split of work does the job.
 
 Test split: 78 invoices, 33 payable, 45 not payable (28 escalate, 17 reject).
 
@@ -367,12 +370,13 @@ checks act on what it read.
 | Content review (`decide.review`) | Apertus decides (pay or human only) | 20 (7%): 0 / 20 | 0 | fraud signals such as pressure wording, against the manual and lessons |
 | Second look (risk score ≥ 95) | logistic regression | 0 | 0 | unusual payment patterns (1 of 600 on the final set) |
 
-Apertus alone (policy, manual gen 0, mandate and supplier list in one prompt) paid 178 of these 300. With
+Apertus alone (policy, manual gen 0, mandate and supplier list in one prompt) paid 178 of these 300, and 171
+with manual gen 1. With
 the work split, none was paid on its own: only clear rule violations (75) are rejected in code, and the
 other 225 go to a person, as do 7 legitimate invoices whose reading could not be verified. Over the 500
 invoices that is 193 paid, 232 to a human, 75 rejected; how accurately and quickly people handle the 232
 was not measured. The final set gives the same split by layer (63 / 12 / 18 / 6%).
-In total the study recorded 7,158 Apertus responses (`data/cache/study_responses.jsonl`, about USD 0.50).
+In total the study recorded 7,658 Apertus responses (500 of them for the gen 1 baseline) (`data/cache/study_responses.jsonl`, about USD 0.50).
 
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
 all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/test_core.py`).
@@ -418,7 +422,7 @@ all 54 hard-rule cases exactly as labelled and passes all other cases (`tests/te
 recorded Apertus responses (no key needed), writes `results/`, prints the table above and serves the
 reviewer app on port 8000. `make eval` prints and exits. `python -m agent holdout` (after `eval`) replays
 the holdout. `LLM_CACHE_PATH=data/cache/study_responses.jsonl python -m agent study tune` replays the study's
-tune set (`STUDY_FORCE=1 … study final|confirm` the others) into `results/study/`; the final set's blind
+tune set (`STUDY_FORCE=1 … study final|confirm` the others, `study baseline-gen1` the gen 1 baseline) into `results/study/`; the final set's blind
 results before the last change are kept in `results/study/final_blind.json`. GitHub Actions runs the tests, builds the image and re-runs `eval` and `holdout` without a key
 on every push; it fails if `metrics.json`, `risk_model.json` or `holdout.json` differ from the committed files. Data generation is deterministic (seed 2026);
 Apertus was called with temperature 0. Hardware: any machine with Docker; no GPU needed for replay.

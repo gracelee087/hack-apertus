@@ -30,7 +30,7 @@ def _decision(raw, allowed=DECISIONS) -> str:
     return d if d in allowed else "escalate"
 
 
-def baseline(case: dict, mandate: dict, suppliers: list, manual: str = prompts.MANUAL_GEN0) -> dict:
+def baseline(case: dict, mandate: dict, suppliers: list, manual: str = prompts.MANUAL_GEN0, tag: str = "baseline") -> dict:
     user = prompts.BASELINE_USER.format(
         policy=prompts.POLICY, manual=manual, client_name=mandate["name"],
         mandate=json.dumps(mandate_view(mandate), ensure_ascii=False),
@@ -39,7 +39,7 @@ def baseline(case: dict, mandate: dict, suppliers: list, manual: str = prompts.M
         invoice=case["invoice_text"])
     msgs = [{"role": "system", "content": prompts.ROLE}, {"role": "user", "content": user}]
     try:
-        out = llm.parse_json(llm.chat(msgs, max_tokens=300, tag=f"baseline:{case['case_id']}"))
+        out = llm.parse_json(llm.chat(msgs, max_tokens=300, tag=f"{tag}:{case['case_id']}"))
         return {"decision": _decision(out.get("decision")), "reason": str(out.get("reason", ""))}
     except Exception as e:  # fail closed
         return {"decision": "escalate", "reason": "model failure", "error": f"{type(e).__name__}: {e}"}

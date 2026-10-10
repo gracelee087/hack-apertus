@@ -182,8 +182,9 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
         "fields": dict(fields), "badge": "pass", "findings": [], "decision": "pay", "reason": "ok"})
 
     first = app.process("C01", app.Text(invoice_text="x"))
-    assert first["executed"] and first["file"] == "C01_pain001_live.xml"
-    assert pain001.validate((tmp_path / "payments" / first["file"]).read_text(encoding="utf-8")) == []
+    assert first["executed"] and first["file"] == "C01_pain001_live_001.xml"
+    first_xml = (tmp_path / "payments" / first["file"]).read_text(encoding="utf-8")
+    assert pain001.validate(first_xml) == []
     again = app.process("C01", app.Text(invoice_text="x"))  # the same invoice: this month's payments come from the ledger
     assert again["decision"] == "reject" and not again["executed"] and "R_DUPLICATE" in [f["code"] for f in again["findings"]]
 
@@ -201,9 +202,16 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
     d.update_badge("C01", 10000, ["payment.decide", "payment.file"])
     app.save(s, d)
     assert app.review(held["case_id"], app.Review(action="approve", note="checked"))["ok"]
-    assert (tmp_path / "payments" / "C01_pain001_approved.xml").exists()
+    assert (tmp_path / "payments" / "C01_pain001_approved_001.xml").exists()
     assert [i["status"] for i in app.queue_items()] == ["approved"]
     assert len(app.prior_payments("C01")) == 2  # approved after a refused file: the second decision counts as paid
+
+    fields["invoice_no"], fields["total_chf"], fields["net_chf"] = "R-3", 300.0, 300.0
+    third = app.process("C01", app.Text(invoice_text="x"))
+    assert third["executed"] and third["file"] == "C01_pain001_live_002.xml"  # a new batch, not the first one again
+    assert (tmp_path / "payments" / first["file"]).read_text(encoding="utf-8") == first_xml  # issued file unchanged
+    second_xml = (tmp_path / "payments" / third["file"]).read_text(encoding="utf-8")
+    assert first["case_id"] not in second_xml and pain001.validate(second_xml) == []
 
 
 def test_second_look_holds_a_high_risk_payment():
