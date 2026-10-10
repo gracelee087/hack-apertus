@@ -60,7 +60,7 @@ run once: Apertus alone 178 of 300 (CHF 642,157); the production harness **0 of 
 holding 3.5% of legitimate invoices for a human (mostly IBANs the model misread). `results/study/confirm.json`.
 
 Payment files: our own check is structural (counts, control sum, IBAN checksums, positive amounts); an
-external review validated the reference files against the official SIX pain.001.001.09 schema. Bank-specific
+external reviewer reported that the reference files pass the official SIX pain.001.001.09 schema (not reproduced by us). Bank-specific
 acceptance rules were not tested. **This is a demo:** the reviewer app has no login or roles, so anyone who
 can reach port 8000 can approve, change settings or use the kill switch. Run it only on a trusted machine.
 

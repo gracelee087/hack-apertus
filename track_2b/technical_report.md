@@ -5,33 +5,7 @@
 - **Team:** hack-1 — Sohee Lee
 - **Demo:** `link to video`
 
-## 1. Summary
-
-Around 12,900 Swiss firms do accounting, bookkeeping and tax work (NOGA 6920; secondary source, Valindex
-2026-02), most with 1–9 employees. A daily task is paying supplier invoices for many small clients, each of
-which delegated a different scope and limit. AI tools in this market read invoices; they do not *execute*
-payments within a provable delegation. Mandate Desk does, on four axes:
-
-- **Mandate and authority.** Each client signs a mandate (scope, limits, validity, delegate = the firm). Each
-  client gets its own agent with its own key and DID, a firm-signed ID card and a badge derived from the
-  mandate. Every request the agent makes is signed and checked by a gate (five checks) before it takes effect.
-- **Harness.** Apertus reads multilingual invoices and reviews their content; code enforces the mandate and
-  checks that what Apertus read is written in the invoice, where Apertus quotes it.
-- **Human control.** Exceptions and uncertain payments go to a person, who approves (a one-time grant bound
-  to client, invoice, IBAN and amount), rejects, or stops the agent with a kill switch. Overrules become
-  lessons that Apertus writes into the firm manual.
-- **Signed record.** Every request, its outcome and every human intervention is in a hash-chained, signed
-  ledger that keeps the request the agent signed, so an auditor can re-check it. Payments leave only as an
-  ISO 20022 pain.001.001.09 file per client.
-
-**Results.** On 500 unseen synthetic invoices run once, Apertus 8B alone decided to pay **178 of 300** it should
-not have (171 with the same lessons); the harness **0 of 300 (95% CI 0–1.3%)**, holding 3.5% of legitimate
-invoices for a person: 193 paid, 232 to a person, 75 rejected. An earlier 1,000-invoice set had found a
-gap (29 of 600, 4.8%) that led to the quote check. On the 78-invoice test set: 33 of 45 → 0 of 45. Seventeen
-attacks on identity and authority were blocked in 561 of 561 attempts, with 33 of 33 legitimate requests
-accepted (scenarios we wrote; not a security audit).
-
-## 2. Architecture
+## 1. Architecture
 
 ```
 invoice ──► [Apertus: extract fields] ──► [Badge: mandate checks in code] ──fail──► reject / to a person
@@ -61,24 +35,26 @@ All under `src/agent/`; everything runs in pure Python except the Apertus calls.
 
 ### Target architecture (mandatory)
 
-**a) On-premise**, with **b) air-gapped** operation possible: a fiduciary is bound by professional secrecy
-for client bank details, salaries and supplier relationships, so everything stays on its own infrastructure.
+**a) On-premise**, with **b) air-gapped** operation possible: a fiduciary holds client bank details, salaries
+and supplier relationships, so the design keeps everything on the firm's own infrastructure.
 
 - **Runtime:** one container (Python 3.11, FastAPI, Uvicorn, cryptography) and one OpenAI-compatible endpoint
-  serving Apertus 8B (e.g. vLLM on one GPU in the firm's server room or at a Swiss hosting partner). No other
+  serving Apertus 8B, run by the firm or a Swiss hosting partner (only the Public AI API was tested). No other
   network access: no payment provider, no external API. Payments leave only as a pain.001 file the firm
   uploads to the client's bank.
 - **Build time:** the `python:3.11-slim` image, three pip packages, Apertus weights from Hugging Face; all can
   be mirrored internally, so the runtime can be air-gapped.
 - **During development** we used the Public AI inference API because the organiser's CSCS key was not at
-  hand. Switching to CSCS or on-prem vLLM changes `LLM_BASE_URL` only; recorded responses make the
-  evaluation independent of it.
+  hand. The endpoint is read from `LLM_BASE_URL`; CSCS and a self-hosted server were not tested. Recorded
+  responses make the evaluation independent of the endpoint.
 
 ### Agent identity, gate and record
 
 The harness answers *what* the agent may do; this layer answers *who* did it and lets anyone check. The
-concept follows the author's earlier "Agentic ID" design (identity, badge, stamp, ledger, lessons); the code
-is new.
+concept follows KYA-OS (Know Your Agent OS: identity, delegation, signed proof, ledger), built by Vouched and
+donated to the Decentralized Identity Foundation in March 2026, whose reference implementation `@kya-os/mcp`
+is MIT-licensed; the author's earlier "Agentic ID" project built on it and added the lesson layer. This
+project re-implements the ideas in pure Python and contains no KYA-OS code.
 
 | Principal | Key | Signs |
 |---|---|---|
@@ -106,9 +82,36 @@ The **ledger** opens with the firm and ledger DIDs, every client mandate with it
 generation's card, badge and manual fingerprint. Each request is kept whole (signed stamp and payload) and
 the recorded fields are taken from the payload. An auditor can check from the ledger alone that every
 executed action was signed by an agent the firm issued and had not revoked, and that the entry says what
-was signed (`audit_identities`; reference run 78 of 78). The design follows control principles referenced in
-FINMA Guidance 08/2024 (inventory, documentation, monitoring, responsibility stays with named people) and
-EU AI Act Art. 12 and 14 (logging, human oversight, ability to stop); this is not a compliance assessment.
+was signed (`audit_identities`; reference run 78 of 78). FINMA Guidance 08/2024 calls for the identification,
+assessment, management and monitoring of AI risks; the EU AI Act requires automatic logs (Art. 12) and human
+oversight including a way to stop the system (Art. 14) for high-risk AI systems. We did not assess whether
+this use is high-risk; this is not a compliance assessment.
+
+## 2. Summary
+
+Around 12,900 Swiss firms do accounting, bookkeeping and tax work (NOGA 6920; secondary source, Valindex
+2026-02), most with 1–9 employees. A daily task is paying supplier invoices for many small clients, each of
+which delegated a different scope and limit. Mandate Desk is an agent that pays them within each client's
+signed delegation, on four axes:
+
+- **Mandate and authority.** Each client signs a mandate (scope, limits, validity, delegate = the firm). Each
+  client gets its own agent with its own key and DID, a firm-signed ID card and a badge derived from the
+  mandate. Every request the agent makes is signed and checked by a gate (five checks) before it takes effect.
+- **Harness.** Apertus reads multilingual invoices and reviews their content; code enforces the mandate and
+  checks that what Apertus read is written in the invoice, where Apertus quotes it.
+- **Human control.** Exceptions and uncertain payments go to a person, who approves (a one-time grant bound
+  to client, invoice, IBAN and amount), rejects, or stops the agent with a kill switch. Overrules become
+  lessons that Apertus writes into the firm manual.
+- **Signed record.** Every request, its outcome and every human intervention is in a hash-chained, signed
+  ledger that keeps the request the agent signed, so an auditor can re-check it. Payments leave only as an
+  ISO 20022 pain.001.001.09 file per client.
+
+**Results.** On 500 unseen synthetic invoices run once, Apertus 8B alone decided to pay **178 of 300** it should
+not have (171 with the same lessons); the harness **0 of 300 (95% CI 0–1.3%)**, holding 3.5% of legitimate
+invoices for a person: 193 paid, 232 to a person, 75 rejected. An earlier 1,000-invoice set had found a
+gap (29 of 600, 4.8%) that led to the quote check. On the 78-invoice test set: 33 of 45 → 0 of 45. Seventeen
+attacks on identity and authority were blocked in 561 of 561 attempts, with 33 of 33 legitimate requests
+accepted (scenarios we wrote; not a security audit).
 
 ## 3. Use of Apertus
 
@@ -118,7 +121,7 @@ EU AI Act Art. 12 and 14 (logging, human oversight, ability to stop); this is no
   prompt; (3) review content after the hard checks; (4) for payment candidates, quote where it read IBAN,
   invoice number and total (checked in code); (5) distil masked reviewer notes into manual rules.
 - **Where it runs:** Public AI inference API (OpenAI-compatible). Reference run and holdout: 501 recorded
-  responses, latency median 3.0 s / p90 7.4 s, well under USD 0.10; study: 7,658 responses, about USD 0.50.
+  responses, latency median 3.3 s / p90 7.3 s, well under USD 0.10; study: 7,658 responses, about USD 0.50.
   Every response is recorded with its exact request (`data/cache/`), so judges replay the same run without a key.
 
 ## 4. Data
@@ -229,12 +232,13 @@ reviewer missed, on the confirm set it added nothing. Every step is shown on the
 - The quote check proves a value is written in the invoice, not what it means (a reference line quoted as
   the invoice number passes if Apertus returns no payment reference; not seen on the confirm set). For a
   registered supplier the expense category comes from the register, not the invoice.
-- The 8B model misreads some IBANs (about 6% of study extractions); they are held, which costs reviewer time.
-- Identity uses real Ed25519 and did:key but simple JSON documents, not W3C VCs or swiyu SD-JWT VCs; demo
+- The 8B model misread the IBAN on 64 of the 1,920 study invoices that carry one (3.3%); such invoices are
+  held, which costs reviewer time.
+- Identity uses real Ed25519 and did:key but simple JSON documents, not a standard credential format; demo
   keys come from fixed seeds (production: HSM for firm and ledger keys); the ledger is not anchored externally.
 - The web app has no login or roles; the ledger records who acted by role, not by a verified login. pain.001
-  files are checked structurally and four were validated against the SIX schema externally; bank acceptance
-  was not tested.
+  files are checked structurally; an external reviewer reported that the four reference files pass the SIX
+  pain.001.001.09 schema, which we could not reproduce; bank acceptance was not tested.
 - Lessons come from 42 training cases with simulated notes and the same case types as the test set; a
   stronger prompted baseline (e.g. multi-step) could narrow the gap.
 
@@ -249,12 +253,12 @@ image and re-runs `eval` and `holdout` without a key on every push, and fails if
 holdout differ from the committed files. Data generation is deterministic; no GPU needed for replay.
 Commit: ⟨pending⟩.
 
-## 8. Next steps
+## 8. Possible next steps (none started)
 
-Mandates as swiyu verifiable credentials and keys in an HSM; QR-bill data and e-invoices read directly so the
-model reads less; supplier profiles and per-field confidence to hold fewer legitimate invoices; a sign-off
-workflow for promoting lessons to code; measuring reviewer accuracy and workload; a pilot with one Treuhand
-office on anonymised historical payment runs, as a layer on top of existing Swiss accounting software.
+Directions we would consider, not commitments: mandates in a standard verifiable-credential format and keys
+in an HSM; reading structured invoice data (QR-bill, e-invoices) directly so the model reads less; supplier
+profiles or per-field confidence to hold fewer legitimate invoices; a sign-off step for promoting lessons to
+code; measuring reviewer accuracy and workload; testing on real, anonymised payment runs with a fiduciary.
 
 ## License
 
@@ -263,6 +267,8 @@ Creative Commons Attribution 4.0 (CC-BY-4.0). All HackApertus projects are open-
 ## References
 
 - Apertus model family: https://huggingface.co/swiss-ai
+- KYA-OS, Decentralized Identity Foundation (donated by Vouched): https://blog.identity.foundation/kya-os/;
+  reference implementation `@kya-os/mcp` (MIT): https://github.com/decentralized-identity/kya-os-mcp
 - ISO 20022 pain.001.001.09 (customer credit transfer initiation)
 - FINMA Guidance 08/2024 on governance and risk management when using AI
 - Valindex (2026-02), count of Swiss firms in NOGA 6920 — secondary source
