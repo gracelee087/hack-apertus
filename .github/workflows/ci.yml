@@ -37,5 +37,6 @@ jobs:
         # llm_mode says how the run was made (live when recorded, replay here), not what it measured
         run: |
           for f in metrics.json risk_model.json holdout.json; do
-            diff <(jq -S 'del(.llm_mode)' "results/$f") <(jq -S 'del(.llm_mode)' "ci-results/$f") && echo "$f matches"
+            diff <(jq -S 'del(.llm_mode)' "results/$f") <(jq -S 'del(.llm_mode)' "ci-results/$f") || exit 1
+            echo "$f matches"
           done
