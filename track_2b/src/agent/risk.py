@@ -9,7 +9,8 @@ Test data: the 78 test invoices as Apertus read them, scored against the same pa
 Target A (main): fraud or not. Target B (comparison): anything that must not be paid automatically,
 which the rules already catch, so its score mostly shows the model relearning the rules.
 
-The score never changes a payment decision. It ranks the approval queue and explains itself.
+The score ranks the approval queue and explains itself. From 95 it sends a payment the harness would make
+to a human (decide.second_look); it never turns a hold or a rejection into a payment.
 """
 import json
 import math

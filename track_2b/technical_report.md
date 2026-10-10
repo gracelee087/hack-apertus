@@ -245,6 +245,12 @@ reviewer missed, on the confirm set it added nothing. Every step is shown on the
   registered supplier the expense category comes from the register, not the invoice.
 - The 8B model misread the IBAN on 64 of the 1,920 study invoices that carry one (3.3%); such invoices are
   held, which costs reviewer time.
+- A changed bank account is held for a person; confirming it with the supplier on a known number is not
+  built into the app (the queue only reserves two days for it when it computes how much time is left).
+- When every check passes, Apertus's "pay" becomes a payment without a person; only the repeated limit check
+  and the risk-score second look come after it.
+- One risk model, fitted on all clients' history, and one threshold (95) serve every client; its features
+  are measured against each client's mandate and usual amounts, but nothing is calibrated per client.
 - Identity uses real Ed25519 and did:key but simple JSON documents, not a standard credential format; demo
   keys come from fixed seeds (production: HSM for firm and ledger keys); the ledger is not anchored externally.
 - The web app has no login or roles; the ledger records who acted by role, not by a verified login. pain.001
