@@ -24,7 +24,9 @@ invoices. Because those additions came after seeing results, we tested on fresh,
 run once (four layouts, two problems at once, unreadable fields). On 1,000 invoices the then design decided
 to pay 29 of 600 it should not have (4.8%), all invoices with no invoice number, which Apertus had filled in;
 after we made Apertus quote where it read each value (checked in code), a new set of 500 had **0 of 300
-(95% CI 0–1.3%)** against 178 for Apertus alone, with 3.5% of legitimate invoices held for a human. Sixteen kinds of attack on the agent's identity and authority (forged or replayed requests,
+(95% CI 0–1.3%)** against 178 for Apertus alone, with 3.5% of legitimate invoices held for a human. The gain
+comes from splitting the work: code makes the decision wherever a rule can be written, Apertus reads and
+judges what no rule can, and what Apertus read is checked against its own quotes from the invoice. Sixteen kinds of attack on the agent's identity and authority (forged or replayed requests,
 revoked agent, tampered mandate, reused human grant, …) were blocked in 528 of 528 attempts (16 scenarios
 we wrote, each replayed for the 33 paid invoices; not a security audit), with 33 of 33 legitimate requests
 accepted.
@@ -323,14 +325,15 @@ committed before the set it was tested on was run, and each set's results were l
    any scoring, when we decided on step 3 from the final set's failures; the responses it recorded (Apertus
    alone, extraction, review) were reused, so the cache holds confirm calls from two sessions:
 
-| System | Accuracy | Wrong payments (of 300) | Wrongly paid CHF | Missed payments (of 200) |
-|---|---|---|---|---|
-| Apertus alone | 0.576 | 178 (59.3%) | 642,157 | 1.0% |
-| extraction + badge | 0.760 | 89 | 226,007 | 2.5% |
-| harness, manual gen 1 | 0.804 | 67 | 172,827 | 2.5% |
-| + promoted lessons | 0.876 | 31 | 67,960 | 2.5% |
-| + verification (written, quoted, duplicate) | 0.986 | 0 | 0 | 3.5% |
-| **+ second look at 95 (production)** | **0.986** | **0 (95% CI 0–1.3%)** | **0** | **3.5% (CI 1.7–7.1%)** |
+| System | What changed | Who decides | Accuracy | Wrong payments (of 300) | Wrongly paid CHF | Missed payments (of 200) |
+|---|---|---|---|---|---|---|
+| Apertus alone | all rules in the prompt, Apertus decides | Apertus | 0.576 | 178 (59.3%) | 642,157 | 1.0% |
+| extraction + badge | Apertus only reads the fields; mandate, limits and account are checked in code | code | 0.760 | 89 | 226,007 | 2.5% |
+| harness, manual gen 0 | Apertus reviews the content of invoices that passed the code checks | code, then Apertus | 0.762 | 88 | 225,217 | 2.5% |
+| harness, manual gen 1 | Apertus writes manual rules from invoices a human corrected | rules by Apertus, applied by Apertus | 0.804 | 67 | 172,827 | 2.5% |
+| + promoted lessons | two of those rules (VAT mismatch, wrong addressee) move into code | rules by Apertus, applied by code | 0.876 | 31 | 67,960 | 2.5% |
+| + verification (written, quoted, duplicate) | Apertus quotes where it read IBAN, invoice number and total; code checks the quotes | Apertus and code together | 0.986 | 0 | 0 | 3.5% |
+| **+ second look at 95 (production)** | a high risk score sends a payment to a human | statistical model | **0.986** | **0 (95% CI 0–1.3%)** | **0** | **3.5% (CI 1.7–7.1%)** |
 
 What it shows. (1) Each layer lowers the wrong payments, from 178 to 0, on invoices the design never saw.
 (2) The 7 legitimate invoices held are reading errors caught before money moves: 5 IBANs Apertus misread
