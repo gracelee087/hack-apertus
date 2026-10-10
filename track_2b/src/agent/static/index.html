@@ -626,11 +626,9 @@ async function clientPage(cid, tab) {
   $("main").innerHTML = `${pageHead(`${esc(c.name)} ${status}`, `${c.client_id} · ${esc(c.city)} · ${c.lang.toUpperCase()} · ${ic("user", 13)} ${t("담당 관리자", "Client manager")} <b>${esc(c.owner.name)}</b> · ${t("고객 DID", "client DID")} <code>${short(c.mandate.client_did)}</code>`)}
     <nav class="tabs">${ctabs().map(([k, n]) => `<a href="#/c/${cid}/${k}" class="${k === tab ? "on" : ""}">${n}${k === "todo" && c.queue_open ? ` <span class="badge">${c.queue_open}</span>` : ""}</a>`).join("")}</nav>
     ${body}`;
-  if ($("ptext")) $("ptext").value = SAMPLES[cid] || "";
   if (FOCUS && $(`q-${FOCUS}`)) $(`q-${FOCUS}`).scrollIntoView({block: "center"});
 }
 function cTodo(c) {  // what needs a human now, in order, with the decision buttons right there
-  setTimeout(() => loadPicks(c.client_id));  // fill the database picker once the page is on screen
   const al = {}; ((OV && OV.alerts) || []).forEach(a => al[a.case_id] = a);
   const open = c.queue.filter(i => i.status === "open").sort((x, y) => (al[x.case_id]?.rank ?? 999) - (al[y.case_id]?.rank ?? 999));
   const done = c.queue.filter(i => i.status !== "open"), a = c.agent, m = c.mandate, own = c.owner.name;
@@ -666,11 +664,9 @@ function cTodo(c) {  // what needs a human now, in order, with the decision butt
   <div class="card"><div class="card-h"><div><h2>${t(`확인할 청구서 (${open.length})`, `Waiting for you (${open.length})`)}</h2><p class="sub">${t("처리할 순서대로예요. 줄을 누르면 보류 이유를 보고 바로 승인하거나 거절할 수 있어요.", "In the order to handle them. Open a row to see why it was held, then approve or reject.")}</p></div></div>
     ${open.length ? `<div class="qlist"><div class="qgrid qh"><span>#</span><span>${t("건", "Case")}</span><span>${t("거래처", "Supplier")}</span><span>${t("신호", "Signal")}</span><span class="n">${t("위험", "Risk")}</span><span class="n">${t("여유", "Spare")}</span><span class="n">CHF</span><span></span></div>${open.map(row).join("")}</div>` : `<p class="mute">${t("없음", "none")}</p>`}
     ${done.length ? `<div style="margin-top:20px">${more(t(`처리한 건 (${done.length})`, `Handled (${done.length})`), `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결과", "Result")}</th><th>${t("메모", "Note")}</th></tr>${done.map(i => `<tr><td><code>${esc(i.case_id)}</code></td><td>${esc(i.vendor)}</td><td class="n">${chf(i.amount_chf)}</td><td>${i.status === "approved" ? `<span class="ok">${t("승인", "approved")}</span>` : `<span class="bad">${t("거절", "rejected")}</span>`}</td><td class="mute">${esc(i.note || "")}</td></tr>`).join("")}</table>`)}</div>` : ""}</div>
-  <div class="card">${more(t("새 청구서를 에이전트에게 맡기기", "Give the agent a new invoice"), `<p class="sub">${t("Apertus가 읽고, 하드 체크가 위임장을 확인하고, Apertus가 내용을 검토해요. 에이전트가 결정에 서명하면 문지기가 확인한 뒤 기록돼요.", "Apertus reads it, the hard checks apply the mandate, Apertus reviews the content; the agent signs the decision and the gate checks it before it is recorded.")}</p>
-    <div class="row"><select id="ppick" onchange="pickInvoice(this.value)" aria-label="${t("데이터베이스에서 고르기", "pick from the database")}"><option value="">${t("데이터베이스에서 청구서 고르기 (원문만 채워요)…", "Pick an invoice from the database (fills in the text only)…")}</option></select></div>
-    <textarea id="ptext" oninput="PICKED = null"></textarea>
-    <div class="row"><button class="btn primary" onclick="processInvoice('${c.client_id}')" ${a.active ? "" : "disabled"}>${t("에이전트 실행", "Run agent")}</button><span id="pstatus" class="mute"></span></div>
-    <div id="presult"></div>`)}</div>`;
+  <div class="card"><h2>${t(`처리한 청구서 (${c.decisions.length})`, `Processed invoices (${c.decisions.length})`)}</h2><p class="sub">${t("이 고객사 에이전트에게 바로 전달된 청구서와 결정. 최근 것부터.", "Invoices delivered straight to this client's agent, and what it decided. Newest first.")}</p>
+    ${c.decisions.length ? `<table><tr><th>${t("날짜", "Date")}</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th></tr>
+      ${c.decisions.slice(0, 10).map(e => `<tr><td class="mute">${esc((e.ts || "").slice(0, 10))}</td><td><code>${esc(e.case_id)}</code></td><td>${dots(flowFromEntry(e))}</td><td>${esc(e.vendor || "")}</td><td class="n">${chf(e.amount_chf)}</td><td>${e.gate !== "OK" ? `<span class="bad">${t("문지기 거부", "refused by gate")}</span>` : e.decision ? dec(e.decision) : ""}</td></tr>`).join("")}</table>` : `<p class="mute">${t("없음", "none")}</p>`}</div>`;
 }
 function cRecords(c) {  // what happened: decisions, why, files, ledger
   const by = {}; c.decisions.forEach(e => { const k = e.gate !== "OK" ? "gate" : e.decision; by[k] = (by[k] || 0) + 1; });
