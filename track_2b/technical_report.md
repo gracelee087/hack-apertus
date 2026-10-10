@@ -319,7 +319,9 @@ committed before the set it was tested on was run, and each set's results were l
    this month counts as a possible duplicate. Re-scored from the recordings, tune and final drop to 0 wrong
    payments (not blind), and the threshold rule now picks **95** (every threshold from 15 up ties at 0).
 4. **Confirm (500, seed 3033)**, blind for the final design (generated and committed before; its results
-   were never scored before this run):
+   were never scored before this run). A first run with the earlier design was stopped at invoice 264, before
+   any scoring, when we decided on step 3 from the final set's failures; the responses it recorded (Apertus
+   alone, extraction, review) were reused, so the cache holds confirm calls from two sessions:
 
 | System | Accuracy | Wrong payments (of 300) | Wrongly paid CHF | Missed payments (of 200) |
 |---|---|---|---|---|
@@ -337,6 +339,22 @@ layout (7.8% held) and none in the e-mail layout. No paid invoice carried a wron
 with the promoted lessons alone). (3) The second look adds nothing here; verification does the work. The
 honest reading is that the final set measured the design before the invoice-number gap was found (4.8%)
 and the confirm set measures it after (0 of 300); both are synthetic and from one generator family.
+
+**Who stopped what (confirm set, production design).** Each non-payable invoice is counted at the first
+layer that held it. Code makes every decision except one; Apertus reads every invoice, and the code
+checks act on what it read.
+
+| Layer | Who | Non-payable held (of 300) | Legitimate held (of 200) | What it handles |
+|---|---|---|---|---|
+| Hard checks (`badge.check`) | code, on fields Apertus extracted | 185 (62%) | 0 | revoked or expired mandate, scope, single/monthly limit, IBAN checksum, IBAN differs from the registered one, new supplier, paid invoice number, missing field |
+| Promoted lessons (`badge.promoted_checks`) | code; the rules were written by Apertus from reviewer notes | 39 (13%) | 0 | VAT does not add up, invoice not addressed to the client |
+| Verification (`badge.grounding`, `badge.cited`) | Apertus quotes, code checks the quotes | 56 (19%) | 7 | no invoice number, total illegible, value not in the invoice, same supplier and amount already paid |
+| Content review (`decide.review`) | Apertus decides (pay or human only) | 20 (7%) | 0 | fraud signals such as pressure wording, against the manual and lessons |
+| Second look (risk score ≥ 95) | logistic regression | 0 | 0 | unusual payment patterns (1 of 600 on the final set) |
+
+Apertus alone, given the same policy, manual, mandate and supplier list in one prompt, paid 178 of these
+300. Splitting the work moved that to 0: Apertus reads, quotes and judges content, and code holds the
+decision wherever a rule can be written. The final set gives the same split (63 / 12 / 18 / 6%).
 In total the study recorded 7,158 Apertus responses (`data/cache/study_responses.jsonl`, about USD 0.50).
 
 Sanity check of the labels and rules: with gold fields instead of model extraction, the badge decides
