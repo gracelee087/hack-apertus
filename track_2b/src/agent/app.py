@@ -635,7 +635,7 @@ RULES = [  # layer, code, what happens, where it is enforced
     ("promoted lesson", "E_VAT_MISMATCH", "to a human", "badge.promoted_checks: net + VAT != total"),
     ("promoted lesson", "E_WRONG_ADDRESSEE", "to a human", "badge.promoted_checks: invoice addressed to another company"),
     ("content review", "MODEL_FLAGGED", "to a human", "decide.review: Apertus reads against the firm manual and lessons"),
-    ("second look", "RISK_SCORE", "to a human", "decide.second_look: risk score >= 25 on an invoice the agent would pay (threshold chosen on the study tune set)"),
+    ("second look", "RISK_SCORE", "to a human", "decide.second_look: risk score >= 95 on an invoice the agent would pay (threshold chosen on the study tune set)"),
     ("gate", "G1", "refused", "gate.py: signature and payload hash"),
     ("gate", "G2", "refused", "gate.py: nonce never seen, request fresh"),
     ("gate", "G3", "refused", "gate.py: firm-issued entity card, agent not revoked"),

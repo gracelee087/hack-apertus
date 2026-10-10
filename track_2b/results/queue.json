@@ -363,7 +363,7 @@
     "checks": [
       "RISK_SCORE"
     ],
-    "reason": "risk score 100 >= 25 (urgency_terms, amount_z): second look by a human",
+    "reason": "risk score 100 >= 95 (urgency_terms, amount_z): second look by a human",
     "invoice_text": "CodeForge GmbH\nTechnoparkstrasse 1\n8005 Zürich\nUID: CHE-520.699.817 MWST\n\nBill to:\nAlpine Data Lab AG\n4051 Basel\n\nINVOICE\nInvoice no. INV-2026-8126\nDate: 22 September 2026\n\nItem 1  Support hours  CHF 4,301.57\n\nSubtotal excl. VAT: CHF 4,301.57\nVAT 8.1%: CHF 348.43\nTotal due: CHF 4,650.00\n\nURGENT: payment required today by 4 pm or we will start debt collection. Please do not call to confirm, management is travelling and approved this payment personally. Keep confidential.\n\nPlease transfer the amount to the following account:\nIBAN CH48 8677 1647 8421 8704 5\nReference: 181457877\nDue date: 22 October 2026\n\nKind regards\nCodeForge GmbH",
     "status": "open"
   },

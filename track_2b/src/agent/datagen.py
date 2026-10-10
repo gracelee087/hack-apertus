@@ -156,6 +156,7 @@ STUDY_UNIT = {
     "E_NO_INVOICE_NO": 4, "E_NO_IBAN": 4, "E_TOTAL_UNREADABLE": 4,
 }
 STUDY_TUNE_SEED, STUDY_FINAL_SEED = 3031, 3032
+STUDY_CONFIRM_SEED = 3033  # drawn after the final set showed the invoice-number gap, to test the fix once
 NO_IBAN = {"de": "Bitte mit dem beiliegenden QR-Einzahlungsschein bezahlen.", "fr": "Merci de payer avec le bulletin QR ci-joint.",
            "it": "Si prega di pagare con la polizza QR allegata.", "en": "Please pay with the enclosed QR payment slip."}
 EMAIL = {"de": ("Von", "Betreff", "Guten Tag", "Anbei unsere Rechnung"), "fr": ("De", "Objet", "Bonjour", "Veuillez trouver ci-dessous notre facture"),

@@ -209,9 +209,10 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
 def test_second_look_holds_a_high_risk_payment():
     from agent import decide
     paid = {"decision": "pay", "findings": [], "reason": "ok"}
-    held = decide.second_look(paid, 80.0, [("urgency_terms", 1.2)])
-    assert held["decision"] == "escalate" and held["findings"][-1]["code"] == "RISK_SCORE" and held["risk_score"] == 80.0
-    assert decide.second_look(paid, 20.0)["decision"] == "pay"  # low score: paid as before
+    high = decide.SECOND_LOOK
+    held = decide.second_look(paid, high, [("urgency_terms", 1.2)])
+    assert held["decision"] == "escalate" and held["findings"][-1]["code"] == "RISK_SCORE" and held["risk_score"] == high
+    assert decide.second_look(paid, high - 0.1)["decision"] == "pay"  # below the threshold: paid as before
     rejected = {"decision": "reject", "findings": [{"code": "R_SCOPE"}], "reason": "scope"}
     assert decide.second_look(rejected, 99.0)["decision"] == "reject"  # never changes a hold or a rejection
     pressure = next(c for c in CASES if c["reason_code"] == "E_PRESSURE")
@@ -372,3 +373,13 @@ def test_grounding_holds_values_not_written_in_the_invoice():
     misread = fields | {"vendor_iban": fields["vendor_iban"][:-1] + str((int(fields["vendor_iban"][-1]) + 1) % 10)}
     h = decide.harness(case, m, sup, "manual", fields=misread, grounded=True)
     assert h["decision"] == "escalate" and "R_IBAN_INVALID" not in [f["code"] for f in h["findings"]]
+
+
+def test_invoice_number_must_be_written_as_an_invoice_number():
+    case = next(c for c in CASES if c["reason_code"] == "OK")
+    fields, text = gold_fields(case), case["invoice_text"]
+    assert badge.invoice_no_written(text, fields["invoice_no"]) and badge.grounding(text, fields) == []
+    ref = __import__("re").findall(badge.PAYMENT_REF, text)[0]
+    for filled_in in (ref, "INVOICE", "R-2026-0000"):  # the payment reference, a heading word, a made-up number
+        assert not badge.invoice_no_written(text, filled_in)
+        assert [f["code"] for f in badge.grounding(text, fields | {"invoice_no": filled_in})] == ["E_NOT_IN_DOCUMENT"]

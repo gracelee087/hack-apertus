@@ -3,6 +3,8 @@
 Two sets drawn from datagen.STUDY_UNIT with their own seeds, after the design was frozen:
   tune  (500)  - choose the second-look threshold by the rule below, nothing else
   final (1000) - run once with that threshold fixed; never used to choose anything
+  confirm (500) - added after the final set showed that a missing invoice number gets filled in: run once
+                  after the invoice-number check was added, with everything else unchanged
 Both add two invoice layouts, invoices with two problems at once and invoices with an unreadable field.
 
 Threshold rule (fixed before either set was run): among 0, 5, ..., 100 (100 = second look off), take the
@@ -28,7 +30,9 @@ OUT = RESULTS / "study"
 THRESHOLDS = list(range(0, 101, 5))
 MAX_EXTRA_HOLDS = 0.02
 STYLES = ["block", "line", "email", "qr"]
-SETS = {"tune": (datagen.STUDY_TUNE_SEED, 5, "S"), "final": (datagen.STUDY_FINAL_SEED, 10, "F")}
+SETS = {"tune": (datagen.STUDY_TUNE_SEED, 5, "S"), "final": (datagen.STUDY_FINAL_SEED, 10, "F"),
+        "confirm": (datagen.STUDY_CONFIRM_SEED, 5, "C")}
+RUN_ONCE = ("final", "confirm")
 FATAL = ("Apertus endpoint error", "Apertus endpoint unreachable", "ReplayMiss")
 
 
@@ -133,17 +137,17 @@ def report(preds, threshold):
 
 def run(name):
     if name not in SETS:
-        sys.exit("usage: python -m agent study [gen|tune|final]")
-    if not data_path(name).exists():
+        sys.exit("usage: python -m agent study [gen|tune|final|confirm]")
+    if not data_path(name).exists():  # sets are deterministic: regenerating the others rewrites them unchanged
         generate()
     if not os.environ.get("LLM_CACHE_PATH"):
         sys.exit("set LLM_CACHE_PATH=data/cache/study_responses.jsonl so the reference recordings stay untouched")
     OUT.mkdir(parents=True, exist_ok=True)
     cases = read_jsonl(data_path(name))
     layout = {c["case_id"]: c.get("layout") for c in cases}
-    if name == "final":
-        if (OUT / "final.json").exists() and not os.environ.get("STUDY_FORCE"):
-            sys.exit("the final set has been run; it is run once (STUDY_FORCE=1 only to re-score from the recordings)")
+    if name in RUN_ONCE:
+        if (OUT / f"{name}.json").exists() and not os.environ.get("STUDY_FORCE"):
+            sys.exit(f"the {name} set has been run; it is run once (STUDY_FORCE=1 only to re-score from the recordings)")
         threshold = json.loads((OUT / "tune.json").read_text(encoding="utf-8"))["chosen_threshold"]
     print(f"LLM mode: {llm.mode()} | model: {llm.model_name()} | {name}: {len(cases)} invoices | cache {llm.CACHE_PATH}", flush=True)
     preds = run_cases(cases)

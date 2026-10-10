@@ -65,7 +65,7 @@ def review(case: dict, mandate: dict, fields: dict, manual: str) -> dict:
         return {"decision": "escalate", "reason": "model failure", "error": f"{type(e).__name__}: {e}"}
 
 
-SECOND_LOOK = 25.0  # risk score (0-100) from which an invoice the agent would pay goes to a human; chosen on the study's tune set
+SECOND_LOOK = 95.0  # risk score (0-100) from which an invoice the agent would pay goes to a human; chosen on the study's tune set
 
 
 def second_look(result: dict, risk_score: float, factors=()) -> dict:

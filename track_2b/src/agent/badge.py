@@ -68,14 +68,29 @@ def amounts_in(text: str) -> set:
     return out
 
 
+INVOICE_NO_LABELS = r"(?:Rechnungs-Nr\.|Facture n°|Fattura n\.|Invoice no\.|RECHNUNG|FACTURE|FATTURA|INVOICE)"
+PAYMENT_REF = r"(?:Referenz|Référence|Riferimento|Reference)\W{0,3}(\d+)"
+
+
+def invoice_no_written(text: str, invoice_no) -> bool:
+    """The invoice number must stand next to an invoice-number label, and be neither the payment reference
+    nor a heading word. Added after the study's final set (technical report, section 5)."""
+    no = str(invoice_no or "").strip()
+    if not no or no.upper() in ("RECHNUNG", "FACTURE", "FATTURA", "INVOICE") or no in re.findall(PAYMENT_REF, text):
+        return False
+    return re.search(INVOICE_NO_LABELS + r"\s*:?\s*" + re.escape(no) + r"\b", text) is not None
+
+
 def grounding(text: str, fields: dict) -> list:
     """Fields the payment depends on must be written in the document: the IBAN as a whole IBAN, the total as
-    an amount. A model that fills a gap (a total from net + VAT, a reference read as an IBAN) is caught here.
-    Added after the study's tune set (technical report, section 6)."""
+    an amount, the invoice number as an invoice number. A model that fills a gap (a total from net + VAT, a
+    reference read as an IBAN or as the invoice number) is caught here. IBAN and total: added after the study's
+    tune set; invoice number: added after its final set (technical report, section 5)."""
     ibans = {normalize_iban(m.group()) for m in re.finditer(r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{1,4}){3,8}\b", text)}
-    iban, total = normalize_iban(fields.get("vendor_iban")), _num(fields.get("total_chf"))
+    iban, total, no = normalize_iban(fields.get("vendor_iban")), _num(fields.get("total_chf")), fields.get("invoice_no")
     missing = ([f"IBAN {iban}"] if iban and iban not in ibans else []) + \
-              ([f"total CHF {total:.2f}"] if total is not None and round(total, 2) not in amounts_in(text) else [])
+              ([f"total CHF {total:.2f}"] if total is not None and round(total, 2) not in amounts_in(text) else []) + \
+              ([f"invoice number {no}"] if str(no or "").strip() and not invoice_no_written(text, no) else [])
     return [{"severity": "escalate", "code": "E_NOT_IN_DOCUMENT",
              "msg": f"not written in the invoice: {', '.join(missing)}"}] if missing else []
 
