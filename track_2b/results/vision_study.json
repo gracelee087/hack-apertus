@@ -1,0 +1,1168 @@
+{
+  "n": 50,
+  "model": "swiss-ai/apertus-v1.5-8b",
+  "seed": 7,
+  "apertus_misread_any": 48,
+  "apertus_misread_by_field": {
+    "iban": 41,
+    "total": 35,
+    "invoice_no": 33
+  },
+  "misread_and_held": 48,
+  "misread_and_passed": [],
+  "ocr_all_three": 0.92,
+  "rows": [
+    {
+      "case_id": "C166",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C486",
+      "label": "escalate",
+      "reason_code": "E_TOTAL_UNREADABLE",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "E_VAT_MISMATCH",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": false,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C078",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "E_VAT_MISMATCH",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C203",
+      "label": "reject",
+      "reason_code": "R_REVOKED",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID",
+        "R_REVOKED"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C334",
+      "label": "escalate",
+      "reason_code": "E_PRESSURE",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C025",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_SINGLE",
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C038",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C421",
+      "label": "escalate",
+      "reason_code": "E_NEW_VENDOR+E_PRESSURE",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C275",
+      "label": "escalate",
+      "reason_code": "E_LIMIT_SINGLE",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C049",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C188",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C299",
+      "label": "escalate",
+      "reason_code": "E_IBAN_CHANGED",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C030",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C466",
+      "label": "escalate",
+      "reason_code": "E_NO_IBAN",
+      "layout": "block",
+      "apertus_wrong": [
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": null,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C260",
+      "label": "reject",
+      "reason_code": "R_DUPLICATE",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C110",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C020",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C045",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C223",
+      "label": "reject",
+      "reason_code": "R_SCOPE",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID",
+        "R_SCOPE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C215",
+      "label": "reject",
+      "reason_code": "R_REVOKED",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": "RuntimeError: Apertus endpoint error 400: b'{\"error\":{\"message\":\"litellm.BadRequestError: OpenAIException - Unsupported model or no available clients: alias-apertus. Received Model Group=swiss-ai/apertus-v1.5-8b\\\\nAvailable Model Group Fallbacks=[\\'swiss-ai/apertus-v1.5-70b\\', \\'aisingapore/Qwen-SEA-LION-v4-32B-IT\\', \\'speakleash/Bielik-11B-v3.0-In'",
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "EXTRACTION_INCOMPLETE",
+        "R_REVOKED"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C036",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_VAT_MISMATCH",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C124",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "email",
+      "apertus_wrong": [
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C047",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C283",
+      "label": "escalate",
+      "reason_code": "E_LIMIT_MONTH",
+      "layout": "email",
+      "apertus_wrong": [
+        "total"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_MONTH",
+        "E_LIMIT_SINGLE",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C218",
+      "label": "reject",
+      "reason_code": "R_SCOPE",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "E_NOT_IN_DOCUMENT",
+        "E_VAT_MISMATCH",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C031",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C424",
+      "label": "escalate",
+      "reason_code": "E_NEW_VENDOR+E_PRESSURE",
+      "layout": "email",
+      "apertus_wrong": [
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_WRONG_ADDRESSEE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C290",
+      "label": "escalate",
+      "reason_code": "E_LIMIT_MONTH",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_MONTH",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID",
+        "R_SCOPE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C064",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_SINGLE",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C115",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban",
+        "total"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_VAT_MISMATCH",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C323",
+      "label": "escalate",
+      "reason_code": "E_NEW_VENDOR",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C322",
+      "label": "escalate",
+      "reason_code": "E_NEW_VENDOR",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C489",
+      "label": "escalate",
+      "reason_code": "E_TOTAL_UNREADABLE",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban",
+        "total"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": false,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C032",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID",
+        "R_SCOPE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C296",
+      "label": "escalate",
+      "reason_code": "E_IBAN_CHANGED",
+      "layout": "qr",
+      "apertus_wrong": [
+        "iban",
+        "total"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C300",
+      "label": "escalate",
+      "reason_code": "E_IBAN_CHANGED",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "CATEGORY_UNCLEAR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C204",
+      "label": "reject",
+      "reason_code": "R_REVOKED",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID",
+        "R_REVOKED"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C026",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C114",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C024",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "qr",
+      "apertus_wrong": [],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_VAT_MISMATCH"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C286",
+      "label": "escalate",
+      "reason_code": "E_LIMIT_MONTH",
+      "layout": "email",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_MONTH",
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE",
+        "R_IBAN_INVALID",
+        "R_SCOPE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C440",
+      "label": "reject",
+      "reason_code": "R_DUPLICATE+E_IBAN_CHANGED",
+      "layout": "qr",
+      "apertus_wrong": [
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_IBAN_CHANGED",
+        "E_NOT_IN_DOCUMENT",
+        "E_VAT_MISMATCH"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C069",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C149",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban",
+        "total"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C481",
+      "label": "escalate",
+      "reason_code": "E_TOTAL_UNREADABLE",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_SINGLE",
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": false,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C074",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "qr",
+      "apertus_wrong": [
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C277",
+      "label": "escalate",
+      "reason_code": "E_LIMIT_MONTH",
+      "layout": "block",
+      "apertus_wrong": [],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_LIMIT_MONTH"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C061",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "block",
+      "apertus_wrong": [
+        "iban"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C293",
+      "label": "escalate",
+      "reason_code": "E_IBAN_CHANGED",
+      "layout": "line",
+      "apertus_wrong": [
+        "iban",
+        "total"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NEW_VENDOR",
+        "E_NOT_IN_DOCUMENT",
+        "R_IBAN_INVALID"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": true,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    },
+    {
+      "case_id": "C158",
+      "label": "pay",
+      "reason_code": "OK",
+      "layout": "email",
+      "apertus_wrong": [
+        "total",
+        "invoice_no"
+      ],
+      "error": null,
+      "held_by_checks": true,
+      "codes": [
+        "E_NOT_IN_DOCUMENT",
+        "E_WRONG_ADDRESSEE"
+      ],
+      "ocr": {
+        "total": true,
+        "iban": false,
+        "invoice_no": true,
+        "misread_iban_passes_checksum": false
+      }
+    }
+  ]
+}

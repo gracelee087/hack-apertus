@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from . import badge, datagen, decide, identity, lessons, llm, pain001, prompts, risk, security
+from . import badge, basis, datagen, decide, identity, lessons, llm, pain001, prompts, risk, security
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256, write_jsonl
 from .datagen import TODAY
 from .desk import Desk
@@ -157,9 +157,10 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
     for p in preds:
         c, m, h = by_case[p["case_id"]], mandates[p["client_id"]], p[PRODUCTION]
         f = p["fields"]
+        tags = basis.of_decision({**h, "risk_score": p.get("risk_score")}, m, manual1)
         payload = {"case_id": c["case_id"], "decision": h["decision"], "vendor": f.get("vendor_name"),
                    "iban": normalize_iban(f.get("vendor_iban")), "amount_chf": _num(f.get("total_chf")),
-                   "executes_payment": h["decision"] == "pay"}
+                   "executes_payment": h["decision"] == "pay", "basis": tags}
         res = desk.request(m["client_id"], "payment.decide", payload, case_id=c["case_id"], decision=h["decision"],
                            vendor=f.get("vendor_name"), iban=payload["iban"], amount_chf=payload["amount_chf"],
                            invoice_no=f.get("invoice_no"), risk_score=p.get("risk_score"), reason=h.get("reason", ""),
@@ -172,7 +173,7 @@ def write_outputs(test, preds, mandates, manual1, lesson_info, out):
                 "iban": payload["iban"], "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
                 "risk_score": p.get("risk_score"),
                 "checks": [x["code"] for x in h.get("findings", [])],
-                "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open"}
+                "reason": h.get("reason", ""), "invoice_text": c["invoice_text"], "status": "open", "basis": tags}
         if h["decision"] == "pay":
             paid_items[m["client_id"]].append(item)
             payments[m["client_id"]].append({"end_to_end_id": c["case_id"], "creditor": f.get("vendor_name", ""),

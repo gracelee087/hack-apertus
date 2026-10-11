@@ -194,6 +194,9 @@ table.agents td, table.agents th { white-space:nowrap; padding:8px 8px; } table.
 .alerts td:first-child, .alerts th:first-child { padding-left:20px; } .alerts td:last-child, .alerts th:last-child { padding-right:20px; }
 .alerts tr:last-child > td { border-bottom:0; }
 .sig { display:inline-block; font-size:12px; margin:1px 6px 1px 0; }
+.srcs { display:inline-flex; flex-wrap:wrap; gap:4px; vertical-align:middle; } .srcs.full { display:flex; flex-direction:column; align-items:flex-start; margin:4px 0 8px; }
+.src { font-size:11px; line-height:1.5; background:var(--chip); border:1px solid var(--line); border-left:3px solid var(--tc, var(--mute)); border-radius:4px; padding:0 6px; white-space:nowrap; }
+.srcs.full .src { white-space:normal; font-size:12px; } .src b { font-weight:650; }
 .card-h { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .card-h .sub { border:0 !important; margin:2px 0 14px !important; padding:0 !important; }
 .uplot { display:grid; grid-template-columns:120px 1fr; row-gap:6px; column-gap:12px; margin:2px 0 18px; }
@@ -310,6 +313,17 @@ const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH
 const chf0 = x => x == null ? "–" : Number(x).toLocaleString("de-CH",{maximumFractionDigits:0});
 const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
 const dec = d => `<span class="pill ${esc(d)}">${esc(decName(d))}</span>`;
+// where a decision came from (basis.py): colour = who applied the source
+const BY_COLOR = {"OCR": "var(--ink2)", "code": "var(--s-control)", "Apertus": "var(--s-fraud)", "Apertus + code": "var(--logo)", "risk model": "var(--mute)", "person": "var(--st-warn)"};
+const BY_KO = {"OCR": "OCR", "code": "코드", "Apertus": "Apertus", "Apertus + code": "Apertus + 코드 교차 확인", "risk model": "위험 모델", "person": "사람"};
+const HUMAN_BASIS = () => [["called_supplier", t("등록된 번호로 거래처에 전화 확인", "called the supplier on a number already on file")],
+  ["client_confirmed", t("고객이 이 지급을 확인", "the client confirmed this payment")], ["other", t("기타 (메모에)", "other (see note)")]];
+const byName = b => LANG === "ko" ? (BY_KO[b] || b) : b;
+function tags(b, full = false) {
+  if (!b || !b.length) return `<span class="mute">–</span>`;
+  return `<span class="srcs ${full ? "full" : ""}">${b.map(x => `<span class="src" style="--tc:${BY_COLOR[x.by] || "var(--mute)"}" title="${esc(`${byName(x.by)}: ${x.detail}`)}"><b>${esc(x.source)}</b> · ${esc(x.ref)}${full ? ` <span class="mute">(${esc(byName(x.by))}) ${esc(x.detail)}</span>` : ""}</span>`).join("")}</span>`;
+}
+const tagLegend = () => `<span class="srcs">${Object.keys(BY_COLOR).map(k => `<span class="src" style="--tc:${BY_COLOR[k]}">${esc(byName(k))}</span>`).join("")}</span>`;
 const ICONS = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   building: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>',
@@ -441,11 +455,9 @@ async function sidebar(active) {
     ${OV.clients.map(c => { const s = statusOf(c); return `<a href="#/c/${c.client_id}" class="${active === c.client_id ? "on" : ""}" title="${esc(c.name)} · ${esc(s.label)}">
       <span class="dot" style="background:${s.color}"></span><span class="nm">${esc(c.name)}</span>${c.queue_open ? `<span class="badge">${c.queue_open}</span>` : ""}</a>`; }).join("")}
     <div class="sec">${t("사무소", "Firm")}</div>
-    <a href="#/evaluation" class="${active === "evaluation" ? "on" : ""}">${ic("chart")}<span class="nm">${t("에이전트 평가", "Agent evaluation")}</span></a>
-    <a href="#/analytics" class="${active === "analytics" ? "on" : ""}">${ic("shield")}<span class="nm">${t("위험 분석", "Risk analytics")}</span></a>
-    <a href="#/datascience" class="${active === "datascience" ? "on" : ""}">${ic("cpu")}<span class="nm">${t("위험 모델 (데이터과학)", "Risk model (data science)")}</span></a>
-    <a href="#/ledger" class="${active === "ledger" ? "on" : ""}">${ic("book")}<span class="nm">${t("장부", "Ledger")}</span></a>
-    <a href="#/database" class="${active === "database" ? "on" : ""}">${ic("file")}<span class="nm">${t("데이터베이스", "Database")}</span></a>
+    <a href="#/health" class="${active === "health" ? "on" : ""}">${ic("chart")}<span class="nm">${t("에이전트 상태", "Agent Health")}</span></a>
+    <a href="#/ledger" class="${active === "ledger" ? "on" : ""}">${ic("book")}<span class="nm">${t("감사 기록", "Audit Trail")}</span></a>
+    <a href="#/database" class="${active === "database" ? "on" : ""}">${ic("file")}<span class="nm">${t("인보이스 풀", "Invoice Pool")}</span></a>
     <div class="foot">${ic("cpu", 13)} ${esc(OV.model)}<br>
       <span class="dot" style="background:var(--st-good)"></span> ${t("정상", "clear")} &nbsp;<span class="dot" style="background:var(--st-warn)"></span> ${t("확인 필요", "attention")}<br>
       <span class="dot" style="background:var(--st-crit)"></span> ${t("에이전트 정지", "agent off")} &nbsp;<span class="dot" style="background:var(--mute)"></span> ${t("위임 취소", "no mandate")}</div>`;
@@ -454,28 +466,36 @@ function topbar(crumbs) {
   const live = OV.llm_mode === "live", ok = OV.ledger_ok && OV.audit_ok;
   $("top").innerHTML = `<nav class="crumbs">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<b>${esc(c[0])}</b>` : c[1] ? `<a href="${c[1]}">${esc(c[0])}</a>${ic("chev", 14)}` : `<span>${esc(c[0])}</span>${ic("chev", 14)}`).join("")}</nav>
     <span class="env ${live ? "live" : "replay"}" title="${esc(OV.model)}">${live ? t("실시간 · Apertus", "Live · Apertus") : t("재현 모드", "Replay")}</span>
-    <a class="tool" href="#/ledger" title="${t("해시 체인·서명·신원 감사", "hash chain, signatures, identity audit")}"><span class="${ok ? "ok" : "bad"}">${ic(ok ? "shield" : "alert", 15)}</span>${ok ? t("장부 검증됨", "Ledger verified") : t("장부 손상", "Ledger broken")}</a>
+    <a class="tool" href="#/ledger" title="${t("해시 체인·서명·신원 감사", "hash chain, signatures, identity audit")}"><span class="${ok ? "ok" : "bad"}">${ic(ok ? "shield" : "alert", 15)}</span>${ok ? t("감사 기록 검증됨", "Audit Trail verified") : t("감사 기록 손상", "Audit Trail broken")}</a>
     <a class="tool bell" href="#/" title="${t("사람 확인 대기", "waiting for a human")}">${ic("bell", 16)}${OV.totals.queue_open ? `<span class="cnt">${OV.totals.queue_open}</span>` : ""}</a>
     <button class="tool" onclick="setLang('${LANG === "ko" ? "en" : "ko"}')">${ic("globe", 15)} ${LANG === "ko" ? "EN" : "KO"}</button>
     <div class="user"><span class="avatar">HP</span><div><b>${t("지급 책임자", "Head of payments")}</b><small>${esc(OV.firm)}</small></div></div>`;
 }
 let FOCUS = null;
+// Agent Health: one firm page, three tabs, each answering one question (older links still work)
+const HEALTH_ALIAS = {evaluation: "results", analytics: "caught", datascience: "score"};
+const healthTabs = () => [["results", t("결과", "Results"), t("시스템 전체가 Apertus 혼자보다 잘못 지급을 덜 하나?", "Does the whole system pay fewer invoices it should not than Apertus alone?")],
+  ["caught", t("누가 잡았나", "Who caught what"), t("위험 유형마다 어느 층(코드 · Apertus · 위험 점수)이 잡았고, 무엇을 놓쳤나?", "Which layer (code · Apertus · risk score) caught each risk type, and what was missed?")],
+  ["score", t("위험 점수", "Risk score"), t("위험 점수는 어떻게 만들었고, 얼마나 정확한가?", "How is the risk score built, and how good is it?")]];
+function healthHead(tab) {
+  const cur = healthTabs().find(x => x[0] === tab);
+  return `${pageHead(t("에이전트 상태", "Agent Health"), esc(cur[2]))}
+    <nav class="tabs">${healthTabs().map(([k, n]) => `<a href="#/health/${k}" class="${k === tab ? "on" : ""}">${n}</a>`).join("")}</nav>`;
+}
 async function route() {
-  const h = location.hash.replace(/^#\/?/, "").split("/");
+  let h = location.hash.replace(/^#\/?/, "").split("/");
+  if (HEALTH_ALIAS[h[0]]) h = ["health", HEALTH_ALIAS[h[0]]];
+  if (h[0] === "health" && !healthTabs().some(x => x[0] === h[1])) h = ["health", "results"];
   await sidebar(h[0] === "c" ? h[1] : h[0] || "overview");
   FOCUS = h[0] === "c" ? decodeURIComponent(h[3] || "") || null : null;
   const cl = h[0] === "c" && OV.clients.find(c => c.client_id === h[1]);
   topbar(h[0] === "c" ? [[t("고객사", "Clients"), "#/"], [cl ? cl.name : h[1], `#/c/${h[1]}`], [(ctabs().find(x => x[0] === (TAB_ALIAS[h[2]] || h[2] || "todo")) || ctabs()[0])[1]]]
-    : h[0] === "database" ? [[t("사무소", "Firm")], [t("데이터베이스", "Database")]]
-    : h[0] === "evaluation" ? [[t("사무소", "Firm")], [t("에이전트 평가", "Agent evaluation")]]
-    : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("장부", "Ledger")]]
-    : h[0] === "analytics" ? [[t("사무소", "Firm")], [t("위험 분석", "Risk analytics")]]
-    : h[0] === "datascience" ? [[t("사무소", "Firm")], [t("위험 모델 (데이터과학)", "Risk model (data science)")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
+    : h[0] === "database" ? [[t("사무소", "Firm")], [t("인보이스 풀", "Invoice Pool")]]
+    : h[0] === "health" ? [[t("사무소", "Firm")], [t("에이전트 상태", "Agent Health"), "#/health"], [healthTabs().find(x => x[0] === h[1])[1]]]
+    : h[0] === "ledger" ? [[t("사무소", "Firm")], [t("감사 기록", "Audit Trail")]] : [[t("업무", "Workspace")], [t("전체 현황", "Overview")]]);
   if (h[0] === "c") return clientPage(h[1], h[2] || "overview");
-  if (h[0] === "evaluation") return evaluation();
+  if (h[0] === "health") return {results: evaluation, caught: analyticsPage, score: dataSciencePage}[h[1]]();
   if (h[0] === "ledger") return ledgerPage();
-  if (h[0] === "analytics") return analyticsPage();
-  if (h[0] === "datascience") return dataSciencePage();
   if (h[0] === "database") return databasePage();
   return dashboard();
 }
@@ -655,18 +675,24 @@ function cTodo(c) {  // what needs a human now, in order, with the decision butt
       <span class="n">${x.slack == null ? "–" : `${x.slack}${t("일", "d")}`}</span><span class="n"><b>${chf(i.amount_chf)}</b></span><span class="chev">${ic("chev", 14)}</span></summary>
       <div>${pipe(flowFromEntry({...i, decision: "escalate", gate: "OK", action: "payment.decide"}))}
         <p><b>${t("보류 이유", "Why held")}:</b> ${esc(i.reason)}</p>
+        ${i.basis ? `<p style="margin:0"><b>${t("근거 출처", "Sources")}:</b></p>${tags(i.basis, true)}` : ""}
         ${more(t("청구서 원문", "Invoice text"), `<pre>${esc(i.invoice_text)}</pre>`)}
-        <input id="n-${i.case_id}" placeholder="${t("검토 메모 (이유) — 이 고객사 에이전트의 교훈이 돼요", "Reviewer note (why) — becomes a lesson for this client's agent")}" style="width:100%;margin-top:10px">
+        <select id="b-${i.case_id}" style="margin-top:10px"><option value="">${t("승인 근거 선택 (승인할 때 필수)", "Basis for approving (required to approve)")}</option>${HUMAN_BASIS().map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select>
+        <input id="n-${i.case_id}" placeholder="${t("검토 메모 (이유, 승인할 때 필수) — 거절하면 이 고객사 에이전트의 교훈이 돼요", "Reviewer note (why; required to approve) — a rejection note becomes a lesson for this client's agent")}" style="width:100%;margin-top:6px">
         <div class="row"><button class="btn primary" onclick="act('${i.case_id}','approve')">${ic("check", 15)} ${t("지급 승인", "Approve payment")}</button>
           <button class="btn danger" onclick="act('${i.case_id}','reject')">${ic("ban", 15)} ${t("거절", "Reject")}</button>
           <span class="meta">${t(`${own} 이름으로 장부에 기록돼요`, `recorded in the ledger as ${own}`)}</span></div></div></details>`; };
   return `${banner}${strip}
   <div class="card"><div class="card-h"><div><h2>${t(`확인할 청구서 (${open.length})`, `Waiting for you (${open.length})`)}</h2><p class="sub">${t("처리할 순서대로예요. 줄을 누르면 보류 이유를 보고 바로 승인하거나 거절할 수 있어요.", "In the order to handle them. Open a row to see why it was held, then approve or reject.")}</p></div></div>
     ${open.length ? `<div class="qlist"><div class="qgrid qh"><span>#</span><span>${t("건", "Case")}</span><span>${t("거래처", "Supplier")}</span><span>${t("신호", "Signal")}</span><span class="n">${t("위험", "Risk")}</span><span class="n">${t("여유", "Spare")}</span><span class="n">CHF</span><span></span></div>${open.map(row).join("")}</div>` : `<p class="mute">${t("없음", "none")}</p>`}
-    ${done.length ? `<div style="margin-top:20px">${more(t(`처리한 건 (${done.length})`, `Handled (${done.length})`), `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결과", "Result")}</th><th>${t("메모", "Note")}</th></tr>${done.map(i => `<tr><td><code>${esc(i.case_id)}</code></td><td>${esc(i.vendor)}</td><td class="n">${chf(i.amount_chf)}</td><td>${i.status === "approved" ? `<span class="ok">${t("승인", "approved")}</span>` : `<span class="bad">${t("거절", "rejected")}</span>`}</td><td class="mute">${esc(i.note || "")}</td></tr>`).join("")}</table>`)}</div>` : ""}</div>
-  <div class="card"><h2>${t(`처리한 청구서 (${c.decisions.length})`, `Processed invoices (${c.decisions.length})`)}</h2><p class="sub">${t("이 고객사 에이전트에게 바로 전달된 청구서와 결정. 최근 것부터.", "Invoices delivered straight to this client's agent, and what it decided. Newest first.")}</p>
-    ${c.decisions.length ? `<table><tr><th>${t("날짜", "Date")}</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th></tr>
-      ${c.decisions.slice(0, 10).map(e => `<tr><td class="mute">${esc((e.ts || "").slice(0, 10))}</td><td><code>${esc(e.case_id)}</code></td><td>${dots(flowFromEntry(e))}</td><td>${esc(e.vendor || "")}</td><td class="n">${chf(e.amount_chf)}</td><td>${e.gate !== "OK" ? `<span class="bad">${t("문지기 거부", "refused by gate")}</span>` : e.decision ? dec(e.decision) : ""}</td></tr>`).join("")}</table>` : `<p class="mute">${t("없음", "none")}</p>`}</div>`;
+    ${done.length ? `<div style="margin-top:20px">${more(t(`처리한 건 (${done.length})`, `Handled (${done.length})`), `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결과", "Result")}</th><th>${t("메모", "Note")}</th></tr>${done.map(i => `<tr><td><code>${esc(i.case_id)}</code></td><td>${esc(i.vendor)}</td><td class="n">${chf(i.amount_chf)}</td><td>${i.status === "approved" ? `<span class="ok">${t("승인", "approved")}</span>` : `<span class="bad">${t("거절", "rejected")}</span>`}</td><td class="mute">${esc([(HUMAN_BASIS().find(([k]) => k === i.human_basis) || [])[1], i.note].filter(Boolean).join(" · "))}</td></tr>`).join("")}</table>`)}</div>` : ""}</div>
+  <div class="card"><h2>${t("청구서 파일 넣기", "Bring in an invoice file")}</h2><p class="sub">${t("PDF · PNG · JPEG · TIFF. 글자가 든 PDF는 그대로 읽고, 스캔·사진은 이 서버 안의 OCR(Tesseract)로 읽어요. 그 글자를 이 고객사 에이전트가 처리해요.", "PDF, PNG, JPEG or TIFF. A PDF with text is read as it is; a scan or photo is read by OCR (Tesseract) on this server. This client's agent then processes the text.")}</p>
+    <div class="row"><input type="file" id="up-${c.client_id}" accept="application/pdf,image/png,image/jpeg,image/tiff">
+      <button class="btn primary" onclick="uploadInvoice('${c.client_id}')">${ic("check", 15)} ${t("에이전트에게 보내기", "Send to the agent")}</button></div>
+    <div id="upres-${c.client_id}"></div></div>
+  <div class="card"><h2>${t(`처리한 청구서 (${c.decisions.length})`, `Processed invoices (${c.decisions.length})`)}</h2><p class="sub">${t("이 고객사 에이전트에게 바로 전달된 청구서와 결정. 최근 것부터. 근거 = 결정이 기댄 출처 (색 = 누가 적용했나, 마우스를 올리면 내용):", "Invoices delivered straight to this client's agent, and what it decided. Newest first. Sources = what each decision relied on (colour = who applied it; hover for the detail):")} ${tagLegend()}</p>
+    ${c.decisions.length ? `<table><tr><th>${t("날짜", "Date")}</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("근거 출처", "Sources")}</th></tr>
+      ${c.decisions.slice(0, 10).map(e => `<tr><td class="mute">${esc((e.ts || "").slice(0, 10))}</td><td><code>${esc(e.case_id)}</code></td><td>${dots(flowFromEntry(e))}</td><td>${esc(e.vendor || "")}</td><td class="n">${chf(e.amount_chf)}</td><td>${e.gate !== "OK" ? `<span class="bad">${t("문지기 거부", "refused by gate")}</span>` : e.decision ? dec(e.decision) : ""}</td><td>${tags(e.basis)}</td></tr>`).join("")}</table>` : `<p class="mute">${t("없음", "none")}</p>`}</div>`;
 }
 function cRecords(c) {  // what happened: decisions, why, files, ledger
   const by = {}; c.decisions.forEach(e => { const k = e.gate !== "OK" ? "gate" : e.decision; by[k] = (by[k] || 0) + 1; });
@@ -686,9 +712,9 @@ function cRecords(c) {  // what happened: decisions, why, files, ledger
       ${risks.length ? donut(risks) : `<p class="mute">${t("없음", "none")}</p>`}</div>
   </div></div>
   <div class="card" style="margin-top:16px"><h2>${t("상세", "Details")}</h2>
-    ${more(t("전체 결정 목록", "All decisions"), `<table><tr><th>#</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("검사", "Checks")}</th><th>${t("문지기", "Gate")}</th><th>${t("이유", "Reason")}</th></tr>
+    ${more(t("전체 결정 목록", "All decisions"), `<table><tr><th>#</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("검사", "Checks")}</th><th>${t("근거 출처", "Sources")}</th><th>${t("문지기", "Gate")}</th><th>${t("이유", "Reason")}</th></tr>
       ${c.decisions.map(e => `<tr><td>${e.seq}</td><td>${esc(e.case_id)}</td><td>${dots(flowFromEntry(e))}</td><td>${esc(e.vendor)}</td><td class="n">${chf(e.amount_chf)}</td>
-        <td>${e.decision ? dec(e.decision) : ""}</td><td class="mute">${esc((e.checks || []).map(x => riskName(x)).join(", "))}</td>
+        <td>${e.decision ? dec(e.decision) : ""}</td><td class="mute">${esc((e.checks || []).map(x => riskName(x)).join(", "))}</td><td>${tags(e.basis)}</td>
         <td class="${e.gate === "OK" ? "ok" : "bad"}">${esc(gateName(e.gate))}</td><td class="mute">${esc(e.reason)}</td></tr>`).join("")}</table>`)}
     ${more(t(`에이전트가 막은 청구서와 이유 (${c.risky.length})`, `What the agent held back and why (${c.risky.length})`), riskTable(c.risky))}
     ${more(t(`지급 파일 (${c.files.length}, ISO 20022 pain.001.001.09)`, `Payment files (${c.files.length}, ISO 20022 pain.001.001.09)`), `<p class="sub">${t(`${c.name}의 은행에 올릴 파일. 이 고객사 에이전트가 요청했고 문지기를 통과했어요.`, `For upload to ${c.name}'s bank. Each file was requested by this client's agent and passed the gate.`)}</p>
@@ -739,8 +765,17 @@ async function processInvoice(cid) {
       ${more(t("Apertus가 읽은 필드", "Fields read by Apertus"), `<pre>${esc(JSON.stringify(h.fields, null, 2))}</pre>`)}`;
   } catch (e) { $("pstatus").textContent = e.message; }
 }
+async function uploadInvoice(cid) {
+  const f = $(`up-${cid}`).files[0], out = $(`upres-${cid}`);
+  if (!f) { alert(t("파일을 고르세요", "Choose a file")); return; }
+  out.innerHTML = `<p class="meta">${t("읽는 중…", "Reading…")}</p>`;
+  try {
+    const h = await api(`/api/clients/${cid}/intake`, {method: "POST", headers: {"Content-Type": f.type, "X-File-Name": encodeURIComponent(f.name)}, body: f});
+    out.innerHTML = `<p><b>${esc(h.case_id)}</b> · ${dec(h.decision)} · ${esc(h.intake.method === "ocr" ? "OCR" : t("PDF 글자", "PDF text"))}</p>${tags(h.basis, true)}${more(t("읽은 글자", "Text read from the file"), `<pre>${esc(h.text)}</pre>`)}`;
+  } catch (e) { out.innerHTML = `<p class="bad">${esc(e.message)}</p>`; }
+}
 async function act(id, action) {
-  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); route(); } catch (e) { alert(e.message); }
+  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value, basis: $(`b-${id}`).value}); route(); } catch (e) { alert(e.message); }
 }
 function cAgent(c) {
   const a = c.agent, b = a.badge || {}, card = a.card || {}, L = c.lessons;
@@ -854,7 +889,7 @@ function ledgerTable(rows) {
     ${rows.map(e => `<tr><td>${e.seq}</td><td>${String(e.actor || "").startsWith("did:") ? `<code>${short(e.actor)}</code>` : esc(e.actor)}</td><td>${esc(actName(e.action))}</td>
       <td class="${e.gate && e.gate !== "OK" ? "bad" : ""}">${esc(e.gate ? gateName(e.gate) : "")}</td><td>${esc(e.client_id || "")}</td><td>${esc(e.case_id || "")}</td>
       <td class="n">${e.amount_chf != null ? chf(e.amount_chf) : ""}</td>
-      <td class="mute">${esc(e.reason || e.note || e.file || e.attack || "")}</td><td><code>${esc(e.hash.slice(0, 10))}</code></td></tr>`).join("")}</table>`;
+      <td class="mute">${esc(e.reason || e.note || e.file || e.attack || "")}${e.basis ? `<div>${tags(e.basis)}</div>` : ""}</td><td><code>${esc(e.hash.slice(0, 10))}</code></td></tr>`).join("")}</table>`;
 }
 
 // ---------------------------------------------------------------- firm pages
@@ -884,7 +919,7 @@ async function databasePage() {  // the files the system is built and tested on,
       ${d.cases.map(c => `<tr><td><code>${esc(c.case_id)}</code></td><td>${esc(c.split)}</td><td>${esc(c.client_id)}</td><td>${esc(c.lang)}</td><td>${esc(c.vendor)}</td><td>${esc(c.type)}</td><td>${dec(c.label)}</td><td class="n">${chf(c.total_chf)}</td></tr>`).join("")}</table></div>`},
     history: {title: t(`과거 지급 (${d.history.rows.toLocaleString()})`, `Past payments (${d.history.rows.toLocaleString()})`), render: () => `<p class="sub">${t("위험 점수 모델의 학습 데이터. 종류별 건수:", "Training data for the risk score, by kind:")}</p>
       ${bars(Object.entries(d.history.kinds).map(([k, v]) => ({label: {legit: t("정상", "legitimate"), fraud: t("사기", "fraud"), control: t("통제 위반", "control")}[k] || k, v, color: k === "fraud" ? C.fraud : k === "control" ? C.control : C.paid})))}
-      <p class="meta"><a href="#/datascience">${t("패턴·특성·모델은 위험 모델 화면에서", "Patterns, features and the model on the risk model page")} ${ic("arrow", 13)}</a></p>`},
+      <p class="meta"><a href="#/health/score">${t("패턴·특성·모델은 위험 점수 탭에서", "Patterns, features and the model in the Risk score tab")} ${ic("arrow", 13)}</a></p>`},
     historySample: {title: t("과거 지급 샘플 12행", "Past payments, first 12 rows"), render: () => { const cols = Object.keys(d.history.sample[0] || {});
       return `<div style="overflow-x:auto"><table><tr>${cols.map(k => `<th>${esc(k)}</th>`).join("")}</tr>${d.history.sample.map(r => `<tr>${cols.map(k => `<td>${esc(String(r[k]))}</td>`).join("")}</tr>`).join("")}</table></div>`; }},
     vendors: {title: t(`거래처 (${d.vendors.length})`, `Suppliers (${d.vendors.length})`), render: () => `<table><tr><th>${t("고객사", "Client")}</th><th>${t("거래처", "Supplier")}</th><th>${t("지출 유형", "Category")}</th><th>${t("언어", "Lang")}</th><th>IBAN</th></tr>
@@ -893,7 +928,7 @@ async function databasePage() {  // the files the system is built and tested on,
       ${bars(Object.entries(d.cache.by_step).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({label: {extract: t("필드 추출", "field extraction"), review: t("내용 검토", "content review"), baseline: t("단독 판단 (비교용)", "alone (baseline)"), distill: t("교훈 정리", "lesson distilling")}[k] || k, v, color: C.control})))}`},
     lessons: {title: t(`사무소 공통 교훈 (${d.lessons.length})`, `Firm-wide lessons (${d.lessons.length})`), render: () => `<p class="sub">${t("학습 분할에서 사람이 고친 사례로 Apertus가 정리한 규칙. 모든 에이전트의 매뉴얼에 들어가요.", "Rules Apertus distilled from the cases a human overruled in the train split; in every agent's manual.")}</p><ol>${d.lessons.map(x => `<li>${esc(x)}</li>`).join("")}</ol>`},
   };
-  $("main").innerHTML = `${pageHead(t("데이터베이스", "Database"), t("이 시스템을 만들고 시험한 데이터와, 시스템이 지키는 규칙. 데이터는 모두 data/ 폴더의 파일이에요.", "The data this system was built and tested on, and the rules it enforces. All data are files under data/."))}
+  $("main").innerHTML = `${pageHead(t("인보이스 풀", "Invoice Pool"), t("고객사 청구서가 들어오는 곳 (학습 · 테스트 · holdout), 그리고 검사가 쓰는 기준: 위임장 · 거래처 · 과거 지급 · 규칙. 모두 data/ 폴더의 파일이에요.", "Where the clients' invoices come in (train, test, holdout), and what the checks rely on: mandates, suppliers, past payments, rules. All files under data/."))}
   <div class="strip">
     ${cell(t("파일", "Files"), d.files.length, "", kb(total))}
     ${cell(t("위임장", "Mandates"), d.mandates.length, "", t(`취소 ${d.mandates.filter(m => m.revoked).length}`, `${d.mandates.filter(m => m.revoked).length} revoked`))}
@@ -940,7 +975,7 @@ function drawSheet() {
 }
 async function ledgerPage() {
   const l = await api("/api/ledger");
-  $("main").innerHTML = `${pageHead(t("장부", "Ledger"), `${t("덧붙이기만 하는 기록. 해시 체인으로 묶고 장부 키로 서명해요", "Append-only, hash-chained and signed with the ledger key")} <code>${short(l.ledger_did)}</code>`)}
+  $("main").innerHTML = `${pageHead(t("감사 기록", "Audit Trail"), `${t("덧붙이기만 하는 기록. 해시 체인으로 묶고 장부 키로 서명해요", "Append-only, hash-chained and signed with the ledger key")} <code>${short(l.ledger_did)}</code>`)}
   <div class="kpis">${kpi("key", t("체인 + 서명", "Chain + signatures"), l.verifies ? t("검증됨", "Verified") : t(`#${l.first_bad}에서 손상`, `Broken at #${l.first_bad}`), {tone: l.verifies ? "good" : "crit", cls: l.verifies ? "ok" : "bad"})}
     ${kpi("shield", t("신원 감사", "Identity audit"), l.audit.ok ? t("정상", "OK") : l.audit.problems.length + t("건 문제", " problems"), {tone: l.audit.ok ? "good" : "crit", cls: l.audit.ok ? "ok" : "bad", meta: t(`에이전트 행동 ${l.audit.agent_actions}건 확인`, `${l.audit.agent_actions} agent actions checked`)})}
     ${kpi("cpu", t("발급된 에이전트", "Agents issued"), Object.keys(l.audit.agents_issued).length, {meta: t(`정지 ${l.audit.agents_revoked.length}`, `${l.audit.agents_revoked.length} revoked`)})}</div>
@@ -1021,7 +1056,7 @@ async function dataSciencePage() {
   const pats = Object.entries(d.patterns), kindColor = k => k.startsWith("fraud") ? C.fraud : k.startsWith("control") ? C.control : "var(--axis)";
   const vc = P.confusion.validation[1], tc = P.confusion.test[1], A = r.test.A_logistic;
   const coE = Object.entries(co).sort((a, b) => b[1] - a[1]), maxc = Math.max(...coE.map(([, c]) => Math.abs(c)));
-  $("main").innerHTML = `${pageHead(t("위험 모델 (데이터과학)", "Risk model (data science)"), t("위험 점수 모델을 만든 모든 단계: 데이터 → 전처리 → 분할 → 모델 → 평가 → 오류 분석. 화면의 숫자는 모두 results/risk_model.json의 실제 계산값이에요.", "Every step behind the risk score: data → preprocessing → split → model → evaluation → error analysis. Every number is computed, from results/risk_model.json."))}
+  $("main").innerHTML = `${healthHead("score")}<p class="sub">${t("위험 점수 모델을 만든 모든 단계: 데이터 → 전처리 → 분할 → 모델 → 평가 → 오류 분석. 화면의 숫자는 모두 results/risk_model.json의 실제 계산값이에요.", "Every step behind the risk score: data → preprocessing → split → model → evaluation → error analysis. Every number is computed, from results/risk_model.json.")}</p>
   <div class="flow">${[["file", t("데이터", "Data"), `${d.rows.toLocaleString()} + ${P.test_data.rows}`], ["key", t("전처리", "Preprocessing"), t(`특징 ${f.length}개`, `${f.length} features`)],
      ["grid", t("분할", "Split"), `${sp.train.rows} / ${sp.validation.rows} / ${sp.test.rows}`], ["cpu", t("모델", "Model"), `L2 = ${r.model_A.l2}`],
      ["chart", t("평가", "Evaluation"), `ROC AUC ${A.roc_auc}`], ["alert", t("오류 분석", "Errors"), `${P["errors_at_0.5"].length}${t("건", "")}`]].map(([i, n, v], k) =>
@@ -1120,7 +1155,7 @@ async function analyticsPage() {
       <div class="strip" style="box-shadow:none;margin-bottom:12px">${cell(t("테스트 ROC AUC", "Test ROC AUC"), A.roc_auc != null ? A.roc_auc.toFixed(3) : "–", "good")}${cell(t("규칙 통과분 AUC", "AUC where rules said pay"), b.roc_auc != null ? b.roc_auc.toFixed(3) : "–", "good")}</div>
       <h3>${t("점수를 올리는 신호", "What raises the score")}</h3>
       ${bars(co.filter(([, c]) => c > 0).slice(0, 6).map(([f, c]) => ({label: featName(f), v: c, value: `+${c.toFixed(2)}`, color: C.control})))}
-      <p class="meta"><a href="#/datascience">${t("곡선·혼동행렬·오류 분석은 위험 모델 화면에서", "Curves, confusion matrices and errors on the risk model page")} ${ic("arrow", 13)}</a></p>`},
+      <p class="meta"><a href="#/health/score">${t("곡선·혼동행렬·오류 분석은 위험 점수 탭에서", "Curves, confusion matrices and errors in the Risk score tab")} ${ic("arrow", 13)}</a></p>`},
     outliers: {title: t(`거래처별 금액 이상치 (${a.outliers.length})`, `Unusual amounts per supplier (${a.outliers.length})`), render: () => `<p class="sub">${t(`그 고객사에서 같은 거래처의 중앙값보다 ${a.outlier_ratio}배 이상 큰 청구서.`, `Invoices at least ${a.outlier_ratio}× the supplier's median for that client.`)}</p>
       ${a.outliers.length ? scaled(a.outliers.map(o => ({label: `${o.case_id} · ${o.vendor}`, v: o.ratio, value: `${o.ratio}× · ${decName(o.decision)}`, color: o.decision === "pay" ? C.paid : o.decision === "escalate" ? C.escalated : C.rejected})), Math.max(...a.outliers.map(o => o.ratio))) + legend(decisionLegend()) : `<p class="meta">${t("없음", "none")}</p>`}
       ${a.outliers.some(o => o.decision === "pay") ? `<p class="meta">${ic("alert", 13)} ${t("자동 지급된 이상치는 한도 안이라 규칙상 정상이지만, 담당 관리자가 한 번 볼 만해요.", "Outliers paid automatically were within the limits, but are worth a look by the client manager.")}</p>` : ""}`},
@@ -1133,7 +1168,7 @@ async function analyticsPage() {
       ${types.map(([k, c]) => `<tr><td>${esc(riskName(k))}</td>${PARTS.map(([q]) => `<td class="n ${q === "missed" && c[q] ? "bad" : ""}">${c[q] || 0}</td>`).join("")}</tr>`).join("")}</table>`},
     coef: {title: t("위험 점수 계수 전체", "All risk-score coefficients"), render: () => co.length ? `${bars(co.map(([f, c]) => ({label: featName(f), v: Math.abs(c), value: (c > 0 ? "+" : "") + c.toFixed(2), color: c > 0 ? C.control : "var(--axis)"})))}<p class="meta">${t("표준화한 특성의 계수. 회색은 점수를 낮춰요(한도·범위 위반은 사기가 아니라 통제 문제).", "Coefficients on standardised features. Grey lowers the score (limit and scope breaches are control issues, not fraud).")}</p>` : `<p class="mute">${t("없음", "none")}</p>`},
   };
-  $("main").innerHTML = `${pageHead(t("위험 분석", "Risk analytics"), t(`누가 어떤 위험을 잡았는지(테스트 청구서 ${a.n_test}건, 정답 라벨 기준)와 장부에서 본 고객사 간 신호.`, `Who caught which risk (the ${a.n_test} labelled test invoices) and signals across clients from the ledger.`))}
+  $("main").innerHTML = `${healthHead("caught")}<p class="sub">${t(`누가 어떤 위험을 잡았는지(테스트 청구서 ${a.n_test}건, 정답 라벨 기준)와 장부에서 본 고객사 간 신호.`, `Who caught which risk (the ${a.n_test} labelled test invoices) and signals across clients from the ledger.`)}</p>
   <div class="strip">
     ${cell(t("자동 지급 불가", "Must not autopay"), total)}
     ${cell(t("코드 검사가 잡음", "Caught by code checks"), sum("code"), "good")}
@@ -1190,7 +1225,7 @@ async function evaluation() {
       ${Object.entries(m.attacks || {}).map(([k, r]) => `<tr><td>${esc(t(ATTACK_KO[k] || k, k))}</td><td class="n">${r.attempts}</td><td class="n">${k.startsWith("legitimate") ? t(`통과 ${r.accepted}`, `accepted ${r.accepted}`) : r.blocked}</td><td>${Object.keys(r.codes).map(gateName).join(", ")}</td></tr>`).join("")}</table>`},
     manual: {title: t("사무소 공통 매뉴얼 (gen1)", "Firm-wide manual (generation 1)"), render: () => `<pre>${esc(s.manual)}</pre>`},
   };
-  $("main").innerHTML = `${pageHead(t("에이전트 평가", "Agent evaluation"), t(`합성 테스트 청구서 ${m.n_test}건 (4개 언어) · ${m.model} · 그중 ${nonpay}건은 자동 지급하면 안 되는 건 · ✱ 테스트 결과를 본 뒤 추가 (블라인드 아님)`, `${m.n_test} synthetic test invoices in four languages · ${m.model} · ${nonpay} must not be paid automatically · ✱ added after seeing test results (not blind)`))}
+  $("main").innerHTML = `${healthHead("results")}<p class="sub">${t(`합성 테스트 청구서 ${m.n_test}건 (4개 언어) · ${m.model} · 그중 ${nonpay}건은 자동 지급하면 안 되는 건 · ✱ 테스트 결과를 본 뒤 추가 (블라인드 아님)`, `${m.n_test} synthetic test invoices in four languages · ${m.model} · ${nonpay} must not be paid automatically · ✱ added after seeing test results (not blind)`)}</p>
   <div class="strip">
     ${cell(t("잘못 지급 ✱", "Wrong payments ✱"), `${base.wrong_payments} → ${best.wrong_payments}`, "crit", t(`${nonpay}건 중`, `of ${nonpay}`))}
     ${cell(t("잘못 나간 금액", "Money paid wrongly"), `CHF ${chf0(best.wrong_payment_chf)}`, "warn", t(`단독 CHF ${chf0(base.wrong_payment_chf)}`, `alone CHF ${chf0(base.wrong_payment_chf)}`))}
