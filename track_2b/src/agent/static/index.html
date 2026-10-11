@@ -313,17 +313,24 @@ const chf = x => x == null || x === "" ? "–" : Number(x).toLocaleString("de-CH
 const chf0 = x => x == null ? "–" : Number(x).toLocaleString("de-CH",{maximumFractionDigits:0});
 const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
 const dec = d => `<span class="pill ${esc(d)}">${esc(decName(d))}</span>`;
-// where a decision came from (basis.py): colour = who applied the source
-const BY_COLOR = {"OCR": "var(--ink2)", "code": "var(--s-control)", "Apertus": "var(--s-fraud)", "Apertus + code": "var(--logo)", "risk model": "var(--mute)", "person": "var(--st-warn)"};
+// where a decision came from (basis.py)
 const BY_KO = {"OCR": "OCR", "code": "코드", "Apertus": "Apertus", "Apertus + code": "Apertus + 코드 교차 확인", "risk model": "위험 모델", "person": "사람"};
 const HUMAN_BASIS = () => [["called_supplier", t("등록된 번호로 거래처에 전화 확인", "called the supplier on a number already on file")],
   ["client_confirmed", t("고객이 이 지급을 확인", "the client confirmed this payment")], ["other", t("기타 (메모에)", "other (see note)")]];
 const byName = b => LANG === "ko" ? (BY_KO[b] || b) : b;
+// routine checks every paid invoice passes: kept in the signed record, not shown as a source of the decision
+const ROUTINE = x => ["mandate", "account on file", "this month", "below threshold", "no rule cited", "no review", "OCR", "PDF text"].includes(x.ref)
+  || (x.ref === "cross-check of what Apertus read" && /^Apertus quoted/.test(x.detail));
+const tagRef = x => x.ref.replace(/^signed off as a hard check: /, "");
 function tags(b, full = false) {
   if (!b || !b.length) return `<span class="mute">–</span>`;
-  return `<span class="srcs ${full ? "full" : ""}">${b.map(x => `<span class="src" style="--tc:${BY_COLOR[x.by] || "var(--mute)"}" title="${esc(`${byName(x.by)}: ${x.detail}`)}"><b>${esc(x.source)}</b> · ${esc(x.ref)}${full ? ` <span class="mute">(${esc(byName(x.by))}) ${esc(x.detail)}</span>` : ""}</span>`).join("")}</span>`;
+  const all = b.map(x => `${x.source} · ${x.ref} (${byName(x.by)}): ${x.detail}`).join("\n");
+  const key = b.filter(x => !ROUTINE(x));
+  const chips = key.length ? key.map(x => `<span class="src" title="${esc(`${byName(x.by)}: ${x.detail}`)}"><b>${esc(x.source)}</b> · ${esc(tagRef(x))}</span>`).join("")
+    : `<span class="src" title="${esc(all)}">${t("일상 검사 통과", "routine checks passed")}</span>`;
+  const more = full ? `<details class="mute" style="font-size:12px"><summary>${t("자세히", "details")}</summary>${b.map(x => `<div><b>${esc(x.source)}</b> · ${esc(x.ref)} (${esc(byName(x.by))}) ${esc(x.detail)}</div>`).join("")}</details>` : "";
+  return `<span class="srcs">${chips}</span>${more}`;
 }
-const tagLegend = () => `<span class="srcs">${Object.keys(BY_COLOR).map(k => `<span class="src" style="--tc:${BY_COLOR[k]}">${esc(byName(k))}</span>`).join("")}</span>`;
 const ICONS = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   building: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>',
@@ -690,7 +697,7 @@ function cTodo(c) {  // what needs a human now, in order, with the decision butt
     <div class="row"><input type="file" id="up-${c.client_id}" accept="application/pdf,image/png,image/jpeg,image/tiff">
       <button class="btn primary" onclick="uploadInvoice('${c.client_id}')">${ic("check", 15)} ${t("에이전트에게 보내기", "Send to the agent")}</button></div>
     <div id="upres-${c.client_id}"></div></div>
-  <div class="card"><h2>${t(`처리한 청구서 (${c.decisions.length})`, `Processed invoices (${c.decisions.length})`)}</h2><p class="sub">${t("이 고객사 에이전트에게 바로 전달된 청구서와 결정. 최근 것부터. 근거 = 결정이 기댄 출처 (색 = 누가 적용했나, 마우스를 올리면 내용):", "Invoices delivered straight to this client's agent, and what it decided. Newest first. Sources = what each decision relied on (colour = who applied it; hover for the detail):")} ${tagLegend()}</p>
+  <div class="card"><h2>${t(`처리한 청구서 (${c.decisions.length})`, `Processed invoices (${c.decisions.length})`)}</h2><p class="sub">${t("이 고객사 에이전트에게 바로 전달된 청구서와 결정. 최근 것부터. 근거 = 결정을 가른 출처 (마우스를 올리면 내용).", "Invoices delivered straight to this client's agent, and what it decided. Newest first. Sources = what decided it (hover for the detail).")}</p>
     ${c.decisions.length ? `<table><tr><th>${t("날짜", "Date")}</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("근거 출처", "Sources")}</th></tr>
       ${c.decisions.slice(0, 10).map(e => `<tr><td class="mute">${esc((e.ts || "").slice(0, 10))}</td><td><code>${esc(e.case_id)}</code></td><td>${dots(flowFromEntry(e))}</td><td>${esc(e.vendor || "")}</td><td class="n">${chf(e.amount_chf)}</td><td>${e.gate !== "OK" ? `<span class="bad">${t("문지기 거부", "refused by gate")}</span>` : e.decision ? dec(e.decision) : ""}</td><td>${tags(e.basis)}</td></tr>`).join("")}</table>` : `<p class="mute">${t("없음", "none")}</p>`}</div>`;
 }
