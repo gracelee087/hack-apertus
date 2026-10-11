@@ -384,7 +384,11 @@ def process_text(cid: str, invoice_text: str):
         m = mandate(s, cid)
         d = desk_of(s)
         if h["decision"] == "pay":  # other payments may have been made while Apertus was reading: check again
-            verdict, findings = badge.check(m, sup, prior_payments(cid), f, today=demo_now().date())
+            prior = prior_payments(cid)
+            verdict, findings = badge.check(m, sup, prior, f, today=demo_now().date())
+            if verdict == "pass" and badge.possible_duplicate(prior, f.get("vendor_name"), f.get("total_chf")):
+                verdict, findings = "escalate", [{"severity": "escalate", "code": "E_POSSIBLE_DUPLICATE",
+                                                  "msg": "same supplier and amount already paid this month"}]
             if verdict != "pass":
                 h = {**h, "decision": verdict, "findings": findings, "reason": "; ".join(x["msg"] for x in findings)}
         h = decide.second_look(h, score, factors)
@@ -423,14 +427,21 @@ def publish(cid: str):
     with lock:
         s = state()
         mandate(s, cid)
-        notes = [n["note"] for n in s["pending_notes"] if n["client_id"] == cid]
-        if not notes:
+        taken = [n for n in s["pending_notes"] if n["client_id"] == cid]
+        if not taken:
             raise HTTPException(400, "no pending reviewer notes for this client")
+    rules = lessons.distill([n["note"] for n in taken])  # the model call runs outside the lock: the kill switch never waits for it
+    with lock:
+        s = state()
+        if any(n not in s["pending_notes"] for n in taken):
+            raise HTTPException(409, "these notes were published meanwhile")
         seat = seat_of(cid)
         s["manual_generation"] += 1
-        s["lessons"] = (s["lessons"] + [{"seat": seat, "rule": r, "from_manual_generation": s["manual_generation"]}
-                                        for r in lessons.distill(notes)])[-20:]
-        s["pending_notes"] = [n for n in s["pending_notes"] if n["client_id"] != cid]
+        kept = s["lessons"] + [{"seat": seat, "rule": r, "from_manual_generation": s["manual_generation"]} for r in rules]
+        mine = [i for i, x in enumerate(kept) if x["seat"] == seat]
+        drop = set(mine[:-20])  # at most 20 lessons per client; other clients' lessons are never dropped
+        s["lessons"] = [x for i, x in enumerate(kept) if i not in drop]
+        s["pending_notes"] = [n for n in s["pending_notes"] if n not in taken]
         save(s)
         sha = lessons.fingerprint(manual_text(s, seat))
         LEDGER.append(actor=identity.owner_of(cid), action="manual.published", client_id=cid, seat=seat,
@@ -489,6 +500,8 @@ def _pay(s, d, m, item, kind, extra, **log):
     # each payment is its own batch with its own message ID; a file once issued is never rewritten, so a file
     # already sent to the bank is never sent again with later payments added
     n = len(s.setdefault(kind, {}).get(cid, [])) + 1
+    while (RESULTS / "payments" / f"{cid}_pain001_{kind}_{n:03d}.xml").exists():  # the saved state can lag behind the files issued
+        n += 1
     items = [item]
     amount = item["amount_chf"]
     xml = None

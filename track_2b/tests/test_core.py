@@ -191,7 +191,7 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
     again = app.process("C01", app.Text(invoice_text="x"))  # the same invoice: this month's payments come from the ledger
     assert again["decision"] == "reject" and not again["executed"] and "R_DUPLICATE" in [f["code"] for f in again["findings"]]
 
-    fields["invoice_no"] = "R-2"
+    fields["invoice_no"], fields["total_chf"], fields["net_chf"] = "R-2", 350.0, 350.0  # same amount would be held as a possible duplicate
     s = app.state()
     d = app.desk_of(s)
     d.update_badge("C01", 10000, ["payment.decide"])  # no payment.file: the decision cannot stand without its file
@@ -462,3 +462,48 @@ L3. C."""
     paid = basis.of_decision({"decision": "pay", "findings": [], "reason": "fine", "risk_score": 12.0}, m, manual)
     assert ("RULE BOOK", "no rule cited") in [(t["source"], t["ref"]) for t in paid]
     assert paid[-1]["source"] == "RISK MODEL" and any(t["by"] == "Apertus + code" for t in paid)
+
+
+def test_failed_state_save_never_rewrites_an_issued_file(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch)
+    real_save = app.save
+    monkeypatch.setattr(app, "save", lambda *a, **k: (_ for _ in ()).throw(OSError("disk full")))
+    import pytest
+    with pytest.raises(OSError):  # the payment and its file went through, the state was not saved
+        app.process("C01", app.Text(invoice_text="x"))
+    first = tmp_path / "payments" / "C01_pain001_live_001.xml"
+    first_xml = first.read_text(encoding="utf-8")
+    monkeypatch.setattr(app, "save", real_save)
+    harness = app.decide.harness
+    monkeypatch.setattr(app.decide, "harness", lambda *a, **k: {**harness(*a, **k), "fields": {
+        **harness(*a, **k)["fields"], "invoice_no": "R-8", "total_chf": 300.0, "net_chf": 300.0}})
+    second = app.process("C01", app.Text(invoice_text="x"))
+    assert second["executed"] and second["file"] == "C01_pain001_live_002.xml"
+    assert first.read_text(encoding="utf-8") == first_xml
+
+
+def test_recheck_holds_same_supplier_and_amount_paid_while_apertus_was_reading(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch)
+    assert app.process("C01", app.Text(invoice_text="x"))["executed"]
+    harness = app.decide.harness  # Apertus read the second invoice before the first was paid: no duplicate seen then
+    monkeypatch.setattr(app.decide, "harness", lambda *a, **k: {**harness(*a, **k), "fields": {
+        **harness(*a, **k)["fields"], "invoice_no": "R-8"}})
+    r = app.process("C01", app.Text(invoice_text="x"))
+    assert not r["executed"] and r["queued"] and "E_POSSIBLE_DUPLICATE" in [f["code"] for f in r["findings"]]
+
+
+def test_publishing_lessons_keeps_other_clients_lessons_and_runs_the_model_outside_the_lock(tmp_path, monkeypatch):
+    app = _live_app(tmp_path, monkeypatch)
+    s = app.state()
+    s["lessons"] += [{"seat": seat_of("C01"), "rule": f"C01 rule {i}", "from_manual_generation": 1} for i in range(20)]
+    s["pending_notes"].append({"client_id": "C05", "note": "called the supplier"})
+    app.save(s)
+
+    def distill(notes):
+        assert not app.lock.locked()  # the kill switch can run while Apertus distils
+        return [f"C05 rule {i}" for i in range(5)]
+    monkeypatch.setattr(app.lessons, "distill", distill)
+    assert app.publish("C05")["ok"]
+    s = app.state()
+    assert sum(x["seat"] == seat_of("C01") for x in s["lessons"]) == 20
+    assert sum(x["seat"] == seat_of("C05") for x in s["lessons"]) == 5 and s["pending_notes"] == []
