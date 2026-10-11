@@ -317,7 +317,9 @@ const dec = d => `<span class="pill ${esc(d)}">${esc(decName(d))}</span>`;
 const BY_KO = {"code": "코드", "Apertus": "Apertus", "Apertus + code": "Apertus + 코드 교차 확인", "risk model": "위험 모델", "person": "사람"};
 const byName = b => LANG === "ko" ? (BY_KO[b] || b) : b;
 // routine checks every paid invoice passes: kept in the signed record, not shown as a source of the decision
-const ROUTINE = x => ["mandate", "account on file", "this month", "below threshold", "no rule cited", "no review"].includes(x.ref)
+// (a finding can share its ref with a passed check, e.g. "account on file": the detail tells them apart)
+const ROUTINE = x => ["mandate", "this month", "below threshold", "no rule cited", "no review"].includes(x.ref)
+  || (x.ref === "account on file" && /^known supplier/.test(x.detail))
   || (x.ref === "cross-check of what Apertus read" && /^Apertus quoted/.test(x.detail));
 const tagRef = x => x.ref.replace(/^signed off as a hard check: /, "");
 function tags(b, full = false) {
