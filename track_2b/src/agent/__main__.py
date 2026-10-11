@@ -1,4 +1,4 @@
-"""CLI: python -m agent [gen|eval|holdout|study gen|tune|final|ocr|vision|serve|all]"""
+"""CLI: python -m agent [gen|eval|holdout|study gen|tune|final|serve|all]"""
 import os
 import sys
 
@@ -16,12 +16,6 @@ def main(argv):
     if cmd in ("holdout", "all"):
         from . import evaluate
         evaluate.holdout()
-    if cmd == "ocr":
-        from . import ocr
-        ocr.measure()
-    if cmd == "vision":
-        from . import ocr
-        ocr.measure_vision()
     if cmd == "study":
         from . import study
         study.main(argv[2:])

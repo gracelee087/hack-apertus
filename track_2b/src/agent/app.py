@@ -10,15 +10,12 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-import hashlib
-import subprocess
 
-from fastapi import FastAPI, HTTPException, Request
-from starlette.concurrency import run_in_threadpool
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from . import badge, basis, credential, decide, gate, identity, lessons, llm, ocr, pain001, risk
+from . import badge, basis, credential, decide, gate, identity, lessons, llm, pain001, risk
 from .common import DATA, RESULTS, load_json, normalize_iban, read_jsonl, sha256
 from .datagen import TODAY
 from .desk import ACTIONS, Desk, seat_of
@@ -173,7 +170,6 @@ def client_view(s, d, cid, entries=None):
 class Review(BaseModel):
     action: str  # approve | reject
     note: str = ""
-    basis: str = ""  # approve: one of basis.HUMAN_BASIS
 
 
 class Text(BaseModel):
@@ -371,35 +367,7 @@ def process(cid: str, inv: Text):
     return process_text(cid, inv.invoice_text)
 
 
-MAX_FILE = 15 * 1024 * 1024
-
-
-@app.post("/api/clients/{cid}/intake")
-async def intake(cid: str, request: Request):
-    """An invoice file (PDF, PNG, JPEG, TIFF) as the request body: its text (OCR if needed) goes to the agent."""
-    data = await request.body()
-    if not data or len(data) > MAX_FILE:
-        raise HTTPException(400, "send one invoice file of at most 15 MB")
-    ctype = request.headers.get("content-type", "").split(";")[0].strip()
-    try:
-        r = await run_in_threadpool(ocr.read, data, ctype)
-    except ValueError as e:
-        raise HTTPException(415, str(e))
-    except (OSError, subprocess.SubprocessError) as e:
-        raise HTTPException(503, f"OCR is not available here ({type(e).__name__})")
-    if not r["text"].strip():
-        raise HTTPException(422, "no text could be read from this file")
-    info = {"file_sha256": hashlib.sha256(data).hexdigest(), "file_name": request.headers.get("x-file-name", "")[:120],
-            "method": r["method"], "pages": r["pages"]}
-    fields = None
-    if r["image"]:  # a scan or photo: Apertus reads the image itself; the checks compare its reading with the OCR text
-        info["reader"] = "Apertus on the image, checked against OCR"
-        fields = await run_in_threadpool(ocr.vision_extract, r["image"][0], info["file_sha256"][:12], r["image"][1])
-    res = await run_in_threadpool(process_text, cid, r["text"], info, fields)
-    return {**res, "intake": info, "text": r["text"]}
-
-
-def process_text(cid: str, invoice_text: str, intake: dict = None, fields: dict = None):
+def process_text(cid: str, invoice_text: str):
     with lock:
         s = state()
         m = mandate(s, cid)
@@ -407,7 +375,7 @@ def process_text(cid: str, invoice_text: str, intake: dict = None, fields: dict 
         case = {"case_id": f"LIVE-{secrets.token_hex(3).upper()}", "client_id": cid, "invoice_text": invoice_text,
                 "prior_payments": prior_payments(cid)}
     sup = load_json(DATA / "vendors.json").get(cid, [])
-    h = decide.harness(case, m, sup, manual, fields=fields, promoted=True, grounded=True)  # model calls run outside the lock
+    h = decide.harness(case, m, sup, manual, promoted=True, grounded=True)  # model calls run outside the lock
     f = h["fields"]
     amount = badge._num(f.get("total_chf"))
     score, factors = risk.scorer().score(case, f)
@@ -425,11 +393,9 @@ def process_text(cid: str, invoice_text: str, intake: dict = None, fields: dict 
                 "invoice_no": f.get("invoice_no"), "due_date": f.get("due_date"),
                 "checks": [x["code"] for x in h["findings"]], "reason": h.get("reason", ""),
                 "risk_score": score, "risk_factors": factors, "invoice_text": invoice_text, "status": "open",
-                "basis": basis.of_intake(intake) + basis.of_decision(h, m, manual)}
-        if intake:
-            item["intake"] = intake
+                "basis": basis.of_decision(h, m, manual)}
         log = dict(reason=h.get("reason", ""), checks=item["checks"], manual_sha256=lessons.fingerprint(manual),
-                   model=llm.model_name(), risk_score=score, **({"intake": intake} if intake else {}))
+                   model=llm.model_name(), risk_score=score)
         if h["decision"] == "pay":
             res = _pay(s, d, m, item, "live", {"basis": item["basis"]}, **log)
             queued = not res["ok"]  # whatever the agent could not carry out waits for a human
@@ -488,14 +454,14 @@ def review(case_id: str, r: Review):
         m = mandate(s, cid)
         d = desk_of(s)
         if r.action == "approve":
-            if r.basis not in basis.HUMAN_BASIS or not r.note.strip():
-                raise HTTPException(400, "to approve a held payment, give its basis and a note")
+            if not r.note.strip():
+                raise HTTPException(400, "to approve a held payment, write why in a note")
             if badge.already_paid(prior_payments(cid), item.get("vendor"), item.get("invoice_no")):
                 raise HTTPException(409, f"payment not made: invoice {item.get('invoice_no')} from {item.get('vendor')} "
                                          "is already paid this month (R_DUPLICATE)")
             amount = badge._num(item["amount_chf"])
             ref = d.grant(cid, case_id, amount or 0, item["iban"], r.note)
-            tags = basis.of_human(identity.owner_of(cid), r.basis, r.note, "approved")
+            tags = basis.of_human(identity.owner_of(cid), r.note, "approved")
             res = _pay(s, d, m, {**item, "amount_chf": amount}, "approved", {"grant_ref": ref, "basis": tags, "held_basis": item.get("basis", [])}, grant_ref=ref,
                        reason=f"approved by human: {r.note}")
             if not res["ok"]:  # the item stays open
@@ -504,11 +470,11 @@ def review(case_id: str, r: Review):
         else:
             LEDGER.append(actor=identity.owner_of(cid), action="consent.denied", client_id=cid, case_id=case_id,
                           amount_chf=item.get("amount_chf"), note=r.note,
-                          basis=basis.of_human(identity.owner_of(cid), r.basis, r.note, "rejected"))
+                          basis=basis.of_human(identity.owner_of(cid), r.note, "rejected"))
             if r.note.strip():
                 s["pending_notes"].append({"client_id": cid, "note": lessons.mask(r.note, names(s))})
         item["status"] = "approved" if r.action == "approve" else "rejected"
-        item["note"], item["human_basis"] = r.note, r.basis
+        item["note"] = r.note
         _write(RESULTS / "queue.json", q)
         save(s, d)
         return {"ok": True}

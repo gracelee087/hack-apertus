@@ -205,9 +205,9 @@ def test_live_flow_files_the_payment_and_holds_the_duplicate(tmp_path, monkeypat
     d.update_badge("C01", 10000, ["payment.decide", "payment.file"])
     app.save(s, d)
     import pytest
-    with pytest.raises(app.HTTPException):  # no basis given: nothing is paid
-        app.review(held["case_id"], app.Review(action="approve", note="checked"))
-    assert app.review(held["case_id"], app.Review(action="approve", note="checked", basis="called_supplier"))["ok"]
+    with pytest.raises(app.HTTPException):  # no note given: nothing is paid
+        app.review(held["case_id"], app.Review(action="approve", note=" "))
+    assert app.review(held["case_id"], app.Review(action="approve", note="called the supplier"))["ok"]
     paid = [e for e in app.LEDGER.entries if e.get("grant_ref") and e.get("action") == "payment.decide"][-1]
     assert paid["basis"][0]["source"] == "HUMAN" and "called the supplier" in paid["basis"][0]["detail"]
     assert (tmp_path / "payments" / "C01_pain001_approved_001.xml").exists()
@@ -365,9 +365,9 @@ def _live_app(tmp_path, monkeypatch, decision="pay"):
 def test_human_approval_cannot_pay_the_same_invoice_twice(tmp_path, monkeypatch):
     app = _live_app(tmp_path, monkeypatch, decision="escalate")
     a, b = (app.process("C01", app.Text(invoice_text="x"))["case_id"] for _ in range(2))
-    assert app.review(a, app.Review(action="approve", note="ok", basis="client_confirmed"))["ok"]
+    assert app.review(a, app.Review(action="approve", note="ok"))["ok"]
     try:
-        app.review(b, app.Review(action="approve", note="ok", basis="client_confirmed"))
+        app.review(b, app.Review(action="approve", note="ok"))
         raise AssertionError("second approval paid the same invoice")
     except app.HTTPException as e:
         assert e.status_code == 409 and "R_DUPLICATE" in e.detail
@@ -462,19 +462,3 @@ L3. C."""
     paid = basis.of_decision({"decision": "pay", "findings": [], "reason": "fine", "risk_score": 12.0}, m, manual)
     assert ("RULE BOOK", "no rule cited") in [(t["source"], t["ref"]) for t in paid]
     assert paid[-1]["source"] == "RISK MODEL" and any(t["by"] == "Apertus + code" for t in paid)
-
-
-
-def test_ocr_reads_an_invoice_image_and_tags_it():
-    import shutil
-    import pytest
-    from agent import basis, ocr
-    if not shutil.which(ocr.TESSERACT):
-        pytest.skip("tesseract is not installed")
-    case = next(c for c in CASES if c["reason_code"] == "E_IBAN_CHANGED" and c["lang"] == "de")
-    r = ocr.read(ocr.draw(case["invoice_text"]), "image/png")
-    assert r["method"] == "ocr" and ocr._survives(r["text"], case["gold"])["iban"]
-    tag = basis.of_intake({"file_sha256": "ab" * 32, "method": "ocr", "pages": 1})[0]
-    assert (tag["source"], tag["ref"], tag["by"]) == ("INVOICE TEXT", "OCR", "OCR")
-    with pytest.raises(ValueError):
-        ocr.read(b"hello", "text/plain")

@@ -9,7 +9,7 @@ Each tag names a source, the part of it that applied and who applied it:
   LEDGER               - this month's payments for the client
   INVOICE TEXT         - the invoice itself (Apertus quoted where it read the values, code compared the quotes)
   RISK MODEL           - the risk score and its threshold
-  HUMAN                - the person who approved or rejected, the basis they gave and their note
+  HUMAN                - the person who approved or rejected, and their note
 Tags are derived in code from what actually ran; a rule is named only if Apertus cited it and it is in the manual.
 """
 import re
@@ -35,14 +35,6 @@ FINDING = {
     "CATEGORY_UNCLEAR": ("INVOICE TEXT", "expense type", APERTUS),
     "RISK_SCORE": ("RISK MODEL", "second look", MODEL),
 }
-
-# what a person may give as the basis for approving a held payment
-HUMAN_BASIS = {
-    "called_supplier": "called the supplier on a number already on file",
-    "client_confirmed": "the client confirmed this payment",
-    "other": "other (see note)",
-}
-
 
 def _tag(source, ref, by, detail=""):
     return {"source": source, "ref": ref, "by": by, "detail": detail}
@@ -101,17 +93,5 @@ def of_decision(h: dict, mandate: dict, manual: str, grounded: bool = True) -> l
     return passed + tags
 
 
-def of_intake(intake: dict) -> list:
-    """How the text of an invoice file was obtained (none for an invoice that arrived as text)."""
-    if not intake:
-        return []
-    how = "OCR (Tesseract)" if intake["method"] == "ocr" else "the PDF's own text"
-    return [_tag("INVOICE TEXT", "OCR" if intake["method"] == "ocr" else "PDF text", "OCR" if intake["method"] == "ocr" else CODE,
-                 f"read by {how} from file sha256 {intake['file_sha256'][:12]}, {intake['pages']} page(s); "
-                 + ("Apertus read the image itself and every check compares its reading with this text"
-                    if intake.get("reader") else "every check compares against this text"))]
-
-
-def of_human(name: str, basis: str, note: str, action: str) -> list:
-    detail = HUMAN_BASIS.get(basis, basis) if basis else ""
-    return [_tag("HUMAN", f"{action} by {name}", "person", "; ".join(x for x in (detail, note.strip()) if x))]
+def of_human(name: str, note: str, action: str) -> list:
+    return [_tag("HUMAN", f"{action} by {name}", "person", note.strip())]

@@ -1,8 +1,6 @@
 FROM python:3.11-slim
 
 WORKDIR /app
-# OCR for scanned invoices runs here, inside the container (German, French, Italian; English is included)
-RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-deu tesseract-ocr-fra tesseract-ocr-ita     && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

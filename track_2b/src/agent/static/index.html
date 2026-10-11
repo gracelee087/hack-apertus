@@ -314,12 +314,10 @@ const chf0 = x => x == null ? "–" : Number(x).toLocaleString("de-CH",{maximumF
 const short = d => d ? esc(d.slice(0, 16) + "…" + d.slice(-6)) : "–";
 const dec = d => `<span class="pill ${esc(d)}">${esc(decName(d))}</span>`;
 // where a decision came from (basis.py)
-const BY_KO = {"OCR": "OCR", "code": "코드", "Apertus": "Apertus", "Apertus + code": "Apertus + 코드 교차 확인", "risk model": "위험 모델", "person": "사람"};
-const HUMAN_BASIS = () => [["called_supplier", t("등록된 번호로 거래처에 전화 확인", "called the supplier on a number already on file")],
-  ["client_confirmed", t("고객이 이 지급을 확인", "the client confirmed this payment")], ["other", t("기타 (메모에)", "other (see note)")]];
+const BY_KO = {"code": "코드", "Apertus": "Apertus", "Apertus + code": "Apertus + 코드 교차 확인", "risk model": "위험 모델", "person": "사람"};
 const byName = b => LANG === "ko" ? (BY_KO[b] || b) : b;
 // routine checks every paid invoice passes: kept in the signed record, not shown as a source of the decision
-const ROUTINE = x => ["mandate", "account on file", "this month", "below threshold", "no rule cited", "no review", "OCR", "PDF text"].includes(x.ref)
+const ROUTINE = x => ["mandate", "account on file", "this month", "below threshold", "no rule cited", "no review"].includes(x.ref)
   || (x.ref === "cross-check of what Apertus read" && /^Apertus quoted/.test(x.detail));
 const tagRef = x => x.ref.replace(/^signed off as a hard check: /, "");
 function tags(b, full = false) {
@@ -683,20 +681,14 @@ function cTodo(c) {  // what needs a human now, in order, with the decision butt
       <div>${pipe(flowFromEntry({...i, decision: "escalate", gate: "OK", action: "payment.decide"}))}
         <p><b>${t("보류 이유", "Why held")}:</b> ${esc(i.reason)}</p>
         ${i.basis ? `<p style="margin:0"><b>${t("근거 출처", "Sources")}:</b></p>${tags(i.basis, true)}` : ""}
-        ${more(t("청구서 원문", "Invoice text"), `<pre>${esc(i.invoice_text)}</pre>`)}
-        <select id="b-${i.case_id}" style="margin-top:10px"><option value="">${t("승인 근거 선택 (승인할 때 필수)", "Basis for approving (required to approve)")}</option>${HUMAN_BASIS().map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select>
-        <input id="n-${i.case_id}" placeholder="${t("검토 메모 (이유, 승인할 때 필수) — 거절하면 이 고객사 에이전트의 교훈이 돼요", "Reviewer note (why; required to approve) — a rejection note becomes a lesson for this client's agent")}" style="width:100%;margin-top:6px">
+        <input id="n-${i.case_id}" placeholder="${t("검토 메모 (이유, 승인할 때 필수) — 거절하면 이 고객사 에이전트의 교훈이 돼요", "Reviewer note (why; required to approve) — a rejection note becomes a lesson for this client's agent")}" style="width:100%;margin-top:10px">
         <div class="row"><button class="btn primary" onclick="act('${i.case_id}','approve')">${ic("check", 15)} ${t("지급 승인", "Approve payment")}</button>
           <button class="btn danger" onclick="act('${i.case_id}','reject')">${ic("ban", 15)} ${t("거절", "Reject")}</button>
           <span class="meta">${t(`${own} 이름으로 장부에 기록돼요`, `recorded in the ledger as ${own}`)}</span></div></div></details>`; };
   return `${banner}${strip}
   <div class="card"><div class="card-h"><div><h2>${t(`확인할 청구서 (${open.length})`, `Waiting for you (${open.length})`)}</h2><p class="sub">${t("처리할 순서대로예요. 줄을 누르면 보류 이유를 보고 바로 승인하거나 거절할 수 있어요.", "In the order to handle them. Open a row to see why it was held, then approve or reject.")}</p></div></div>
     ${open.length ? `<div class="qlist"><div class="qgrid qh"><span>#</span><span>${t("건", "Case")}</span><span>${t("거래처", "Supplier")}</span><span>${t("신호", "Signal")}</span><span class="n">${t("위험", "Risk")}</span><span class="n">${t("여유", "Spare")}</span><span class="n">CHF</span><span></span></div>${open.map(row).join("")}</div>` : `<p class="mute">${t("없음", "none")}</p>`}
-    ${done.length ? `<div style="margin-top:20px">${more(t(`처리한 건 (${done.length})`, `Handled (${done.length})`), `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결과", "Result")}</th><th>${t("메모", "Note")}</th></tr>${done.map(i => `<tr><td><code>${esc(i.case_id)}</code></td><td>${esc(i.vendor)}</td><td class="n">${chf(i.amount_chf)}</td><td>${i.status === "approved" ? `<span class="ok">${t("승인", "approved")}</span>` : `<span class="bad">${t("거절", "rejected")}</span>`}</td><td class="mute">${esc([(HUMAN_BASIS().find(([k]) => k === i.human_basis) || [])[1], i.note].filter(Boolean).join(" · "))}</td></tr>`).join("")}</table>`)}</div>` : ""}</div>
-  <div class="card"><h2>${t("청구서 파일 넣기", "Bring in an invoice file")}</h2><p class="sub">${t("PDF · PNG · JPEG · TIFF. 글자가 든 PDF는 그대로 읽고, 스캔·사진은 이 서버 안의 OCR(Tesseract)로 읽어요. 그 글자를 이 고객사 에이전트가 처리해요.", "PDF, PNG, JPEG or TIFF. A PDF with text is read as it is; a scan or photo is read by OCR (Tesseract) on this server. This client's agent then processes the text.")}</p>
-    <div class="row"><input type="file" id="up-${c.client_id}" accept="application/pdf,image/png,image/jpeg,image/tiff">
-      <button class="btn primary" onclick="uploadInvoice('${c.client_id}')">${ic("check", 15)} ${t("에이전트에게 보내기", "Send to the agent")}</button></div>
-    <div id="upres-${c.client_id}"></div></div>
+    ${done.length ? `<div style="margin-top:20px">${more(t(`처리한 건 (${done.length})`, `Handled (${done.length})`), `<table><tr><th>${t("건", "Case")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결과", "Result")}</th><th>${t("메모", "Note")}</th></tr>${done.map(i => `<tr><td><code>${esc(i.case_id)}</code></td><td>${esc(i.vendor)}</td><td class="n">${chf(i.amount_chf)}</td><td>${i.status === "approved" ? `<span class="ok">${t("승인", "approved")}</span>` : `<span class="bad">${t("거절", "rejected")}</span>`}</td><td class="mute">${esc(i.note)}</td></tr>`).join("")}</table>`)}</div>` : ""}</div>
   <div class="card"><h2>${t(`처리한 청구서 (${c.decisions.length})`, `Processed invoices (${c.decisions.length})`)}</h2><p class="sub">${t("이 고객사 에이전트에게 바로 전달된 청구서와 결정. 최근 것부터. 근거 = 결정을 가른 출처 (마우스를 올리면 내용).", "Invoices delivered straight to this client's agent, and what it decided. Newest first. Sources = what decided it (hover for the detail).")}</p>
     ${c.decisions.length ? `<table><tr><th>${t("날짜", "Date")}</th><th>${t("건", "Case")}</th><th>${t("흐름", "Flow")}</th><th>${t("거래처", "Supplier")}</th><th class="n">CHF</th><th>${t("결정", "Decision")}</th><th>${t("근거 출처", "Sources")}</th></tr>
       ${c.decisions.slice(0, 10).map(e => `<tr><td class="mute">${esc((e.ts || "").slice(0, 10))}</td><td><code>${esc(e.case_id)}</code></td><td>${dots(flowFromEntry(e))}</td><td>${esc(e.vendor || "")}</td><td class="n">${chf(e.amount_chf)}</td><td>${e.gate !== "OK" ? `<span class="bad">${t("문지기 거부", "refused by gate")}</span>` : e.decision ? dec(e.decision) : ""}</td><td>${tags(e.basis)}</td></tr>`).join("")}</table>` : `<p class="mute">${t("없음", "none")}</p>`}</div>`;
@@ -772,17 +764,8 @@ async function processInvoice(cid) {
       ${more(t("Apertus가 읽은 필드", "Fields read by Apertus"), `<pre>${esc(JSON.stringify(h.fields, null, 2))}</pre>`)}`;
   } catch (e) { $("pstatus").textContent = e.message; }
 }
-async function uploadInvoice(cid) {
-  const f = $(`up-${cid}`).files[0], out = $(`upres-${cid}`);
-  if (!f) { alert(t("파일을 고르세요", "Choose a file")); return; }
-  out.innerHTML = `<p class="meta">${t("읽는 중…", "Reading…")}</p>`;
-  try {
-    const h = await api(`/api/clients/${cid}/intake`, {method: "POST", headers: {"Content-Type": f.type, "X-File-Name": encodeURIComponent(f.name)}, body: f});
-    out.innerHTML = `<p><b>${esc(h.case_id)}</b> · ${dec(h.decision)} · ${esc(h.intake.method === "ocr" ? "OCR" : t("PDF 글자", "PDF text"))}</p>${tags(h.basis, true)}${more(t("읽은 글자", "Text read from the file"), `<pre>${esc(h.text)}</pre>`)}`;
-  } catch (e) { out.innerHTML = `<p class="bad">${esc(e.message)}</p>`; }
-}
 async function act(id, action) {
-  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value, basis: $(`b-${id}`).value}); route(); } catch (e) { alert(e.message); }
+  try { await post(`/api/queue/${id}`, {action, note: $(`n-${id}`).value}); route(); } catch (e) { alert(e.message); }
 }
 function cAgent(c) {
   const a = c.agent, b = a.badge || {}, card = a.card || {}, L = c.lessons;

@@ -18,10 +18,8 @@ jobs:
         with:
           python-version: "3.11"  # same as the Dockerfile
 
-      - name: Install (OCR as in the Docker image)
-        run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-deu tesseract-ocr-fra tesseract-ocr-ita
-          pip install -r requirements.txt pytest
+      - name: Install
+        run: pip install -r requirements.txt pytest
 
       - name: Unit tests (offline, no API key)
         run: python -m pytest tests -q
