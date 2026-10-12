@@ -3,7 +3,7 @@
 - **Track:** Track 2B — Mandate Desk
 - **Event:** Online
 - **Team:** hack-1 — Sohee Lee
-- **Demo:** `link to video`
+- **Demo:** link to follow
 
 ## Summary
 
@@ -15,6 +15,13 @@ once, Apertus alone decided to pay **178 of 300** invoices it should not have; w
 (95% CI 0–1.3%)**, holding 3.5% of legitimate invoices for a person. Seventeen attacks on the agent's identity
 and authority were blocked in 561 of 561 attempts (scenarios we wrote; not a security audit).
 
+## At a glance
+
+- **178 → 0 of 300** non-payable invoices paid: Apertus alone vs Mandate Desk, on 500 unseen invoices run once (95% CI 0–1.3%)
+- **7 of 200** legitimate invoices held for a person (3.5%): reading errors caught before money moves
+- **561 of 561** attacks on the agent's identity and authority blocked: 17 scenarios × 33 paid invoices
+- **78 of 78** executed requests traced from the signed ledger alone to an agent the firm issued and had not revoked
+
 ## Contents
 
 1. Introduction
@@ -24,7 +31,7 @@ and authority were blocked in 561 of 561 attempts (scenarios we wrote; not a sec
 5. Discussion
 6. Limitations
 7. Conclusion
-8. Reproducibility · License · References
+8. Reproducibility · License · References · Appendix A
 
 ## 1. Introduction
 
@@ -73,12 +80,11 @@ every agent request is signed with its own key ──► [Gate: G1 signature · 
 every request, outcome and human action ──► signed, hash-chained ledger (with the signed request)
 ```
 
-All code is under `src/agent/` and runs in pure Python except the Apertus calls: synthetic data
-(`datagen.py`), the Apertus client with a record/replay cache (`llm.py`, `prompts.py`), badge, verification and
-the client-signed mandate (`badge.py`, `credential.py`), decision paths and lessons (`decide.py`,
-`lessons.py`), identity, gate and desk (`identity.py`, `gate.py`, `desk.py`), risk score and attack scenarios
-(`risk.py`, `security.py`), and the signed ledger, payment files and reviewer web app (`ledger.py`,
-`pain001.py`, `app.py`, FastAPI on port 8000).
+Four parts divide the work. **Apertus** reads each invoice, reviews its content, quotes where it read the key
+values and writes lessons. **Rule code** enforces the mandate (badge, limits, duplicates), checks the quotes and
+runs the gate. **A risk score** takes a second look at payments that passed. **A person** decides the
+exceptions in a reviewer web app that also shows the signed ledger and Agent Health. Everything except the
+Apertus calls runs in pure Python; every Apertus response is recorded so a run can be replayed exactly.
 
 ### 2.2 Target architecture (mandatory)
 
@@ -89,28 +95,28 @@ and supplier relationships, so the design keeps everything on the firm's own inf
   serving Apertus 8B, run by the firm or a Swiss hosting partner (only the Public AI API was tested). No other
   network access: no payment provider, no external API. Payments leave only as a pain.001 file the firm
   uploads to the client's bank.
-- **Build time:** the `python:3.11-slim` image, three pip packages, Apertus weights from Hugging Face; all can
+- **Build time:** a standard Python 3.11 base image, three Python packages, Apertus weights from Hugging Face; all can
   be mirrored internally, so the runtime can be air-gapped.
 - **During development** we used the Public AI inference API because the organiser's CSCS key was not at
-  hand. The endpoint is read from `LLM_BASE_URL`; CSCS and a self-hosted server were not tested. Recorded
+  hand. The endpoint is a single setting; CSCS and a self-hosted server were not tested. Recorded
   responses make the evaluation independent of the endpoint.
 
 ### 2.3 Use of Apertus
 
-- **Model:** Apertus v1.5 8B (`swiss-ai/apertus-v1.5-8b` on the endpoint; weights `swiss-ai/Apertus-v1.5-8B`),
+- **Model:** Apertus v1.5 8B (Swiss AI weights on Hugging Face),
   inference only, structured JSON outputs, temperature 0, no fine-tuning, no other model (not even as a judge).
 - **Five roles:** (1) extract fields from DE/FR/IT/EN invoices; (2) the *baseline*: the whole decision in one
   prompt; (3) review content after the hard checks; (4) for payment candidates, quote where it read IBAN,
   invoice number and total (checked in code); (5) distil masked reviewer notes into manual rules.
 - **Where it runs:** Public AI inference API (OpenAI-compatible). Reference run and holdout: 501 recorded
   responses, latency median 3.3 s / p90 7.3 s, well under USD 0.10; study: 7,658 responses, about USD 0.50.
-  Every response is recorded with its exact request (`data/cache/`), so judges replay the same run without a key.
+  Every response is recorded with its exact request in the repository, so judges replay the same run without a key.
 
 ### 2.4 Agent identity, gate and record
 
 The harness answers *what* the agent may do; this layer answers *who* did it and lets anyone check. The
 concept follows KYA-OS (Know Your Agent OS: identity, delegation, signed proof, ledger), built by Vouched and
-donated to the Decentralized Identity Foundation in March 2026, whose reference implementation `@kya-os/mcp`
+donated to the Decentralized Identity Foundation in March 2026, whose reference implementation
 is MIT-licensed; the author's earlier "Agentic ID" project built on it and added the lesson layer. This
 project re-implements the ideas in pure Python and contains no KYA-OS code.
 
@@ -141,7 +147,7 @@ The **ledger** opens with the firm and ledger DIDs, every client mandate with it
 generation's card, badge and manual fingerprint. Each request is kept whole (signed stamp and payload) and
 the recorded fields are taken from the payload. An auditor can check from the ledger alone that every
 executed action was signed by an agent the firm issued and had not revoked, and that the entry says what
-was signed (`audit_identities`; reference run 78 of 78). FINMA Guidance 08/2024 calls for the identification,
+was signed (identity audit; reference run 78 of 78). FINMA Guidance 08/2024 calls for the identification,
 assessment, management and monitoring of AI risks; the EU AI Act requires automatic logs (Art. 12) and human
 oversight including a way to stop the system (Art. 14) for high-risk AI systems. We did not assess whether
 this use is high-risk; this is not a compliance assessment.
@@ -238,7 +244,7 @@ amount. The final set gives the same split (63 / 12 / 18 / 6%). How accurately a
 ### 4.4 Agent verification
 
 Each of 17 attack scenarios was replayed for each of the 33 paid invoices against a freshly hired agent
-(`security.py`, no model calls); 17 × 33 = 561 attempts, all blocked (scenarios we wrote; not a security audit). **G1** caught a forged signature and an
+(scripted, no model calls); 17 × 33 = 561 attempts, all blocked (scenarios we wrote; not a security audit). **G1** caught a forged signature and an
 amount or IBAN changed after signing; **G2** a replayed and a stale (1 h) request; **G3** an unknown agent key
 and an agent revoked by the kill switch; **G4** an agent of another client, an amount above the cap without a
 grant, an expired badge, a reused grant, another client's grant, a negative, zero or NaN amount, and a "pay" of
@@ -246,7 +252,7 @@ CHF 9,999,999 marked as not executing a payment; **G5** tampered mandate limits,
 delegate, a revoked mandate, and an amount above the client's limit with the badge cap set too high. The
 legitimate control request was accepted 33 of 33 times. In the reference run the gate accepted 78 requests
 from active clients (74 payment decisions and 4 payment files) and refused the 4 for the client that had
-revoked its mandate; a request signed for CHF 100 can no longer be recorded as CHF 999,999 (`tests/test_core.py`).
+revoked its mandate; a request signed for CHF 100 can no longer be recorded as CHF 999,999 (automated test).
 
 ### 4.5 Risk score (data-science layer)
 
@@ -319,26 +325,44 @@ with a fiduciary.
 
 ## 8. Reproducibility
 
-`make run` in `track_2b/` on a clean checkout builds the image, replays the recorded Apertus responses (no key
-needed), writes `results/`, prints the table and serves the app on port 8000; `make eval` prints and exits;
-`python -m agent holdout` replays the holdout. `LLM_CACHE_PATH=data/cache/study_responses.jsonl python -m
-agent study tune` replays the study (`STUDY_FORCE=1 … study final|confirm`, `study baseline-gen1`); the final
-set's blind results are kept in `results/study/final_blind.json`. GitHub Actions runs the tests, builds the
-image and re-runs `eval` and `holdout` without a key on every push, and fails if the metrics, risk model or
-holdout differ from the committed files. Data generation is deterministic; no GPU needed for replay.
-Commit: `6b8625b` (code and results; later commits change only the report and the demo video link).
+One command on a clean checkout builds the container, replays the recorded Apertus responses (no key
+needed), writes the results, prints the table and serves the reviewer app on port 8000. The holdout and the
+three study sets replay the same way, and the final set's blind results are kept in the repository. GitHub
+Actions runs the tests, builds the image and re-runs the evaluation and the holdout without a key on every
+push, and fails if the metrics, risk model or holdout differ from the committed files. Built and run from a
+fresh clone of the public repository, the container reproduced the committed results. Data generation is
+deterministic; no GPU needed for replay. Commands and a map of the code: Appendix A.
+Commit: 6b8625b (code and results; later commits change only the report and the demo video link).
 
 ## License
 
-Creative Commons Attribution 4.0 (CC-BY-4.0). All HackApertus projects are open-sourced. Code: Apache-2.0
-(repository `LICENSE`); data: CDLA-Permissive-2.0. Third-party components: Apertus v1.5 8B (Apache-2.0),
+Creative Commons Attribution 4.0 (CC-BY-4.0). All HackApertus projects are open-sourced. Code: Apache-2.0;
+data: CDLA-Permissive-2.0. Third-party components: Apertus v1.5 8B (Apache-2.0),
 FastAPI (MIT), Uvicorn (BSD-3-Clause), cryptography (Apache-2.0 OR BSD-3-Clause).
 
 ## References
 
 - Apertus model family: https://huggingface.co/swiss-ai
 - KYA-OS, Decentralized Identity Foundation (donated by Vouched): https://blog.identity.foundation/kya-os/;
-  reference implementation `@kya-os/mcp` (MIT): https://github.com/decentralized-identity/kya-os-mcp
+  reference implementation (MIT): https://github.com/decentralized-identity/kya-os-mcp
 - ISO 20022 pain.001.001.09 (customer credit transfer initiation)
 - FINMA Guidance 08/2024 on governance and risk management when using AI
 - Valindex (2026-02), count of Swiss firms in NOGA 6920 — secondary source
+
+## Appendix A. Code map and commands
+
+**Code** (all under `src/agent/`): synthetic data `datagen.py`; Apertus client with record/replay cache
+`llm.py`, `prompts.py`; badge, verification and client-signed mandate `badge.py`, `credential.py`; decision
+paths and lessons `decide.py`, `lessons.py`; identity, gate and desk `identity.py`, `gate.py`, `desk.py`; risk
+score and attack scenarios `risk.py`, `security.py`; signed ledger, payment files and reviewer web app
+`ledger.py`, `pain001.py`, `app.py` (FastAPI, port 8000). Identity audit: `audit_identities`. Tests:
+`tests/test_core.py`.
+
+**Model and endpoint:** `swiss-ai/apertus-v1.5-8b` on the endpoint, weights `swiss-ai/Apertus-v1.5-8B`;
+endpoint from `LLM_BASE_URL`; recorded responses in `data/cache/`; base image `python:3.11-slim`.
+
+**Commands** (in `track_2b/`): `make run` builds the image, replays, writes `results/`, prints the table and
+serves the app; `make eval` prints and exits; `python -m agent holdout` replays the holdout;
+`LLM_CACHE_PATH=data/cache/study_responses.jsonl python -m agent study tune` replays the study
+(`STUDY_FORCE=1 … study final|confirm`, `study baseline-gen1`); final blind results:
+`results/study/final_blind.json`. Licence file: `LICENSE`; KYA-OS reference implementation: `@kya-os/mcp`.
