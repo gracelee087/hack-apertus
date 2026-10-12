@@ -17,7 +17,7 @@ Seventeen attacks on the agent's identity and authority were blocked in 561 of 5
 wrote; not a security audit).
 
 - **Technical report (PDF, 6 pages):** [track_2b/hack-1_Report.pdf](track_2b/hack-1_Report.pdf)
-- **Demo video (1:49):** https://drive.google.com/file/d/1PivYnnCA00WErcqTeLPPWcmFxSrGoKiP/view?usp=sharing
+- **Demo video (1:49):** https://www.youtube.com/watch?v=8DZT-EEhEOU
 - **Project, details and results:** [track_2b/](track_2b/README.md)
 
 ## Run it
