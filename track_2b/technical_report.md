@@ -5,7 +5,59 @@
 - **Team:** hack-1 — Sohee Lee
 - **Demo:** `link to video`
 
-## 1. Architecture
+## Summary
+
+Swiss fiduciaries pay supplier invoices for many small clients, each of which delegated a different scope and
+limit. Mandate Desk gives each client its own payment agent and keeps it inside the client's signed mandate:
+Apertus 8B reads and reviews multilingual invoices, code enforces the mandate and checks what Apertus read,
+a person decides the exceptions, and every step is signed into a ledger. On 500 unseen synthetic invoices run
+once, Apertus alone decided to pay **178 of 300** invoices it should not have; with the harness, **0 of 300
+(95% CI 0–1.3%)**, holding 3.5% of legitimate invoices for a person. Seventeen attacks on the agent's identity
+and authority were blocked in 561 of 561 attempts (scenarios we wrote; not a security audit).
+
+## Contents
+
+1. Introduction
+2. System design: architecture, target architecture, use of Apertus, identity and record, Agent Health
+3. Data
+4. Evaluation: setup, reference test set, blind study, agent verification, risk score
+5. Discussion
+6. Limitations
+7. Conclusion
+8. Reproducibility · License · References
+
+## 1. Introduction
+
+**Problem.** Around 12,900 Swiss firms do accounting, bookkeeping and tax work (NOGA 6920; secondary source,
+Valindex 2026-02), most with 1–9 employees. A daily task is paying supplier invoices for many small clients,
+each of which delegated a different scope and limit. A language model can read the invoices, but on its own it
+*fails open*: on our test set Apertus alone paid 33 of 45 invoices it should not have, asserting facts it did
+not check ("IBAN matches on file" for a broken checksum) and never summing the month.
+
+**Question.** Can a harness around Apertus 8B keep each client's payments within that client's signed
+mandate, so that it pays no invoice it should not, while a person decides the exceptions and every action can
+be checked afterwards?
+
+**Approach.** Mandate Desk works on four axes:
+
+- **Mandate and authority.** Each client signs a mandate (scope, limits, validity, delegate = the firm). Each
+  client gets its own agent with its own key and DID, a firm-signed ID card and a badge derived from the
+  mandate. Every request the agent makes is signed and checked by a gate (five checks) before it takes effect.
+- **Harness.** Apertus reads multilingual invoices and reviews their content; code enforces the mandate and
+  checks that what Apertus read is written in the invoice, where Apertus quotes it.
+- **Human control.** Exceptions and uncertain payments go to a person, who approves (a one-time grant bound
+  to client, invoice, IBAN and amount), rejects, or stops the agent with a kill switch. Overrules become
+  lessons that Apertus writes into the firm manual.
+- **Signed record.** Every request, its outcome and every human intervention is in a hash-chained, signed
+  ledger that keeps the request the agent signed, so an auditor can re-check it. Payments leave only as an
+  ISO 20022 pain.001.001.09 file per client.
+
+**Outline.** Section 2 describes the system, Section 3 the data, Section 4 the evaluation against Apertus
+alone, Section 5 what the results suggest, Section 6 the limitations and Section 7 concludes.
+
+## 2. System design
+
+### 2.1 Architecture
 
 ```
 invoice ──► [Apertus: extract fields] ──► [Badge: mandate checks in code] ──fail──► reject / to a person
@@ -21,31 +73,14 @@ every agent request is signed with its own key ──► [Gate: G1 signature · 
 every request, outcome and human action ──► signed, hash-chained ledger (with the signed request)
 ```
 
-| Component | File |
-|---|---|
-| Synthetic data (mandates, suppliers, invoices, labels), deterministic | `datagen.py` |
-| Apertus client with record/replay cache (one OpenAI-compatible endpoint) | `llm.py`, `prompts.py` |
-| Badge (hard mandate checks), verification (written in the invoice, quotes, possible duplicate), client-signed mandate | `badge.py`, `credential.py` |
-| Decision paths (baseline, harness), lessons | `decide.py`, `lessons.py` |
-| Identity (Ed25519, did:key, ID card, badge, signed requests), gate, desk (deploy, kill switch, replace, grants) | `identity.py`, `gate.py`, `desk.py` |
-| Risk score (logistic regression, pure Python), attack scenarios | `risk.py`, `security.py` |
-| Signed ledger, payment files, reviewer web app (FastAPI, port 8000) | `ledger.py`, `pain001.py`, `app.py` |
+All code is under `src/agent/` and runs in pure Python except the Apertus calls: synthetic data
+(`datagen.py`), the Apertus client with a record/replay cache (`llm.py`, `prompts.py`), badge, verification and
+the client-signed mandate (`badge.py`, `credential.py`), decision paths and lessons (`decide.py`,
+`lessons.py`), identity, gate and desk (`identity.py`, `gate.py`, `desk.py`), risk score and attack scenarios
+(`risk.py`, `security.py`), and the signed ledger, payment files and reviewer web app (`ledger.py`,
+`pain001.py`, `app.py`, FastAPI on port 8000).
 
-All under `src/agent/`; everything runs in pure Python except the Apertus calls.
-
-**Agent Health, the reviewer app's firm-level screen,** has three tabs; each answers one question, and they build on each other
-(the other firm screens: Audit Trail verifies the signed ledger, Invoice Pool lists the data the checks use):
-
-| Tab | What it evaluates | Why it is needed |
-|---|---|---|
-| Risk score (data science) | how the risk score is built and how good it is: 3,000 synthetic past payments, 13 features, split, L2 choice, ROC and PR curves, confusion matrices, errors | the score is one part of the harness; its quality has to be shown before its second look is trusted |
-| Who caught what | on the 78 labelled test invoices, which layer caught each risk type (code checks, Apertus review, risk score, missed); from the ledger, signals across clients (one IBAN on several suppliers or clients, unusual amounts paid automatically) | shows which part does the work and where the gaps are, and what a client manager should look at |
-| Results | the whole system against Apertus alone: wrong payments step by step on the test set, the confirm set and the holdout, attacks blocked, and each client's agent | shows whether the harness as a whole pays fewer invoices it should not |
-
-Read together: the risk score is one part, Who caught what shows what each part catches, and Results
-shows the result of all parts at once.
-
-### Target architecture (mandatory)
+### 2.2 Target architecture (mandatory)
 
 **a) On-premise**, with **b) air-gapped** operation possible: a fiduciary holds client bank details, salaries
 and supplier relationships, so the design keeps everything on the firm's own infrastructure.
@@ -60,7 +95,18 @@ and supplier relationships, so the design keeps everything on the firm's own inf
   hand. The endpoint is read from `LLM_BASE_URL`; CSCS and a self-hosted server were not tested. Recorded
   responses make the evaluation independent of the endpoint.
 
-### Agent identity, gate and record
+### 2.3 Use of Apertus
+
+- **Model:** Apertus v1.5 8B (`swiss-ai/apertus-v1.5-8b` on the endpoint; weights `swiss-ai/Apertus-v1.5-8B`),
+  inference only, structured JSON outputs, temperature 0, no fine-tuning, no other model (not even as a judge).
+- **Five roles:** (1) extract fields from DE/FR/IT/EN invoices; (2) the *baseline*: the whole decision in one
+  prompt; (3) review content after the hard checks; (4) for payment candidates, quote where it read IBAN,
+  invoice number and total (checked in code); (5) distil masked reviewer notes into manual rules.
+- **Where it runs:** Public AI inference API (OpenAI-compatible). Reference run and holdout: 501 recorded
+  responses, latency median 3.3 s / p90 7.3 s, well under USD 0.10; study: 7,658 responses, about USD 0.50.
+  Every response is recorded with its exact request (`data/cache/`), so judges replay the same run without a key.
+
+### 2.4 Agent identity, gate and record
 
 The harness answers *what* the agent may do; this layer answers *who* did it and lets anyone check. The
 concept follows KYA-OS (Know Your Agent OS: identity, delegation, signed proof, ledger), built by Vouched and
@@ -100,44 +146,19 @@ assessment, management and monitoring of AI risks; the EU AI Act requires automa
 oversight including a way to stop the system (Art. 14) for high-risk AI systems. We did not assess whether
 this use is high-risk; this is not a compliance assessment.
 
-## 2. Summary
+### 2.5 Agent Health: what the firm sees
 
-Around 12,900 Swiss firms do accounting, bookkeeping and tax work (NOGA 6920; secondary source, Valindex
-2026-02), most with 1–9 employees. A daily task is paying supplier invoices for many small clients, each of
-which delegated a different scope and limit. Mandate Desk is an agent that pays them within each client's
-signed delegation, on four axes:
+Agent Health, the reviewer app's firm-level screen, has three tabs; each answers one question, and they
+build on each other (the other firm screens: Audit Trail verifies the signed ledger, Invoice Pool lists the
+data the checks use):
 
-- **Mandate and authority.** Each client signs a mandate (scope, limits, validity, delegate = the firm). Each
-  client gets its own agent with its own key and DID, a firm-signed ID card and a badge derived from the
-  mandate. Every request the agent makes is signed and checked by a gate (five checks) before it takes effect.
-- **Harness.** Apertus reads multilingual invoices and reviews their content; code enforces the mandate and
-  checks that what Apertus read is written in the invoice, where Apertus quotes it.
-- **Human control.** Exceptions and uncertain payments go to a person, who approves (a one-time grant bound
-  to client, invoice, IBAN and amount), rejects, or stops the agent with a kill switch. Overrules become
-  lessons that Apertus writes into the firm manual.
-- **Signed record.** Every request, its outcome and every human intervention is in a hash-chained, signed
-  ledger that keeps the request the agent signed, so an auditor can re-check it. Payments leave only as an
-  ISO 20022 pain.001.001.09 file per client.
+| Tab | What it evaluates | Why it is needed |
+|---|---|---|
+| Risk score (data science) | how the risk score is built and how good it is: 3,000 synthetic past payments, 13 features, split, L2 choice, ROC and PR curves, confusion matrices, errors | the score is one part of the harness; its quality has to be shown before its second look is trusted |
+| Who caught what | on the 78 labelled test invoices, which layer caught each risk type (code checks, Apertus review, risk score, missed); from the ledger, signals across clients (one IBAN on several suppliers or clients, unusual amounts paid automatically) | shows which part does the work and where the gaps are, and what a client manager should look at |
+| Results | the whole system against Apertus alone: wrong payments step by step on the test set, the confirm set and the holdout, attacks blocked, and each client's agent | shows whether the harness as a whole pays fewer invoices it should not |
 
-**Results.** On 500 unseen synthetic invoices run once, Apertus 8B alone decided to pay **178 of 300** it should
-not have (171 with the same lessons); the harness **0 of 300 (95% CI 0–1.3%)**, holding 3.5% of legitimate
-invoices for a person: 193 paid, 232 to a person, 75 rejected. An earlier 1,000-invoice set had found a
-gap (29 of 600, 4.8%) that led to the quote check. On the 78-invoice test set: 33 of 45 → 0 of 45. Seventeen
-attacks on identity and authority were blocked in 561 of 561 attempts, with 33 of 33 legitimate requests
-accepted (scenarios we wrote; not a security audit).
-
-## 3. Use of Apertus
-
-- **Model:** Apertus v1.5 8B (`swiss-ai/apertus-v1.5-8b` on the endpoint; weights `swiss-ai/Apertus-v1.5-8B`),
-  inference only, structured JSON outputs, temperature 0, no fine-tuning, no other model (not even as a judge).
-- **Five roles:** (1) extract fields from DE/FR/IT/EN invoices; (2) the *baseline*: the whole decision in one
-  prompt; (3) review content after the hard checks; (4) for payment candidates, quote where it read IBAN,
-  invoice number and total (checked in code); (5) distil masked reviewer notes into manual rules.
-- **Where it runs:** Public AI inference API (OpenAI-compatible). Reference run and holdout: 501 recorded
-  responses, latency median 3.3 s / p90 7.3 s, well under USD 0.10; study: 7,658 responses, about USD 0.50.
-  Every response is recorded with its exact request (`data/cache/`), so judges replay the same run without a key.
-
-## 4. Data
+## 3. Data
 
 All data is **synthetic and fictional**, generated by templates (not a model), so labels are exact; no
 personal data; licence CDLA-Permissive-2.0. Reference set (seed 2026): 5 client mandates (one revoked), 19
@@ -148,7 +169,9 @@ Split: 42 train (only to collect reviewer notes), 78 test; a 42-invoice holdout 
 (seeds 3031–3033): four layouts (adding e-mail and a Swiss QR-bill payment part), two faults on one invoice,
 and unreadable fields (no invoice number, no IBAN, illegible total); per 100: 40 payable, 45 escalate, 15 reject.
 
-## 5. Evaluation
+## 4. Evaluation
+
+### 4.1 Task, metric and baseline
 
 **Task:** pay / escalate / reject per invoice. **Primary metric:** wrong payments, non-payable invoices the
 system decided to pay on its own. No money moves in any evaluation; in operation a "pay" puts the invoice
@@ -157,10 +180,12 @@ accuracy. Model failures fail closed (escalate) and are counted.
 
 **Baseline:** Apertus alone with the *same* information (mandate, supplier list, this month's payments,
 invoice) and the same written policy and manual gen 0. Harness rows from "manual gen 1" on also use lessons;
-the step-by-step rows separate the two, and a baseline given manual gen 1 too (below) shows the lessons
+the step-by-step rows separate the two, and a baseline given manual gen 1 too (Section 4.3) shows the lessons
 barely help on their own.
 
-**Reference test set** (78 invoices: 33 payable, 45 not):
+### 4.2 Reference test set
+
+78 invoices: 33 payable, 45 not.
 
 | Setup | Accuracy | Wrong payments (of 45) | Wrongly paid CHF | Missed (of 33) |
 |---|---|---|---|---|
@@ -172,17 +197,12 @@ barely help on their own.
 | + verification (written, quoted, duplicate) ✱ | 0.987 | 1 | 4,650 | 0 |
 | **+ risk-score second look (≥ 95 → person) ✱ = production** | **1.000** | **0** | **0** | **0** |
 
-✱ Added after seeing these results, so not blind; the study below is. What we learned: (1) *Apertus alone
-fails open*: it asserts facts it did not check ("IBAN matches on file" for a broken checksum) and never sums
-the month, yet misses only 1 legitimate invoice, so the problem is verification, not caution. (2) *Rules
-belong in code, reading belongs to the model*: the badge removes every error a rule can see, with no missed
-payment; extraction in four languages was near perfect (IBAN, invoice no., supplier 1.000, total 0.987).
-(3) *Lessons help where the signal is in the words* (pressure invoices caught 0 → 3 of 4), not with
-arithmetic: the 8B reviewer asserts "correct totals" without adding, so those two lessons were promoted to
-code. Soft control finds the rule, hard control enforces it. A fresh **holdout** of 42 invoices, run once
-with the design frozen up to the promoted lessons, gave 14 → 0 of 25 with no missed payment.
+✱ Added after seeing these results, so not blind; the study below is. A fresh **holdout** of 42 invoices, run
+once with the design frozen up to the promoted lessons, gave 14 → 0 of 25 with no missed payment.
 
-**Study: three fresh sets, each run once.** Each step was committed before the set it was tested on was run.
+### 4.3 Blind study: three fresh sets, each run once
+
+Each step was committed before the set it was tested on was run.
 
 1. **Tune (500)** chose the second-look threshold by a rule fixed in advance (fewest wrong payments while
    holding at most 2% more legitimate invoices). It showed Apertus filling gaps (16 of 20 illegible totals
@@ -207,35 +227,53 @@ with the design frozen up to the promoted lessons, gave 14 → 0 of 25 with no m
 | + verification | Apertus quotes, code checks the quotes | Apertus and code | 0 | 0 | 7 |
 | **+ second look at 95 = production** | high risk score → person | statistical model | **0 (CI 0–1.3%)** | **0** | **7** |
 
-**Who stopped what** (production, first layer that held each non-payable invoice; rejected / to a person):
-hard checks 185 (75 / 110), promoted lessons 39 (0 / 39), verification 56 (0 / 56), Apertus review 20
-(0 / 20), second look 0. Only clear rule violations are rejected in code; everything else goes to a person.
-The 7 legitimate invoices held are reading errors caught before money moves (5 misread IBANs, 2 quotes that
-did not match); no paid invoice carried a wrong IBAN or amount. The final set gives the same split
-(63 / 12 / 18 / 6%). How accurately and quickly people handle the 232 was not measured.
+The production harness paid 193, sent 232 to a person and rejected 75. **Who stopped what** (first layer that
+held each non-payable invoice; rejected / to a person): hard checks 185 (75 / 110), promoted lessons 39
+(0 / 39), verification 56 (0 / 56), Apertus review 20 (0 / 20), second look 0. Only clear rule violations are
+rejected in code; everything else goes to a person. The 7 legitimate invoices held are reading errors caught
+before money moves (5 misread IBANs, 2 quotes that did not match); no paid invoice carried a wrong IBAN or
+amount. The final set gives the same split (63 / 12 / 18 / 6%). How accurately and quickly people handle the
+232 was not measured.
 
-**Agent verification.** Each scenario was replayed for each of the 33 paid invoices against a freshly hired
-agent (`security.py`, no model calls); 17 × 33 = 561 attempts, all blocked:
+### 4.4 Agent verification
 
-| Scenario | Caught by |
-|---|---|
-| forged signature · amount or IBAN changed after signing | G1 |
-| replayed request · stale request (1 h) | G2 |
-| unknown agent key · revoked agent after kill switch | G3 |
-| agent of another client · above cap without grant · expired badge · grant reused · grant of another client · negative, zero or NaN amount · a "pay" of CHF 9,999,999 marked as not executing a payment | G4 |
-| mandate limits tampered · mandate naming another delegate · mandate revoked · above the client's limit with the badge cap set too high | G5 |
+Each of 17 attack scenarios was replayed for each of the 33 paid invoices against a freshly hired agent
+(`security.py`, no model calls); 17 × 33 = 561 attempts, all blocked (scenarios we wrote; not a security audit). **G1** caught a forged signature and an
+amount or IBAN changed after signing; **G2** a replayed and a stale (1 h) request; **G3** an unknown agent key
+and an agent revoked by the kill switch; **G4** an agent of another client, an amount above the cap without a
+grant, an expired badge, a reused grant, another client's grant, a negative, zero or NaN amount, and a "pay" of
+CHF 9,999,999 marked as not executing a payment; **G5** tampered mandate limits, a mandate naming another
+delegate, a revoked mandate, and an amount above the client's limit with the badge cap set too high. The
+legitimate control request was accepted 33 of 33 times. In the reference run the gate accepted 78 requests
+from active clients (74 payment decisions and 4 payment files) and refused the 4 for the client that had
+revoked its mandate; a request signed for CHF 100 can no longer be recorded as CHF 999,999 (`tests/test_core.py`).
 
-The legitimate control request was accepted 33 of 33 times. In the reference run the gate accepted 78 requests from active
-clients (74 payment decisions and 4 payment files) and refused the 4 for the client that had revoked its
-mandate; a request signed for CHF 100 can no longer be recorded as CHF 999,999 (`tests/test_core.py`).
+### 4.5 Risk score (data-science layer)
 
-**Risk score (data-science layer).** L2-regularised logistic regression (Newton/IRLS, pure Python) on 3,000
-synthetic past payments with 13 features (amount z-score per supplier, changed or invalid IBAN, new
-supplier, round amount, sum mismatch, wrong addressee, urgency words in four languages, short due date,
-duplicate, limits, scope, month load); L2 weight chosen on a 20% validation split. Fraud ROC AUC 0.970 on
-the test set and 0.984 on the holdout (unsupervised baseline 0.878 / 0.838). It only sends a payment the
-harness would make to a person (score ≥ 95); on the reference set it caught the one pressure invoice the
-reviewer missed, on the confirm set it added nothing. Every step is shown on Agent Health's Risk score tab.
+L2-regularised logistic regression (Newton/IRLS, pure Python) on 3,000 synthetic past payments with 13
+features (amount z-score per supplier, changed or invalid IBAN, new supplier, round amount, sum mismatch,
+wrong addressee, urgency words in four languages, short due date, duplicate, limits, scope, month load); L2
+weight chosen on a 20% validation split. Fraud ROC AUC 0.970 on the test set and 0.984 on the holdout
+(unsupervised baseline 0.878 / 0.838). It only sends a payment the harness would make to a person (score ≥
+95); on the reference set it caught the one pressure invoice the reviewer missed, on the confirm set it added
+nothing. Every step is shown on Agent Health's Risk score tab.
+
+## 5. Discussion
+
+**Apertus alone fails open.** It asserts facts it did not check and never sums the month, yet misses only 1
+legitimate invoice on the test set, so the problem is verification, not caution. Giving it the lessons does not
+fix this: on the confirm set it still paid 171 of 300.
+
+**Rules belong in code, reading belongs to the model.** The badge removes every error a rule can see, with no
+missed payment; extraction in four languages was near perfect (IBAN, invoice no., supplier 1.000, total 0.987).
+On the confirm set the hard checks held 185 of the 300 non-payable invoices and the Apertus review 20.
+
+**Lessons help where the signal is in the words**, not with arithmetic: pressure invoices were caught 0 → 3
+of 4, but the 8B reviewer asserts "correct totals" without adding, so those two lessons were promoted to
+code. Soft control finds the rule, hard control enforces it.
+
+**Each gap was found by a fresh set.** The quote check exists because the final set showed 29 of 600 paid
+invoices without an invoice number; only the confirm set tests the final design blind.
 
 ## 6. Limitations
 
@@ -264,7 +302,22 @@ reviewer missed, on the confirm set it added nothing. Every step is shown on Age
 - Lessons come from 42 training cases with simulated notes and the same case types as the test set; a
   stronger prompted baseline (e.g. multi-step) could narrow the gap.
 
-## 7. Reproducibility
+## 7. Conclusion
+
+A harness around Apertus 8B kept payments within each client's signed mandate on synthetic data: on the
+blind confirm set, wrong payments fell from 178 of 300 (Apertus alone) to 0 of 300, at the cost of holding 7
+of 200 legitimate invoices for a person, and all 561 attack attempts on the agent's identity and authority
+were blocked. Apertus does the reading and the review of content; code, the gate and people decide what money
+may move, and the signed ledger lets anyone check it afterwards. The result is evidence for the mechanism,
+not a production error rate.
+
+Directions we would consider, not commitments (none started): mandates in a standard verifiable-credential
+format and keys in an HSM; reading structured invoice data (QR-bill, e-invoices) directly so the model reads
+less; supplier profiles or per-field confidence to hold fewer legitimate invoices; a sign-off step for
+promoting lessons to code; measuring reviewer accuracy and workload; testing on real, anonymised payment runs
+with a fiduciary.
+
+## 8. Reproducibility
 
 `make run` in `track_2b/` on a clean checkout builds the image, replays the recorded Apertus responses (no key
 needed), writes `results/`, prints the table and serves the app on port 8000; `make eval` prints and exits;
@@ -274,13 +327,6 @@ set's blind results are kept in `results/study/final_blind.json`. GitHub Actions
 image and re-runs `eval` and `holdout` without a key on every push, and fails if the metrics, risk model or
 holdout differ from the committed files. Data generation is deterministic; no GPU needed for replay.
 Commit: `6b8625b` (code and results; later commits change only the report and the demo video link).
-
-## 8. Possible next steps (none started)
-
-Directions we would consider, not commitments: mandates in a standard verifiable-credential format and keys
-in an HSM; reading structured invoice data (QR-bill, e-invoices) directly so the model reads less; supplier
-profiles or per-field confidence to hold fewer legitimate invoices; a sign-off step for promoting lessons to
-code; measuring reviewer accuracy and workload; testing on real, anonymised payment runs with a fiduciary.
 
 ## License
 
