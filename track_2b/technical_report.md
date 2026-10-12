@@ -3,7 +3,7 @@
 - **Track:** Track 2B — Mandate Desk
 - **Event:** Online
 - **Team:** hack-1 — Sohee Lee
-- **Demo:** link to follow
+- **Demo:** https://drive.google.com/file/d/1PivYnnCA00WErcqTeLPPWcmFxSrGoKiP/view?usp=sharing
 
 ## Summary
 
