@@ -30,7 +30,7 @@ and authority were blocked in 561 of 561 attempts (scenarios we wrote; not a sec
 4. Evaluation: setup, reference test set, blind study, agent verification, risk score
 5. Discussion
 6. Limitations
-7. Conclusion
+7. Conclusion: next steps
 8. Reproducibility · License · References · Appendix A
 
 ## 1. Introduction
@@ -316,6 +316,8 @@ of 200 legitimate invoices for a person, and all 561 attack attempts on the agen
 were blocked. Apertus does the reading and the review of content; code, the gate and people decide what money
 may move, and the signed ledger lets anyone check it afterwards. The result is evidence for the mechanism,
 not a production error rate.
+
+### 7.1 Next steps
 
 Directions we would consider, not commitments (none started): mandates in a standard verifiable-credential
 format and keys in an HSM; reading structured invoice data (QR-bill, e-invoices) directly so the model reads
